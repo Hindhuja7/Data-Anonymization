@@ -1,9 +1,12 @@
-# PII Detection Module
+# PII Detection System
 
 ## What This Does
-This module detects Personally Identifiable Information (PII) using two approaches:
-1. **LLM-based detection** (Primary) - Context-aware using Claude/OpenAI/GitHub Models API
-2. **Regex patterns** (Secondary) - India-specific and global pattern matching
+A complete PII (Personally Identifiable Information) detection system for databases with Indian-specific PII patterns. The system:
+1. Connects to databases (PostgreSQL, MySQL, SQL Server)
+2. Extracts table schemas and sample data
+3. Detects PII using LLM-based and regex-based approaches
+4. Generates synthetic Indian enterprise test data
+5. Loads data into Neon PostgreSQL for testing
 
 ## Implementation Details
 
@@ -43,6 +46,18 @@ This module detects Personally Identifiable Information (PII) using two approach
 
 ### Usage
 
+#### Complete Database PII Detection
+```bash
+# 1. Generate synthetic test data
+python generate_test_data.py
+
+# 2. Load data into Neon PostgreSQL
+python load_to_neon.py
+
+# 3. Run PII detection on database
+python database_pii_detection.py
+```
+
 #### LLM-based Detection
 ```python
 from llm_pii_detection import detect_pii_with_llm
@@ -70,10 +85,20 @@ result = detect_india_pii("ABCDE1234F")
 pip install -r requirements.txt
 ```
 
-2. Configure API keys:
+2. Configure environment variables in `.env`:
 ```bash
-cp .env.example .env
-# Edit .env and add your API key
+# Database configuration
+DB_TYPE=postgresql
+DB_HOST=your-neon-host
+DB_PORT=5432
+DB_USERNAME=your-username
+DB_PASSWORD=your-password
+DB_NAME=neondb
+
+# LLM configuration
+LLM_PROVIDER=github
+LLM_MODEL=gpt-4o
+GITHUB_API_KEY=your-github-token
 ```
 
 3. For GitHub Models (Free):
@@ -82,6 +107,11 @@ cp .env.example .env
    - Click "Use this model" to generate a Personal Access Token (PAT)
    - Add the PAT to `.env` as `GITHUB_API_KEY`
 
+4. For Neon PostgreSQL (Free):
+   - Sign up at https://neon.tech
+   - Create a project
+   - Get connection details from the dashboard
+
 ### Testing
 ```bash
 # Test regex patterns
@@ -89,10 +119,37 @@ python india_regex_patterns.py
 
 # Test LLM detection (requires API key)
 python llm_pii_detection.py
+
+# Generate synthetic test data
+python generate_test_data.py
+
+# Load data to Neon PostgreSQL
+python load_to_neon.py
+
+# Run complete PII detection on database
+python database_pii_detection.py
 ```
+
+## Test Data
+The system generates synthetic Indian enterprise dataset:
+- **100,000 customers** with Aadhaar, PAN, phone, address
+- **5,000 employees** with Aadhaar, PAN, UAN, salary
+- **150,000 accounts** with account numbers, GSTIN, balance
+- **500,000 transactions** with amounts, beneficiaries
+
+Test data is saved in `test_data/` directory and can be loaded into Neon PostgreSQL using `load_to_neon.py`.
+
+## Files Added
+- `database_connector.py` - Database connection management
+- `schema_extractor.py` - Extract table schemas
+- `sample_extractor.py` - Fetch sample data for analysis
+- `database_pii_detection.py` - Main PII detection orchestrator
+- `generate_test_data.py` - Synthetic data generator
+- `load_to_neon.py` - Neon PostgreSQL data loader
+- `test_data/` - Generated test data and schema
 
 ## Next Steps
 - Implement global regex patterns (email, credit card, SSN, etc.)
 - Create combined detection engine (LLM OR regex logic)
-- Create sample database schema with Indian PII columns
-- Test detection on real database data
+- Add more anonymization techniques
+- Test on real production databases
