@@ -27,12 +27,14 @@ data-anonymization/
 
 ### PII Detection Module (`pii-detection/`)
 
+- **Structured Database Support**: PostgreSQL, MySQL, SQL Server
 - **Enterprise-Aware Detection**: Automatically detects enterprise type (BANKING, HR, HEALTHCARE, etc.) from database schema
 - **Context-Aware LLM Detection**: Uses GitHub Models with enterprise context for accurate PII identification
 - **India-Specific Patterns**: Regex patterns for Aadhaar, PAN, GSTIN, Indian Phone, etc.
 - **Sequential Model Fallback**: Automatic fallback between GitHub models (gpt-4o → gpt-4o-mini → gpt-4-turbo)
 - **Column-Wise Random Sampling**: Privacy-preserving sample extraction
 - **Compliance Mapping**: Automatic compliance law mapping based on enterprise type
+- **Real-Time PII Detection**: On-demand scanning of database schemas and sample data
 
 ### Supported Enterprise Types
 
@@ -220,8 +222,6 @@ This tool is intended solely for authorized privacy assessments of databases you
 
 - [ ] Anonymization module implementation
 - [ ] Admin dashboard for review and overrides
-- [ ] Real-time PII monitoring
-- [ ] Support for more database types
 - [ ] Integration with data pipelines
 - [ ] Automated compliance reporting
 
