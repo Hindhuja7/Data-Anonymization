@@ -12,6 +12,7 @@ from database_connector import DatabaseConnector
 from schema_extractor import SchemaExtractor
 from sample_extractor import SampleExtractor
 from combined_detector import CombinedPIIDetector
+from enterprise_detector import EnterpriseDetector
 
 load_dotenv()
 
@@ -56,6 +57,7 @@ class DatabasePIIDetector:
         self.schema_extractor = None
         self.sample_extractor = None
         self.combined_detector = None
+        self.enterprise_detector = None
     
     def connect(self):
         """Establish database connection."""
@@ -70,8 +72,9 @@ class DatabasePIIDetector:
         self.connector.connect(read_only=True)
         
         self.schema_extractor = SchemaExtractor(self.connector.engine)
-        self.sample_extractor = SampleExtractor(self.connector.engine)
+        self.sample_extractor = SampleExtractor(self.connector.engine, database_type=self.database_type)
         self.combined_detector = CombinedPIIDetector(provider=self.provider, model=self.model)
+        self.enterprise_detector = EnterpriseDetector(provider=self.provider, model=self.model)
     
     def detect_pii(self) -> Dict[str, Any]:
         """
@@ -86,13 +89,19 @@ class DatabasePIIDetector:
         # Step 1: Extract schema
         table_schemas = self.schema_extractor.get_all_schemas()
         
-        # Step 2: Extract sample data
+        # Step 2: Detect enterprise type
+        enterprise_info = self.enterprise_detector.detect_enterprise(table_schemas)
+        
+        # Step 3: Extract sample data
         table_samples = self.sample_extractor.get_all_table_samples(table_schemas)
         
-        # Step 3: Run PII detection for each table
+        # Step 4: Run PII detection for each table
         report = {
             "database_name": self.database_name,
             "database_type": self.database_type,
+            "enterprise_type": enterprise_info["enterprise_type"],
+            "enterprise_confidence": enterprise_info["confidence"],
+            "compliance_law": enterprise_info["compliance_law"],
             "tables": []
         }
         
@@ -100,7 +109,14 @@ class DatabasePIIDetector:
             table_name = schema["table_name"]
             samples = table_samples.get(table_name, {})
             
-            table_report = self._detect_table_pii(table_name, schema, samples)
+            table_report = self._detect_table_pii(
+                table_name, 
+                schema, 
+                samples, 
+                enterprise_info["enterprise_type"],
+                enterprise_info["compliance_law"],
+                enterprise_info["confidence"]
+            )
             report["tables"].append(table_report)
         
         return report
@@ -109,7 +125,10 @@ class DatabasePIIDetector:
         self,
         table_name: str,
         schema: Dict[str, Any],
-        samples: Dict[str, List[str]]
+        samples: Dict[str, List[str]],
+        enterprise_type: str,
+        compliance_law: str,
+        enterprise_confidence: float
     ) -> Dict[str, Any]:
         """
         Detect PII for a single table.
@@ -118,6 +137,9 @@ class DatabasePIIDetector:
             table_name: Name of the table
             schema: Table schema dictionary
             samples: Column sample values dictionary
+            enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
+            compliance_law: Applicable compliance law
+            enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
         
         Returns:
             Dictionary with PII detection results for the table
@@ -145,7 +167,10 @@ class DatabasePIIDetector:
         detection_results = self.combined_detector.detect_table(
             table_name=table_name,
             columns=columns_for_detection,
-            use_batch=True
+            use_batch=True,
+            enterprise_type=enterprise_type,
+            compliance_law=compliance_law,
+            enterprise_confidence=enterprise_confidence
         )
         
         # Format results according to specified JSON structure

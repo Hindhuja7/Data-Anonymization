@@ -173,7 +173,10 @@ class CombinedPIIDetector:
         self,
         table_name: str,
         columns: list[Dict[str, Any]],
-        use_batch: bool = True
+        use_batch: bool = True,
+        enterprise_type: str = "GENERAL",
+        compliance_law: str = "DPDP Act 2023",
+        enterprise_confidence: float = 0.5
     ) -> list[Dict[str, Any]]:
         """
         Detect PII in all columns of a table.
@@ -183,6 +186,9 @@ class CombinedPIIDetector:
             columns: List of dicts with keys: column_name, data_type, sample_values
             use_batch: If True, use LLM batch detection (single API call). 
                       If False, detect each column individually.
+            enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
+            compliance_law: Applicable compliance law
+            enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
         
         Returns:
             List of merged detection results for all columns
@@ -190,7 +196,7 @@ class CombinedPIIDetector:
         if use_batch:
             # Use LLM batch detection for efficiency
             llm_detector = LLMPiiDetector(provider=self.provider, model=self.model)
-            llm_results = llm_detector.detect_table_columns_batch(table_name, columns)
+            llm_results = llm_detector.detect_table_columns_batch(table_name, columns, enterprise_type, compliance_law, enterprise_confidence)
             
             # Merge each LLM result with regex result
             merged_results = []
