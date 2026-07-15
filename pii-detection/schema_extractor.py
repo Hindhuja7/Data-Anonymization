@@ -42,19 +42,25 @@ class SchemaExtractor:
     
     def get_table_schema(self, table_name: str) -> Dict[str, Any]:
         """
-        Get complete schema information for a table.
+        Get complete schema information for a table including all constraints, keys, and metadata.
         
         Args:
             table_name: Name of the table
         
         Returns:
-            Dictionary with table schema information
+            Dictionary with complete table schema information
         """
         try:
+            # Extract all available schema information automatically
             columns = self.inspector.get_columns(table_name)
             primary_keys = self.inspector.get_pk_constraint(table_name)
             foreign_keys = self.inspector.get_foreign_keys(table_name)
+            unique_constraints = self.inspector.get_unique_constraints(table_name)
+            check_constraints = self.inspector.get_check_constraints(table_name)
+            indexes = self.inspector.get_indexes(table_name)
+            table_comment = self.inspector.get_table_comment(table_name)
             
+            # Enhanced column information with all metadata
             column_info = []
             for col in columns:
                 column_info.append({
@@ -62,17 +68,25 @@ class SchemaExtractor:
                     "data_type": str(col["type"]),
                     "nullable": col.get("nullable", True),
                     "default": col.get("default"),
-                    "autoincrement": col.get("autoincrement", False)
+                    "autoincrement": col.get("autoincrement", False),
+                    "comment": col.get("comment"),
+                    "computed": col.get("computed"),
+                    "identity": col.get("identity")
                 })
             
             schema = {
                 "table_name": table_name,
                 "columns": column_info,
                 "primary_keys": primary_keys.get("constrained_columns", []),
-                "foreign_keys": foreign_keys
+                "primary_key_constraint": primary_keys,
+                "foreign_keys": foreign_keys,
+                "unique_constraints": unique_constraints,
+                "check_constraints": check_constraints,
+                "indexes": indexes,
+                "table_comment": table_comment
             }
             
-            logger.info(f"Extracted schema for table: {table_name}")
+            logger.info(f"Extracted complete schema for table: {table_name}")
             return schema
             
         except Exception as e:

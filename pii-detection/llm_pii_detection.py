@@ -80,10 +80,13 @@ class LLMPiiDetector:
         table_name: Optional[str] = None,
         enterprise_type: str = "GENERAL",
         compliance_law: str = "DPDP Act 2023",
-        enterprise_confidence: float = 0.5
+        enterprise_confidence: float = 0.5,
+        is_primary_key: bool = False,
+        foreign_key_info: Optional[Dict[str, Any]] = None,
+        unique_constraint_info: Optional[Dict[str, Any]] = None
     ) -> str:
         """
-        Create a prompt for PII detection with enterprise context.
+        Create a prompt for PII detection with enterprise context and schema information.
         
         Args:
             column_name: Name of the column to analyze
@@ -93,11 +96,25 @@ class LLMPiiDetector:
             enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
             compliance_law: Applicable compliance law
             enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
+            is_primary_key: Whether column is a primary key
+            foreign_key_info: Foreign key information if applicable
+            unique_constraint_info: Unique constraint information if applicable
             
         Returns:
             Formatted prompt string
         """
         samples_str = "\n".join([f"  - {val}" for val in sample_values[:10]])
+        
+        # Build schema context dynamically
+        schema_context = ""
+        if is_primary_key:
+            schema_context += "  - PRIMARY KEY: Yes\n"
+        if foreign_key_info:
+            schema_context += f"  - FOREIGN KEY: References {foreign_key_info['referred_table']}.{foreign_key_info['referred_columns']}\n"
+        if unique_constraint_info:
+            schema_context += f"  - UNIQUE CONSTRAINT: {unique_constraint_info['unique_constraint_name']}\n"
+        if not schema_context:
+            schema_context = "  - No special constraints\n"
         
         prompt = f"""You are a PII (Personally Identifiable Information) detection expert 
 for Indian {enterprise_type} enterprises.
@@ -206,6 +223,15 @@ Global:
 EMAIL, CREDIT_CARD, SSN, IP_ADDRESS,
 FULL_NAME, ADDRESS, DATE_OF_BIRTH
 
+Location (DPDP Act 2023 - treat as PII):
+LOCATION — city, state, pincode, postal_code,
+            district, region, address_line
+
+Identifiers (Internal IDs - treat as PII):
+IDENTIFIER — customer_id, user_id, account_id,
+            employee_id, subscriber_id, member_id,
+            client_id, patient_id, student_id
+
 Financial/Sensitive (DPDP Act 2023 Section 2(t)):
 FINANCIAL — salary, balance, income,
             credit_score, transaction_amount,
@@ -227,6 +253,9 @@ Data Type: {data_type}
 Sample Values:
 {samples_str}
 
+Schema Context:
+{schema_context}
+
 === THINKING STEPS ===
 
 For this column, before answering consider:
@@ -238,6 +267,9 @@ For this column, before answering consider:
 6. Is this financial/sensitive data under DPDP Act even if not directly identifiable?
 7. When uncertain → flag as PII with lower confidence rather than missing it
 8. Recommend appropriate technique based on PII type, enterprise context, and compliance requirements
+9. For BANKING enterprises under RBI guidelines: consider masking for account numbers, hashing for IDs
+10. Location data (city, state, pincode) is treated as PII per mentor requirements
+11. All ID columns (customer_id, user_id, etc.) are treated as IDENTIFIER PII type
 
 === STRICT RULES ===
 
@@ -246,10 +278,11 @@ CRITICAL — these rules must never be violated:
 2. If type is unclear but column seems sensitive → use pii_type: UNKNOWN
 3. Financial data (salary, balance, amounts) → always is_pii: true, type: FINANCIAL
 4. Dates of birth → always is_pii: true, type: DATE_OF_BIRTH
-5. Location data (pincode, city, state, address) → always is_pii: true, type: ADDRESS
-6. Choose technique based on PII type, enterprise context, and compliance requirements
-7. If technique is unclear → use MASKING as safest default
-8. Confidence 0.0 means LLM failed — never use 0.0 for a real detection
+5. Location data (pincode, city, state, address) → always is_pii: true, type: LOCATION
+6. ID columns (customer_id, user_id, account_id, etc.) → always is_pii: true, type: IDENTIFIER
+7. Choose technique based on PII type, enterprise context, and compliance requirements (not hardcoded)
+8. If technique is unclear → use MASKING as safest default
+9. Confidence 0.0 means LLM failed — never use 0.0 for a real detection
 
 === RESPONSE FORMAT ===
 
@@ -273,7 +306,10 @@ Respond in JSON only, no extra text:
         table_name: Optional[str] = None,
         enterprise_type: str = "GENERAL",
         compliance_law: str = "DPDP Act 2023",
-        enterprise_confidence: float = 0.5
+        enterprise_confidence: float = 0.5,
+        is_primary_key: bool = False,
+        foreign_key_info: Optional[Dict[str, Any]] = None,
+        unique_constraint_info: Optional[Dict[str, Any]] = None
     ) -> LLMPIIDetection:
         """
         Detect PII in a database column using LLM.
@@ -286,11 +322,14 @@ Respond in JSON only, no extra text:
             enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
             compliance_law: Applicable compliance law
             enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
+            is_primary_key: Whether column is a primary key
+            foreign_key_info: Foreign key information if applicable
+            unique_constraint_info: Unique constraint information if applicable
             
         Returns:
             LLMPIIDetection object with detection results
         """
-        prompt = self._create_detection_prompt(column_name, data_type, sample_values, table_name, enterprise_type, compliance_law, enterprise_confidence)
+        prompt = self._create_detection_prompt(column_name, data_type, sample_values, table_name, enterprise_type, compliance_law, enterprise_confidence, is_primary_key, foreign_key_info, unique_constraint_info)
         
         try:
             # Use LLMClient with automatic fallback
@@ -337,7 +376,7 @@ Respond in JSON only, no extra text:
         Detect PII in multiple columns (one API call per column).
         
         Args:
-            columns: List of dicts with keys: column_name, data_type, sample_values, table_name (optional)
+            columns: List of dicts with keys: column_name, data_type, sample_values, table_name (optional), is_primary_key (optional), foreign_key_info (optional), unique_constraint_info (optional)
             
         Returns:
             List of LLMPIIDetection objects
@@ -348,7 +387,10 @@ Respond in JSON only, no extra text:
                 column_name=col["column_name"],
                 data_type=col["data_type"],
                 sample_values=col["sample_values"],
-                table_name=col.get("table_name")
+                table_name=col.get("table_name"),
+                is_primary_key=col.get("is_primary_key", False),
+                foreign_key_info=col.get("foreign_key_info"),
+                unique_constraint_info=col.get("unique_constraint_info")
             )
             results.append(result)
         return results
@@ -374,16 +416,30 @@ Respond in JSON only, no extra text:
         Returns:
             List of LLMPIIDetection objects
         """
-        # Create a batch prompt for all columns
+        # Create a batch prompt for all columns with schema context
         columns_info = []
         for col in columns:
             samples_str = "\n".join([f"  - {val}" for val in col["sample_values"][:5]])
+            
+            # Add schema context dynamically
+            schema_context = ""
+            if col.get("is_primary_key"):
+                schema_context += f"  - PRIMARY KEY: Yes\n"
+            if col.get("foreign_key_info"):
+                fk = col["foreign_key_info"]
+                schema_context += f"  - FOREIGN KEY: References {fk['referred_table']}.{fk['referred_columns']}\n"
+            if col.get("unique_constraint_info"):
+                uc = col["unique_constraint_info"]
+                schema_context += f"  - UNIQUE CONSTRAINT: {uc['unique_constraint_name']}\n"
+            
             columns_info.append(f"""
 ---
 Column: {col['column_name']}
 Data Type: {col['data_type']}
 Sample Values:
 {samples_str}
+Schema Context:
+{schema_context if schema_context else "  - No special constraints"}
 """)
         
         prompt = f"""You are a PII (Personally Identifiable Information) detection expert 
@@ -420,6 +476,15 @@ Global:
 EMAIL, CREDIT_CARD, SSN, IP_ADDRESS,
 FULL_NAME, ADDRESS, DATE_OF_BIRTH
 
+Location (DPDP Act 2023 - treat as PII):
+LOCATION — city, state, pincode, postal_code,
+            district, region, address_line
+
+Identifiers (Internal IDs - treat as PII):
+IDENTIFIER — customer_id, user_id, account_id,
+            employee_id, subscriber_id, member_id,
+            client_id, patient_id, student_id
+
 Financial/Sensitive (DPDP Act 2023 Section 2(t)):
 FINANCIAL — salary, balance, income,
             credit_score, transaction_amount,
@@ -441,6 +506,9 @@ For each column, before answering consider:
 6. Is this financial/sensitive data under DPDP Act even if not directly identifiable?
 7. When uncertain → flag as PII with lower confidence rather than missing it
 8. Recommend appropriate technique based on PII type, enterprise context, and compliance requirements
+9. For BANKING enterprises under RBI guidelines: consider masking for account numbers, hashing for IDs
+10. Location data (city, state, pincode) is treated as PII per mentor requirements
+11. All ID columns (customer_id, user_id, etc.) are treated as IDENTIFIER PII type
 
 === STRICT RULES ===
 
@@ -449,10 +517,11 @@ CRITICAL — these rules must never be violated:
 2. If type is unclear but column seems sensitive → use pii_type: UNKNOWN
 3. Financial data (salary, balance, amounts) → always is_pii: true, type: FINANCIAL
 4. Dates of birth → always is_pii: true, type: DATE_OF_BIRTH
-5. Location data (pincode, city, state, address) → always is_pii: true, type: ADDRESS
-6. Choose technique based on PII type, enterprise context, and compliance requirements
-7. If technique is unclear → use MASKING as safest default
-8. Confidence 0.0 means LLM failed — never use 0.0 for a real detection
+5. Location data (pincode, city, state, address) → always is_pii: true, type: LOCATION
+6. ID columns (customer_id, user_id, account_id, etc.) → always is_pii: true, type: IDENTIFIER
+7. Choose technique based on PII type, enterprise context, and compliance requirements (not hardcoded)
+8. If technique is unclear → use MASKING as safest default
+9. Confidence 0.0 means LLM failed — never use 0.0 for a real detection
 
 === RESPONSE FORMAT ===
 

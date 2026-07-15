@@ -18,12 +18,14 @@ class DatabaseConnector:
     
     def __init__(
         self,
-        database_type: str,
-        host: str,
-        port: int,
-        username: str,
-        password: str,
-        database_name: str
+        database_type: str = None,
+        host: str = None,
+        port: int = None,
+        username: str = None,
+        password: str = None,
+        database_name: str = None,
+        sslmode: str = None,
+        connection_string: str = None
     ):
         """
         Initialize database connector.
@@ -35,16 +37,21 @@ class DatabaseConnector:
             username: Database username
             password: Database password
             database_name: Database name
+            sslmode: SSL mode for PostgreSQL (require, prefer, disable, etc.)
+            connection_string: Full connection string (overrides individual parameters)
         """
-        self.database_type = database_type.lower()
+        self.connection_string = connection_string
+        self.database_type = database_type.lower() if database_type else None
         self.host = host
         self.port = port
         self.username = username
         self.password = password
         self.database_name = database_name
+        self.sslmode = sslmode
         self.engine: Optional[Engine] = None
         
-        self._validate_database_type()
+        if not connection_string:
+            self._validate_database_type()
     
     def _validate_database_type(self):
         """Validate database type."""
@@ -55,6 +62,8 @@ class DatabaseConnector:
     def _build_connection_string(self) -> str:
         """Build SQLAlchemy connection string."""
         if self.database_type == 'postgresql':
+            if self.sslmode:
+                return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}?sslmode={self.sslmode}"
             return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}"
         elif self.database_type == 'mysql':
             return f"mysql+pymysql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}"
@@ -74,7 +83,10 @@ class DatabaseConnector:
             SQLAlchemy Engine instance
         """
         try:
-            connection_string = self._build_connection_string()
+            if self.connection_string:
+                connection_string = self.connection_string
+            else:
+                connection_string = self._build_connection_string()
             self.engine = create_engine(connection_string)
             
             # Test connection

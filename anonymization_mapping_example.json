@@ -1,0 +1,228 @@
+{
+  "metadata": {
+    "database_name": "neondb",
+    "database_type": "postgresql",
+    "enterprise_type": "BANKING",
+    "enterprise_confidence": 0.9,
+    "compliance_law": "RBI Guidelines",
+    "anonymization_timestamp": "2026-07-14T16:53:00Z",
+    "redis_mapping_stats": {
+      "table_mappings": 15,
+      "global_mappings": 8,
+      "total_mappings": 23
+    }
+  },
+  "tables": [
+    {
+      "table_name": "employees",
+      "column_mappings": [
+        {
+          "column_name": "employee_id",
+          "pii_type": null,
+          "technique": "NO_CHANGE",
+          "mapping_type": "none",
+          "sample_mappings": []
+        },
+        {
+          "column_name": "first_name",
+          "pii_type": "FULL_NAME",
+          "technique": "TOKENIZATION",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "Rajesh",
+              "anonymized": "Advaith"
+            },
+            {
+              "original": "Priya",
+              "anonymized": "Kavya"
+            },
+            {
+              "original": "Amit",
+              "anonymized": "Rohan"
+            }
+          ]
+        },
+        {
+          "column_name": "last_name",
+          "pii_type": "FULL_NAME",
+          "technique": "TOKENIZATION",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "Kumar",
+              "anonymized": "Misra"
+            },
+            {
+              "original": "Sharma",
+              "anonymized": "Madan"
+            },
+            {
+              "original": "Singh",
+              "anonymized": "Prakash"
+            }
+          ]
+        },
+        {
+          "column_name": "email",
+          "pii_type": "EMAIL",
+          "technique": "TOKENIZATION",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "rajesh.kumar@bank.com",
+              "anonymized": "advaith.misra@example.com"
+            },
+            {
+              "original": "priya.sharma@bank.com",
+              "anonymized": "kavya.madan@example.com"
+            }
+          ]
+        },
+        {
+          "column_name": "aadhaar",
+          "pii_type": "AADHAAR",
+          "technique": "MASKING",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "452188349021",
+              "anonymized": "4521 8834 XXXX"
+            },
+            {
+              "original": "519283749012",
+              "anonymized": "5192 8374 XXXX"
+            }
+          ]
+        },
+        {
+          "column_name": "pan",
+          "pii_type": "PAN",
+          "technique": "MASKING",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "ABCDE1234F",
+              "anonymized": "ABCDE12XX"
+            },
+            {
+              "original": "FGHIJ5678K",
+              "anonymized": "FGHIJ56XX"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table_name": "customers",
+      "column_mappings": [
+        {
+          "column_name": "customer_id",
+          "pii_type": "CUSTOMER_ID",
+          "technique": "HASHING",
+          "mapping_type": "global",
+          "sample_mappings": [
+            {
+              "original": "CUST001",
+              "anonymized": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
+            },
+            {
+              "original": "CUST002",
+              "anonymized": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7"
+            }
+          ]
+        },
+        {
+          "column_name": "account_number",
+          "pii_type": "BANK_ACCOUNT",
+          "technique": "MASKING",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "1234567890123456",
+              "anonymized": "XXXXXXXXXXXX3456"
+            },
+            {
+              "original": "9876543210987654",
+              "anonymized": "XXXXXXXXXXXX7654"
+            }
+          ]
+        },
+        {
+          "column_name": "credit_card",
+          "pii_type": "CREDIT_CARD",
+          "technique": "MASKING",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": "4521883490211234",
+              "anonymized": "XXXXXXXXXXXX1234"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table_name": "transactions",
+      "column_mappings": [
+        {
+          "column_name": "customer_id",
+          "pii_type": "CUSTOMER_ID",
+          "technique": "HASHING",
+          "mapping_type": "global",
+          "sample_mappings": [
+            {
+              "original": "CUST001",
+              "anonymized": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
+            },
+            {
+              "original": "CUST002",
+              "anonymized": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7"
+            }
+          ],
+          "note": "Same anonymized value as customers table (global mapping for relationship preservation)"
+        },
+        {
+          "column_name": "amount",
+          "pii_type": "SALARY",
+          "technique": "DIFFERENTIAL_PRIVACY",
+          "mapping_type": "table_specific",
+          "sample_mappings": [
+            {
+              "original": 50000.00,
+              "anonymized": 50123.45
+            },
+            {
+              "original": 75000.00,
+              "anonymized": 74876.32
+            }
+          ],
+          "note": "Laplacian noise added for differential privacy"
+        }
+      ]
+    }
+  ],
+  "relationship_preservation": {
+    "description": "Foreign key relationships preserved using global Redis mapping",
+    "examples": [
+      {
+        "relationship": "customers.customer_id → transactions.customer_id",
+        "original_value": "CUST001",
+        "customers_table_anonymized": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+        "transactions_table_anonymized": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+        "status": "CONSISTENT"
+      }
+    ]
+  },
+  "encryption_status": {
+    "description": "Application-side encryption enabled for Redis storage",
+    "encryption_method": "Fernet (AES-128)",
+    "storage_format": "Ciphertext only",
+    "compliance": "DPDP Act 2023 compliant"
+  },
+  "redis_aof_status": {
+    "description": "Redis Append-Only File enabled for crash safety",
+    "persistence_mode": "everysec",
+    "crash_recovery": "Mapping history recoverable after restart"
+  }
+}

@@ -220,7 +220,7 @@ This tool is intended solely for authorized privacy assessments of databases you
 
 ## Future Enhancements
 
-- [ ] Anonymization module implementation
+- [x] Anonymization module implementation
 - [ ] Admin dashboard for review and overrides
 - [ ] Integration with data pipelines
 - [ ] Automated compliance reporting

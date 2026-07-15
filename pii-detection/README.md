@@ -35,6 +35,7 @@ PII Detector (LLM + Regex) ◄────────────────�
 | LLM PII Detector | `llm_pii_detection.py` | Context-aware PII detection using LLM |
 | India Regex Patterns | `india_regex_patterns.py` | India-specific PII pattern matching |
 | Combined Detector | `combined_detector.py` | Merges LLM and regex detection results |
+| Anonymizer | `anonymizer.py` | Applies anonymization techniques to PII data |
 | Database PII Detector | `database_pii_detection.py` | Main pipeline orchestrator |
 
 ## Quick Start
@@ -72,6 +73,12 @@ result = detect_pii_from_database(
     provider="github",
     model="gpt-4o"
 )
+
+# Anonymize data based on detection report
+detector = DatabasePIIDetector(...)
+detector.connect()
+pii_report = detector.detect_pii()
+anonymized_data = detector.anonymize_data(pii_report)
 ```
 
 ## Detection Types
@@ -194,6 +201,7 @@ pii-detection/
 ├── llm_pii_detection.py        # LLM-based PII detection
 ├── india_regex_patterns.py     # India-specific regex patterns
 ├── combined_detector.py        # LLM + regex merger
+├── anonymizer.py               # Data anonymization techniques
 ├── database_pii_detection.py   # Main pipeline entry point
 ├── requirements.txt            # Python dependencies
 ├── .env                        # Environment variables
@@ -257,6 +265,9 @@ Edit the prompt in `enterprise_detector.py` to include new enterprise types in t
 
 ### Add new regex patterns
 Edit `india_regex_patterns.py` to add new patterns to the `IndiaPIIPatterns` class.
+
+### Add new anonymization techniques
+Edit `anonymizer.py` to add new techniques to the `Anonymizer` class.
 
 ## Compliance
 
