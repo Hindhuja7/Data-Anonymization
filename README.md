@@ -218,9 +218,11 @@ export LLM_MODEL=gpt-4o-mini
 
 This tool is intended solely for authorized privacy assessments of databases you own or have explicit permission to analyze. Misuse against third-party databases without consent is unethical and potentially illegal.
 
-## Future Enhancements
 
+<<<<<<< HEAD
 - [x] Anonymization module implementation
 - [ ] Admin dashboard for review and overrides
 - [ ] Integration with data pipelines
 - [ ] Automated compliance reporting
+=======
+>>>>>>> 991010faeb2d81edd48452ecf71ea47618816603
