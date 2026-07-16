@@ -8,9 +8,13 @@ import json
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from dotenv import load_dotenv
+import logging
 
-# Load environment variables
+from llm_client import LLMClient
+
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -27,69 +31,26 @@ class LLMPIIDetection:
 class LLMPiiDetector:
     """LLM-based PII detector using Claude or OpenAI API."""
     
-    # Available GitHub Models (all FREE)
-    GITHUB_MODELS = {
-        "gpt-4o": "GPT-4o (Best Quality)",
-        "gpt-4o-mini": "GPT-4o Mini (Faster)",
-        "llama-3.1-70b": "Llama 3.1 70B (Open Source)",
-        "llama-3.1-8b": "Llama 3.1 8B (Fastest)",
-        "mistral-7b": "Mistral 7B (Open Source)",
-    }
-    
-    def __init__(self, provider: str = "anthropic", model: str = None):
+    def __init__(self, provider: str = "github", model: str = None):
         """
-        Initialize LLM detector.
+        Initialize LLM detector with fallback support.
         
         Args:
-            provider: 'anthropic', 'openai', or 'github' (for free GitHub Models)
+            provider: Must be 'github' (only GitHub models supported)
             model: Specific model name (for GitHub Models). 
                    If None, uses default for provider.
                    GitHub defaults to 'gpt-4o'
         """
+        if provider != "github":
+            raise ValueError("Only GitHub models are supported. Provider must be 'github'.")
+        
         self.provider = provider
-        self.model = model
-        
-        if provider == "anthropic":
-            self.api_key = os.getenv("ANTHROPIC_API_KEY")
-            if not self.api_key:
-                raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
-            try:
-                from anthropic import Anthropic
-                self.client = Anthropic(api_key=self.api_key)
-                self.model = model or "claude-3-sonnet-20240229"
-            except ImportError:
-                raise ImportError("anthropic package not installed. Run: pip install anthropic")
-                
-        elif provider == "openai":
-            self.api_key = os.getenv("OPENAI_API_KEY")
-            if not self.api_key:
-                raise ValueError("OPENAI_API_KEY not found in environment variables")
-            try:
-                from openai import OpenAI
-                self.client = OpenAI(api_key=self.api_key)
-                self.model = model or "gpt-4"
-            except ImportError:
-                raise ImportError("openai package not installed. Run: pip install openai")
-        
-        elif provider == "github":
-            # GitHub Models - Free tier using OpenAI SDK with custom base_url
-            self.api_key = os.getenv("GITHUB_API_KEY")
-            if not self.api_key:
-                raise ValueError("GITHUB_API_KEY not found in environment variables")
-            try:
-                from openai import OpenAI
-                self.client = OpenAI(
-                    api_key=self.api_key,
-                    base_url="https://models.inference.ai.azure.com"
-                )
-                # Default to gpt-4o if no model specified
-                self.model = model or "gpt-4o"
-                if self.model not in self.GITHUB_MODELS:
-                    raise ValueError(f"Invalid GitHub model: {self.model}. Available: {list(self.GITHUB_MODELS.keys())}")
-            except ImportError:
-                raise ImportError("openai package not installed. Run: pip install openai")
-        else:
-            raise ValueError(f"Invalid provider: {provider}. Use 'anthropic', 'openai', or 'github'")
+        self.model = model or self._get_default_model()
+        self.llm_client = LLMClient(provider=provider, model=model)
+    
+    def _get_default_model(self) -> str:
+        """Get default model."""
+        return os.getenv("LLM_MODEL", "gpt-4o")
     
     def _clean_json_response(self, response_text: str) -> str:
         """
@@ -116,59 +77,224 @@ class LLMPiiDetector:
         column_name: str,
         data_type: str,
         sample_values: List[str],
-        table_name: Optional[str] = None
+        table_name: Optional[str] = None,
+        enterprise_type: str = "GENERAL",
+        compliance_law: str = "DPDP Act 2023",
+        enterprise_confidence: float = 0.5,
+        is_primary_key: bool = False,
+        foreign_key_info: Optional[Dict[str, Any]] = None,
+        unique_constraint_info: Optional[Dict[str, Any]] = None
     ) -> str:
         """
-        Create a prompt for PII detection.
+        Create a prompt for PII detection with enterprise context and schema information.
         
         Args:
             column_name: Name of the column to analyze
             data_type: SQL data type of the column
             sample_values: List of sample values from the column
             table_name: Optional table name for context
+            enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
+            compliance_law: Applicable compliance law
+            enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
+            is_primary_key: Whether column is a primary key
+            foreign_key_info: Foreign key information if applicable
+            unique_constraint_info: Unique constraint information if applicable
             
         Returns:
             Formatted prompt string
         """
         samples_str = "\n".join([f"  - {val}" for val in sample_values[:10]])
         
-        prompt = f"""You are a PII (Personally Identifiable Information) detection expert for Indian enterprises.
+        # Build schema context dynamically
+        schema_context = ""
+        if is_primary_key:
+            schema_context += "  - PRIMARY KEY: Yes\n"
+        if foreign_key_info:
+            schema_context += f"  - FOREIGN KEY: References {foreign_key_info['referred_table']}.{foreign_key_info['referred_columns']}\n"
+        if unique_constraint_info:
+            schema_context += f"  - UNIQUE CONSTRAINT: {unique_constraint_info['unique_constraint_name']}\n"
+        if not schema_context:
+            schema_context = "  - No special constraints\n"
+        
+        prompt = f"""You are a PII (Personally Identifiable Information) detection expert 
+for Indian {enterprise_type} enterprises.
+Applicable compliance: {compliance_law}
 
-Analyze the following database column and determine if it contains PII:
+=== CONTEXT ===
+This is a {enterprise_type} database.
+Enterprise detection confidence: {enterprise_confidence}
+Every PII decision must consider {enterprise_type} regulations and sensitivity levels.
 
-Table Name: {table_name or 'N/A'}
-Column Name: {column_name}
-Data Type: {data_type}
+=== FEW-SHOT EXAMPLES ===
 
-Sample Values:
-{samples_str}
+Example 1 — Clear Indian government ID:
+Column: aadhaar_number | Table: customers | Type: VARCHAR(14)
+Samples: ['4521 8834 9021', '5192 8374 6102', '6283 XXXX XXXX']
+Answer:
+{{
+  "column_name": "aadhaar_number",
+  "is_pii": true,
+  "pii_type": "AADHAAR",
+  "confidence": 0.99,
+  "recommended_technique": "MASKING",
+  "reasoning": "12-digit Aadhaar format confirmed by pattern and column name"
+}}
 
-PII Types to Detect:
-- India-specific: aadhaar, pan, indian_phone, gstin, indian_passport, driving_license, voter_id, uan
-- Global: email, credit_card, ssn, ip_address, url, generic_phone, full_name, address, date_of_birth
+Example 2 — Ambiguous column name, clear value pattern:
+Column: emp_contact | Table: employees | Type: VARCHAR(15)
+Samples: ['+91 9876543210', '919123456789', '9876543210']
+Answer:
+{{
+  "column_name": "emp_contact",
+  "is_pii": true,
+  "pii_type": "INDIAN_PHONE",
+  "confidence": 0.95,
+  "recommended_technique": "TOKENIZATION",
+  "reasoning": "Indian phone format detected from values despite ambiguous column name"
+}}
 
-Anonymization Techniques:
+Example 3 — Financial sensitive data (DPDP Act):
+Column: monthly_salary | Table: employees | Type: DECIMAL
+Samples: ['45000', '78000', '92000', '120000']
+Answer:
+{{
+  "column_name": "monthly_salary",
+  "is_pii": true,
+  "pii_type": "FINANCIAL",
+  "confidence": 0.90,
+  "recommended_technique": "DIFFERENTIAL_PRIVACY",
+  "reasoning": "Salary is sensitive financial data protected under DPDP Act 2023 Section 2(t)"
+}}
+
+Example 4 — Sensitive but no fixed pattern:
+Column: date_of_birth | Table: customers | Type: DATE
+Samples: ['1990-05-15', '1985-11-22', '1995-03-08']
+Answer:
+{{
+  "column_name": "date_of_birth",
+  "is_pii": true,
+  "pii_type": "DATE_OF_BIRTH",
+  "confidence": 0.95,
+  "recommended_technique": "DIFFERENTIAL_PRIVACY",
+  "reasoning": "Date of birth is personal data, noise shifts date by few days preserving realism"
+}}
+
+Example 5 — Non-PII correctly ignored:
+Column: department | Table: employees | Type: VARCHAR(50)
+Samples: ['Engineering', 'HR', 'Finance', 'Marketing']
+Answer:
+{{
+  "column_name": "department",
+  "is_pii": false,
+  "pii_type": null,
+  "confidence": 0.0,
+  "recommended_technique": "NO_CHANGE",
+  "reasoning": "Organizational category, not personal information"
+}}
+
+Example 6 — Enterprise-specific context matters:
+Column: account_number | Table: accounts | Type: VARCHAR(18)
+Enterprise: BANKING
+Samples: ['XXXXXXXXXX3456', 'XXXXXXXXXX7890']
+Answer:
+{{
+  "column_name": "account_number",
+  "is_pii": true,
+  "pii_type": "BANK_ACCOUNT",
+  "confidence": 0.99,
+  "recommended_technique": "MASKING",
+  "reasoning": "Bank account number in financial institution — RBI guidelines require masking"
+}}
+
+=== ANONYMIZATION TECHNIQUES ===
 - tokenization: Replace with realistic fake values (names, emails, phones)
 - masking: Replace sensitive characters with X (aadhaar, pan, credit_card)
 - hashing: One-way hash for IDs (user_id, customer_id)
 - differential_privacy: Add statistical noise to numerical values (salary, age)
 - no_change: Non-PII columns
 
-Respond in JSON format only:
-{{
-    "is_pii": true/false,
-    "pii_type": "type_name or null",
-    "confidence": 0.0 to 1.0,
-    "recommended_technique": "technique_name or null",
-    "reasoning": "brief explanation"
-}}
+=== PII TYPES TO DETECT ===
 
-Consider:
-1. Column name patterns (even if not exact, e.g., "emp_contact", "kyc_uid", "ref_no_2")
-2. Data format and structure of sample values
-3. Context from table name
-4. Indian-specific formats (Aadhaar, PAN, +91 phone numbers)
-5. Be conservative - if uncertain, flag as PII with lower confidence"""
+India-specific:
+AADHAAR, PAN, INDIAN_PHONE, GSTIN,
+INDIAN_PASSPORT, DRIVING_LICENSE, VOTER_ID, UAN
+
+Global:
+EMAIL, CREDIT_CARD, SSN, IP_ADDRESS,
+FULL_NAME, ADDRESS, DATE_OF_BIRTH
+
+Location (DPDP Act 2023 - treat as PII):
+LOCATION — city, state, pincode, postal_code,
+            district, region, address_line
+
+Identifiers (Internal IDs - treat as PII):
+IDENTIFIER — customer_id, user_id, account_id,
+            employee_id, subscriber_id, member_id,
+            client_id, patient_id, student_id
+
+Financial/Sensitive (DPDP Act 2023 Section 2(t)):
+FINANCIAL — salary, balance, income,
+            credit_score, transaction_amount,
+            loan_amount, emi, bill_amount
+
+Enterprise-specific:
+BANK_ACCOUNT — bank account numbers
+MEDICAL — diagnosis, blood_type, prescription
+SUBSCRIBER — telecom subscriber details
+
+=== COLUMN TO CLASSIFY ===
+
+Table: {table_name or 'N/A'}
+Enterprise: {enterprise_type}
+Compliance: {compliance_law}
+Column Name: {column_name}
+Data Type: {data_type}
+
+Sample Values:
+{samples_str}
+
+Schema Context:
+{schema_context}
+
+=== THINKING STEPS ===
+
+For this column, before answering consider:
+1. Does the column NAME suggest personal or sensitive data?
+2. Do the sample VALUES match any known PII pattern?
+3. Does the TABLE NAME add context about what this column represents?
+4. Given this is a {enterprise_type} database, how sensitive is this column?
+5. Which specific regulation ({compliance_law}) applies to this data type?
+6. Is this financial/sensitive data under DPDP Act even if not directly identifiable?
+7. When uncertain → flag as PII with lower confidence rather than missing it
+8. Recommend appropriate technique based on PII type, enterprise context, and compliance requirements
+9. For BANKING enterprises under RBI guidelines: consider masking for account numbers, hashing for IDs
+10. Location data (city, state, pincode) is treated as PII per mentor requirements
+11. All ID columns (customer_id, user_id, etc.) are treated as IDENTIFIER PII type
+
+=== STRICT RULES ===
+
+CRITICAL — these rules must never be violated:
+1. If is_pii is true → pii_type must NEVER be null or NONE
+2. If type is unclear but column seems sensitive → use pii_type: UNKNOWN
+3. Financial data (salary, balance, amounts) → always is_pii: true, type: FINANCIAL
+4. Dates of birth → always is_pii: true, type: DATE_OF_BIRTH
+5. Location data (pincode, city, state, address) → always is_pii: true, type: LOCATION
+6. ID columns (customer_id, user_id, account_id, etc.) → always is_pii: true, type: IDENTIFIER
+7. Choose technique based on PII type, enterprise context, and compliance requirements (not hardcoded)
+8. If technique is unclear → use MASKING as safest default
+9. Confidence 0.0 means LLM failed — never use 0.0 for a real detection
+
+=== RESPONSE FORMAT ===
+
+Respond in JSON only, no extra text:
+{{
+    "column_name": "{column_name}",
+    "is_pii": true/false,
+    "pii_type": "TYPE or null",
+    "confidence": 0.1 to 1.0,
+    "recommended_technique": "TECHNIQUE or NO_CHANGE",
+    "reasoning": "one clear sentence explaining the decision"
+}}"""
 
         return prompt
     
@@ -177,7 +303,13 @@ Consider:
         column_name: str,
         data_type: str,
         sample_values: List[str],
-        table_name: Optional[str] = None
+        table_name: Optional[str] = None,
+        enterprise_type: str = "GENERAL",
+        compliance_law: str = "DPDP Act 2023",
+        enterprise_confidence: float = 0.5,
+        is_primary_key: bool = False,
+        foreign_key_info: Optional[Dict[str, Any]] = None,
+        unique_constraint_info: Optional[Dict[str, Any]] = None
     ) -> LLMPIIDetection:
         """
         Detect PII in a database column using LLM.
@@ -187,37 +319,28 @@ Consider:
             data_type: SQL data type of the column
             sample_values: List of sample values from the column
             table_name: Optional table name for context
+            enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
+            compliance_law: Applicable compliance law
+            enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
+            is_primary_key: Whether column is a primary key
+            foreign_key_info: Foreign key information if applicable
+            unique_constraint_info: Unique constraint information if applicable
             
         Returns:
             LLMPIIDetection object with detection results
         """
-        prompt = self._create_detection_prompt(column_name, data_type, sample_values, table_name)
+        prompt = self._create_detection_prompt(column_name, data_type, sample_values, table_name, enterprise_type, compliance_law, enterprise_confidence, is_primary_key, foreign_key_info, unique_constraint_info)
         
         try:
-            if self.provider == "anthropic":
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=1024,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                response_text = response.content[0].text
-                
-            elif self.provider == "openai":
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=1024
-                )
-                response_text = response.choices[0].message.content
+            # Use LLMClient with automatic fallback
+            response_text = self.llm_client.chat_completion(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1024
+            )
             
-            elif self.provider == "github":
-                # GitHub Models - uses selected model via OpenAI SDK
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=1024
-                )
-                response_text = response.choices[0].message.content
+            # Log which model was used
+            provider, model = self.llm_client.get_current_model()
+            logger.info(f"PII detection for {column_name} used: {provider}/{model}")
             
             # Parse JSON response using helper method
             response_text = self._clean_json_response(response_text)
@@ -253,7 +376,7 @@ Consider:
         Detect PII in multiple columns (one API call per column).
         
         Args:
-            columns: List of dicts with keys: column_name, data_type, sample_values, table_name (optional)
+            columns: List of dicts with keys: column_name, data_type, sample_values, table_name (optional), is_primary_key (optional), foreign_key_info (optional), unique_constraint_info (optional)
             
         Returns:
             List of LLMPIIDetection objects
@@ -264,7 +387,10 @@ Consider:
                 column_name=col["column_name"],
                 data_type=col["data_type"],
                 sample_values=col["sample_values"],
-                table_name=col.get("table_name")
+                table_name=col.get("table_name"),
+                is_primary_key=col.get("is_primary_key", False),
+                foreign_key_info=col.get("foreign_key_info"),
+                unique_constraint_info=col.get("unique_constraint_info")
             )
             results.append(result)
         return results
@@ -272,7 +398,10 @@ Consider:
     def detect_table_columns_batch(
         self,
         table_name: str,
-        columns: List[Dict[str, Any]]
+        columns: List[Dict[str, Any]],
+        enterprise_type: str = "GENERAL",
+        compliance_law: str = "DPDP Act 2023",
+        enterprise_confidence: float = 0.5
     ) -> List[LLMPIIDetection]:
         """
         Detect PII in all columns of a table in a single API call.
@@ -280,76 +409,147 @@ Consider:
         Args:
             table_name: Name of the table
             columns: List of dicts with keys: column_name, data_type, sample_values
+            enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
+            compliance_law: Applicable compliance law
+            enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
             
         Returns:
             List of LLMPIIDetection objects
         """
-        # Create a batch prompt for all columns
+        # Create a batch prompt for all columns with schema context
         columns_info = []
         for col in columns:
             samples_str = "\n".join([f"  - {val}" for val in col["sample_values"][:5]])
+            
+            # Add schema context dynamically
+            schema_context = ""
+            if col.get("is_primary_key"):
+                schema_context += f"  - PRIMARY KEY: Yes\n"
+            if col.get("foreign_key_info"):
+                fk = col["foreign_key_info"]
+                schema_context += f"  - FOREIGN KEY: References {fk['referred_table']}.{fk['referred_columns']}\n"
+            if col.get("unique_constraint_info"):
+                uc = col["unique_constraint_info"]
+                schema_context += f"  - UNIQUE CONSTRAINT: {uc['unique_constraint_name']}\n"
+            
             columns_info.append(f"""
+---
 Column: {col['column_name']}
 Data Type: {col['data_type']}
 Sample Values:
 {samples_str}
+Schema Context:
+{schema_context if schema_context else "  - No special constraints"}
 """)
         
-        prompt = f"""You are a PII (Personally Identifiable Information) detection expert for Indian enterprises.
+        prompt = f"""You are a PII (Personally Identifiable Information) detection expert 
+for Indian {enterprise_type} enterprises.
+Applicable compliance: {compliance_law}
 
-Analyze the following table and determine which columns contain PII:
+=== CONTEXT ===
+This is a {enterprise_type} database.
+Enterprise detection confidence: {enterprise_confidence}
+Every PII decision must consider {enterprise_type} regulations and sensitivity levels.
 
-Table Name: {table_name}
+=== COLUMNS TO CLASSIFY ===
 
-Columns:
+Table: {table_name}
+Enterprise: {enterprise_type}
+Compliance: {compliance_law}
+
 {"".join(columns_info)}
 
-For each column, provide a JSON response with:
-- is_pii: boolean
-- pii_type: one of [aadhaar, pan, indian_phone, gstin, passport, driving_license, voter_id, uan, email, full_name, address, credit_card, ssn, none]
-- confidence: float (0.0 to 1.0)
-- recommended_technique: one of [tokenization, masking, hashing, differential_privacy, no_change]
-- reasoning: brief explanation
+=== ANONYMIZATION TECHNIQUES ===
+- tokenization: Replace with realistic fake values (names, emails, phones)
+- masking: Replace sensitive characters with X (aadhaar, pan, credit_card)
+- hashing: One-way hash for IDs (user_id, customer_id)
+- differential_privacy: Add statistical noise to numerical values (salary, age)
+- no_change: Non-PII columns
 
-Return the results as a JSON array with one object per column, in the same order as the columns above.
+=== PII TYPES TO DETECT ===
 
-Example format:
+India-specific:
+AADHAAR, PAN, INDIAN_PHONE, GSTIN,
+INDIAN_PASSPORT, DRIVING_LICENSE, VOTER_ID, UAN
+
+Global:
+EMAIL, CREDIT_CARD, SSN, IP_ADDRESS,
+FULL_NAME, ADDRESS, DATE_OF_BIRTH
+
+Location (DPDP Act 2023 - treat as PII):
+LOCATION — city, state, pincode, postal_code,
+            district, region, address_line
+
+Identifiers (Internal IDs - treat as PII):
+IDENTIFIER — customer_id, user_id, account_id,
+            employee_id, subscriber_id, member_id,
+            client_id, patient_id, student_id
+
+Financial/Sensitive (DPDP Act 2023 Section 2(t)):
+FINANCIAL — salary, balance, income,
+            credit_score, transaction_amount,
+            loan_amount, emi, bill_amount
+
+Enterprise-specific:
+BANK_ACCOUNT — bank account numbers
+MEDICAL — diagnosis, blood_type, prescription
+SUBSCRIBER — telecom subscriber details
+
+=== THINKING STEPS ===
+
+For each column, before answering consider:
+1. Does the column NAME suggest personal or sensitive data?
+2. Do the sample VALUES match any known PII pattern?
+3. Does the TABLE NAME add context about what this column represents?
+4. Given this is a {enterprise_type} database, how sensitive is this column?
+5. Which specific regulation ({compliance_law}) applies to this data type?
+6. Is this financial/sensitive data under DPDP Act even if not directly identifiable?
+7. When uncertain → flag as PII with lower confidence rather than missing it
+8. Recommend appropriate technique based on PII type, enterprise context, and compliance requirements
+9. For BANKING enterprises under RBI guidelines: consider masking for account numbers, hashing for IDs
+10. Location data (city, state, pincode) is treated as PII per mentor requirements
+11. All ID columns (customer_id, user_id, etc.) are treated as IDENTIFIER PII type
+
+=== STRICT RULES ===
+
+CRITICAL — these rules must never be violated:
+1. If is_pii is true → pii_type must NEVER be null or NONE
+2. If type is unclear but column seems sensitive → use pii_type: UNKNOWN
+3. Financial data (salary, balance, amounts) → always is_pii: true, type: FINANCIAL
+4. Dates of birth → always is_pii: true, type: DATE_OF_BIRTH
+5. Location data (pincode, city, state, address) → always is_pii: true, type: LOCATION
+6. ID columns (customer_id, user_id, account_id, etc.) → always is_pii: true, type: IDENTIFIER
+7. Choose technique based on PII type, enterprise context, and compliance requirements (not hardcoded)
+8. If technique is unclear → use MASKING as safest default
+9. Confidence 0.0 means LLM failed — never use 0.0 for a real detection
+
+=== RESPONSE FORMAT ===
+
+Return a JSON array with one object per column, in the same order as the columns above.
+No extra text, no markdown, no explanation outside JSON.
+
 [
   {{
-    "column_name": "customer_aadhaar",
-    "is_pii": true,
-    "pii_type": "aadhaar",
-    "confidence": 0.95,
-    "recommended_technique": "masking",
-    "reasoning": "Column name and format indicate Aadhaar number"
+    "column_name": "column_name_here",
+    "is_pii": true/false,
+    "pii_type": "TYPE or null",
+    "confidence": 0.1 to 1.0,
+    "recommended_technique": "TECHNIQUE or NO_CHANGE",
+    "reasoning": "one clear sentence explaining the decision"
   }}
 ]
 """
         
         try:
-            if self.provider == "anthropic":
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=2048,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                response_text = response.content[0].text
-                
-            elif self.provider == "openai":
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=2048
-                )
-                response_text = response.choices[0].message.content
+            # Use LLMClient with automatic fallback
+            response_text = self.llm_client.chat_completion(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=2048
+            )
             
-            elif self.provider == "github":
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=2048
-                )
-                response_text = response.choices[0].message.content
+            # Log which model was used
+            provider, model = self.llm_client.get_current_model()
+            logger.info(f"Batch PII detection for {table_name} used: {provider}/{model}")
             
             # Parse JSON response using helper method
             response_text = self._clean_json_response(response_text)

@@ -12,6 +12,8 @@ from database_connector import DatabaseConnector
 from schema_extractor import SchemaExtractor
 from sample_extractor import SampleExtractor
 from combined_detector import CombinedPIIDetector
+from enterprise_detector import EnterpriseDetector
+from anonymizer import Anonymizer
 
 load_dotenv()
 
@@ -28,7 +30,8 @@ class DatabasePIIDetector:
         password: str,
         database_name: str,
         provider: str = "github",
-        model: str = None
+        model: str = None,
+        sslmode: str = None
     ):
         """
         Initialize database PII detector.
@@ -42,6 +45,7 @@ class DatabasePIIDetector:
             database_name: Database name
             provider: LLM provider ('github', 'openai', 'anthropic')
             model: Specific model name (for GitHub Models)
+            sslmode: SSL mode for PostgreSQL (require, prefer, disable, etc.)
         """
         self.database_type = database_type
         self.host = host
@@ -51,11 +55,14 @@ class DatabasePIIDetector:
         self.database_name = database_name
         self.provider = provider
         self.model = model
+        self.sslmode = sslmode
         
         self.connector = None
         self.schema_extractor = None
         self.sample_extractor = None
         self.combined_detector = None
+        self.enterprise_detector = None
+        self.anonymizer = None
     
     def connect(self):
         """Establish database connection."""
@@ -65,13 +72,16 @@ class DatabasePIIDetector:
             port=self.port,
             username=self.username,
             password=self.password,
-            database_name=self.database_name
+            database_name=self.database_name,
+            sslmode=self.sslmode
         )
         self.connector.connect(read_only=True)
         
         self.schema_extractor = SchemaExtractor(self.connector.engine)
-        self.sample_extractor = SampleExtractor(self.connector.engine)
+        self.sample_extractor = SampleExtractor(self.connector.engine, database_type=self.database_type)
         self.combined_detector = CombinedPIIDetector(provider=self.provider, model=self.model)
+        self.enterprise_detector = EnterpriseDetector(provider=self.provider, model=self.model)
+        self.anonymizer = Anonymizer()
     
     def detect_pii(self) -> Dict[str, Any]:
         """
@@ -86,13 +96,19 @@ class DatabasePIIDetector:
         # Step 1: Extract schema
         table_schemas = self.schema_extractor.get_all_schemas()
         
-        # Step 2: Extract sample data
+        # Step 2: Detect enterprise type
+        enterprise_info = self.enterprise_detector.detect_enterprise(table_schemas)
+        
+        # Step 3: Extract sample data
         table_samples = self.sample_extractor.get_all_table_samples(table_schemas)
         
-        # Step 3: Run PII detection for each table
+        # Step 4: Run PII detection for each table
         report = {
             "database_name": self.database_name,
             "database_type": self.database_type,
+            "enterprise_type": enterprise_info["enterprise_type"],
+            "enterprise_confidence": enterprise_info["confidence"],
+            "compliance_law": enterprise_info["compliance_law"],
             "tables": []
         }
         
@@ -100,7 +116,14 @@ class DatabasePIIDetector:
             table_name = schema["table_name"]
             samples = table_samples.get(table_name, {})
             
-            table_report = self._detect_table_pii(table_name, schema, samples)
+            table_report = self._detect_table_pii(
+                table_name, 
+                schema, 
+                samples, 
+                enterprise_info["enterprise_type"],
+                enterprise_info["compliance_law"],
+                enterprise_info["confidence"]
+            )
             report["tables"].append(table_report)
         
         return report
@@ -109,7 +132,10 @@ class DatabasePIIDetector:
         self,
         table_name: str,
         schema: Dict[str, Any],
-        samples: Dict[str, List[str]]
+        samples: Dict[str, List[str]],
+        enterprise_type: str,
+        compliance_law: str,
+        enterprise_confidence: float
     ) -> Dict[str, Any]:
         """
         Detect PII for a single table.
@@ -118,6 +144,9 @@ class DatabasePIIDetector:
             table_name: Name of the table
             schema: Table schema dictionary
             samples: Column sample values dictionary
+            enterprise_type: Enterprise type (BANKING, HEALTHCARE, HR, etc.)
+            compliance_law: Applicable compliance law
+            enterprise_confidence: Confidence in enterprise detection (0.0 to 1.0)
         
         Returns:
             Dictionary with PII detection results for the table
@@ -127,25 +156,55 @@ class DatabasePIIDetector:
             "columns": []
         }
         
-        # Prepare columns for batch detection
+        # Prepare columns for batch detection with schema context
         columns_for_detection = []
         for col_info in schema["columns"]:
             column_name = col_info["column_name"]
             data_type = col_info["data_type"]
             sample_values = samples.get(column_name, [])
             
+            # Check if column is a primary key
+            is_primary_key = column_name in schema.get("primary_keys", [])
+            
+            # Check if column is a foreign key
+            foreign_key_info = None
+            for fk in schema.get("foreign_keys", []):
+                if column_name in fk.get("constrained_columns", []):
+                    foreign_key_info = {
+                        "foreign_key_column": column_name,
+                        "referred_table": fk.get("referred_table"),
+                        "referred_columns": fk.get("referred_columns")
+                    }
+                    break
+            
+            # Check if column has unique constraint
+            unique_constraint_info = None
+            for uc in schema.get("unique_constraints", []):
+                if column_name in uc.get("constrained_columns", []):
+                    unique_constraint_info = {
+                        "unique_constraint_name": uc.get("name"),
+                        "constrained_columns": uc.get("constrained_columns")
+                    }
+                    break
+            
             columns_for_detection.append({
                 "column_name": column_name,
                 "data_type": data_type,
                 "sample_values": sample_values,
-                "table_name": table_name
+                "table_name": table_name,
+                "is_primary_key": is_primary_key,
+                "foreign_key_info": foreign_key_info,
+                "unique_constraint_info": unique_constraint_info
             })
         
         # Run combined detection for all columns in the table
         detection_results = self.combined_detector.detect_table(
             table_name=table_name,
             columns=columns_for_detection,
-            use_batch=True
+            use_batch=True,
+            enterprise_type=enterprise_type,
+            compliance_law=compliance_law,
+            enterprise_confidence=enterprise_confidence
         )
         
         # Format results according to specified JSON structure
@@ -160,6 +219,73 @@ class DatabasePIIDetector:
             table_report["columns"].append(column_report)
         
         return table_report
+    
+    def anonymize_data(self, pii_report: Dict[str, Any], schema_info: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Anonymize database data based on PII detection report.
+        
+        Args:
+            pii_report: PII detection report from detect_pii()
+            schema_info: Schema information with foreign keys and primary keys
+        
+        Returns:
+            Dictionary with anonymized data for all tables
+        """
+        if not self.connector:
+            raise RuntimeError("Database connection not established. Call connect() first.")
+        
+        anonymized_data = {}
+        
+        for table in pii_report.get("tables", []):
+            table_name = table["table_name"]
+            anonymized_data[table_name] = {}
+            
+            # Get schema information for this table
+            table_schema = schema_info.get(table_name, {}) if schema_info else {}
+            primary_keys = table_schema.get("primary_keys", [])
+            foreign_keys = table_schema.get("foreign_keys", [])
+            
+            for column_info in table.get("columns", []):
+                column_name = column_info["column_name"]
+                technique = column_info.get("recommended_technique", "NO_CHANGE")
+                pii_type = column_info.get("pii_type")
+                
+                if technique == "NO_CHANGE":
+                    # Skip anonymization for non-PII columns
+                    continue
+                
+                # Determine if column is foreign key or primary key
+                is_primary_key = column_name in primary_keys
+                is_foreign_key = False
+                for fk in foreign_keys:
+                    if column_name in fk.get("constrained_columns", []):
+                        is_foreign_key = True
+                        break
+                
+                # Fetch actual data from database
+                query = f'SELECT "{column_name}" FROM "{table_name}"'
+                try:
+                    import pandas as pd
+                    df = pd.read_sql(query, self.connector.engine)
+                    values = df[column_name].tolist()
+                    
+                    # Apply anonymization with schema context
+                    anonymized_values = self.anonymizer.anonymize_column(
+                        values=values,
+                        pii_type=pii_type,
+                        technique=technique,
+                        column_name=column_name,
+                        table_name=table_name,
+                        is_foreign_key=is_foreign_key,
+                        is_primary_key=is_primary_key
+                    )
+                    
+                    anonymized_data[table_name][column_name] = anonymized_values
+                except Exception as e:
+                    print(f"Error anonymizing {table_name}.{column_name}: {e}")
+                    anonymized_data[table_name][column_name] = None
+        
+        return anonymized_data
     
     def disconnect(self):
         """Close database connection."""

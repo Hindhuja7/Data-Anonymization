@@ -1,82 +1,10 @@
 {
   "database_name": "neondb",
   "database_type": "postgresql",
+  "enterprise_type": "BANKING",
+  "enterprise_confidence": 0.9,
+  "compliance_law": "RBI Guidelines",
   "tables": [
-    {
-      "table_name": "transactions",
-      "columns": [
-        {
-          "column_name": "transaction_id",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
-        },
-        {
-          "column_name": "account_id",
-          "is_pii": true,
-          "pii_type": "NONE",
-          "confidence": 0.9,
-          "recommended_technique": "MASKING"
-        },
-        {
-          "column_name": "transaction_type",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
-        },
-        {
-          "column_name": "amount",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
-        },
-        {
-          "column_name": "transaction_date",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
-        },
-        {
-          "column_name": "category",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
-        },
-        {
-          "column_name": "description",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
-        },
-        {
-          "column_name": "reference_number",
-          "is_pii": true,
-          "pii_type": "AADHAAR",
-          "confidence": 0.7999999999999999,
-          "recommended_technique": "MASKING"
-        },
-        {
-          "column_name": "beneficiary_account",
-          "is_pii": true,
-          "pii_type": "NONE",
-          "confidence": 0.99,
-          "recommended_technique": "MASKING"
-        },
-        {
-          "column_name": "beneficiary_name",
-          "is_pii": true,
-          "pii_type": "FULL_NAME",
-          "confidence": 1.0,
-          "recommended_technique": "MASKING"
-        }
-      ]
-    },
     {
       "table_name": "employees",
       "columns": [
@@ -92,49 +20,49 @@
           "is_pii": true,
           "pii_type": "FULL_NAME",
           "confidence": 0.9,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "last_name",
           "is_pii": true,
           "pii_type": "FULL_NAME",
           "confidence": 0.9,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "full_name",
           "is_pii": true,
           "pii_type": "FULL_NAME",
           "confidence": 1.0,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "email",
           "is_pii": true,
           "pii_type": "EMAIL",
           "confidence": 1.0,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "phone",
           "is_pii": true,
           "pii_type": "INDIAN_PHONE",
           "confidence": 0.99,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "personal_email",
           "is_pii": true,
           "pii_type": "EMAIL",
           "confidence": 1.0,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "personal_phone",
           "is_pii": true,
           "pii_type": "INDIAN_PHONE",
           "confidence": 0.99,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "aadhaar",
@@ -173,10 +101,10 @@
         },
         {
           "column_name": "salary",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
+          "is_pii": true,
+          "pii_type": "FINANCIAL",
+          "confidence": 1.0,
+          "recommended_technique": "DIFFERENTIAL_PRIVACY"
         },
         {
           "column_name": "joining_date",
@@ -197,14 +125,14 @@
           "is_pii": true,
           "pii_type": "INDIAN_PHONE",
           "confidence": 0.99,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "emergency_contact_name",
           "is_pii": true,
           "pii_type": "FULL_NAME",
-          "confidence": 1.0,
-          "recommended_technique": "MASKING"
+          "confidence": 0.9,
+          "recommended_technique": "TOKENIZATION"
         }
       ]
     },
@@ -222,36 +150,36 @@
           "column_name": "first_name",
           "is_pii": true,
           "pii_type": "FULL_NAME",
-          "confidence": 0.9,
-          "recommended_technique": "MASKING"
+          "confidence": 1.0,
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "last_name",
           "is_pii": true,
           "pii_type": "FULL_NAME",
-          "confidence": 0.9,
-          "recommended_technique": "MASKING"
+          "confidence": 1.0,
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "full_name",
           "is_pii": true,
           "pii_type": "FULL_NAME",
           "confidence": 1.0,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "email",
           "is_pii": true,
           "pii_type": "EMAIL",
           "confidence": 1.0,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "phone",
           "is_pii": true,
           "pii_type": "INDIAN_PHONE",
           "confidence": 0.99,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "aadhaar",
@@ -276,30 +204,30 @@
         },
         {
           "column_name": "city",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
+          "is_pii": true,
+          "pii_type": "ADDRESS",
+          "confidence": 0.9,
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "state",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
+          "is_pii": true,
+          "pii_type": "ADDRESS",
+          "confidence": 0.9,
           "recommended_technique": "NO_CHANGE"
         },
         {
           "column_name": "pincode",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
+          "is_pii": true,
+          "pii_type": "ADDRESS",
+          "confidence": 0.9,
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "date_of_birth",
           "is_pii": true,
-          "pii_type": "NONE",
-          "confidence": 0.95,
+          "pii_type": "DATE_OF_BIRTH",
+          "confidence": 1.0,
           "recommended_technique": "MASKING"
         },
         {
@@ -330,17 +258,17 @@
         },
         {
           "column_name": "customer_id",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
+          "is_pii": true,
+          "pii_type": "UNKNOWN",
+          "confidence": 1.0,
+          "recommended_technique": "HASHING"
         },
         {
           "column_name": "account_number",
           "is_pii": true,
-          "pii_type": "NONE",
+          "pii_type": "BANK_ACCOUNT",
           "confidence": 0.99,
-          "recommended_technique": "MASKING"
+          "recommended_technique": "TOKENIZATION"
         },
         {
           "column_name": "account_type",
@@ -351,10 +279,10 @@
         },
         {
           "column_name": "balance",
-          "is_pii": false,
-          "pii_type": null,
-          "confidence": 0.0,
-          "recommended_technique": "NO_CHANGE"
+          "is_pii": true,
+          "pii_type": "FINANCIAL",
+          "confidence": 1.0,
+          "recommended_technique": "DIFFERENTIAL_PRIVACY"
         },
         {
           "column_name": "status",
@@ -388,8 +316,83 @@
           "column_name": "gstin",
           "is_pii": true,
           "pii_type": "GSTIN",
-          "confidence": 0.95,
+          "confidence": 1.0,
           "recommended_technique": "MASKING"
+        }
+      ]
+    },
+    {
+      "table_name": "transactions",
+      "columns": [
+        {
+          "column_name": "transaction_id",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": "NO_CHANGE"
+        },
+        {
+          "column_name": "account_id",
+          "is_pii": true,
+          "pii_type": "BANK_ACCOUNT",
+          "confidence": 0.95,
+          "recommended_technique": "HASHING"
+        },
+        {
+          "column_name": "transaction_type",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": "NO_CHANGE"
+        },
+        {
+          "column_name": "amount",
+          "is_pii": true,
+          "pii_type": "FINANCIAL",
+          "confidence": 1.0,
+          "recommended_technique": "DIFFERENTIAL_PRIVACY"
+        },
+        {
+          "column_name": "transaction_date",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": "NO_CHANGE"
+        },
+        {
+          "column_name": "category",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": "NO_CHANGE"
+        },
+        {
+          "column_name": "description",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": "NO_CHANGE"
+        },
+        {
+          "column_name": "reference_number",
+          "is_pii": true,
+          "pii_type": "AADHAAR",
+          "confidence": 0.7999999999999999,
+          "recommended_technique": "MASKING"
+        },
+        {
+          "column_name": "beneficiary_account",
+          "is_pii": true,
+          "pii_type": "BANK_ACCOUNT",
+          "confidence": 0.99,
+          "recommended_technique": "MASKING"
+        },
+        {
+          "column_name": "beneficiary_name",
+          "is_pii": true,
+          "pii_type": "FULL_NAME",
+          "confidence": 1.0,
+          "recommended_technique": "TOKENIZATION"
         }
       ]
     }
