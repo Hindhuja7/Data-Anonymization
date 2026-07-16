@@ -1,0 +1,171 @@
+{
+    "metadata": {
+        "enterprise_type": "BANKING",
+        "compliance_law": "DPDP Act 2023",
+        "last_scanned": "2026-07-16T18:00:00Z",
+        "status": "pending_review"
+    },
+    "tables": {
+        "employees": {
+            "employee_id": {
+                "pii_type": "IDENTIFIER",
+                "recommended_technique": "hashing",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Unique identifier for company employees.",
+                "sample_values": ["EMP1001", "EMP1002", "EMP1003", "EMP1004", "EMP1005"]
+            },
+            "full_name": {
+                "pii_type": "FULL_NAME",
+                "recommended_technique": "tokenization",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.95,
+                "reasoning": "Directly identifies the employee.",
+                "sample_values": ["Aarav Sharma", "Aditi Patel", "Rohan Verma", "Karan Malhotra", "Priya Singh"]
+            },
+            "email": {
+                "pii_type": "EMAIL",
+                "recommended_technique": "tokenization",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.95,
+                "reasoning": "Standard contact email address.",
+                "sample_values": ["aarav@bankingcorp.in", "aditi@bankingcorp.in", "rohan@bankingcorp.in"]
+            },
+            "phone": {
+                "pii_type": "INDIAN_PHONE",
+                "recommended_technique": "tokenization",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.95,
+                "reasoning": "10-digit mobile number.",
+                "sample_values": ["9876543210", "9123456789", "9988776655"]
+            },
+            "aadhaar": {
+                "pii_type": "AADHAAR",
+                "recommended_technique": "masking",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.99,
+                "reasoning": "12-digit Indian national identity number.",
+                "sample_values": ["4521 8834 9021", "5192 8374 6102", "6283 1245 9852"]
+            },
+            "pan": {
+                "pii_type": "PAN",
+                "recommended_technique": "masking",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.99,
+                "reasoning": "Indian Permanent Account Number.",
+                "sample_values": ["ABCDE1234F", "XYZWP9876Q", "LMNOP5432R"]
+            },
+            "salary": {
+                "pii_type": "FINANCIAL",
+                "recommended_technique": "differential_privacy",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Sensitive financial compensation data.",
+                "sample_values": ["45000", "78000", "92000", "120000"]
+            }
+        },
+        "customers": {
+            "customer_id": {
+                "pii_type": "IDENTIFIER",
+                "recommended_technique": "hashing",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Unique identifier for bank customers.",
+                "sample_values": ["CUST9091", "CUST9092", "CUST9093", "CUST9094"]
+            },
+            "full_name": {
+                "pii_type": "FULL_NAME",
+                "recommended_technique": "tokenization",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.95,
+                "reasoning": "Identifies the customer name.",
+                "sample_values": ["Devendra Rao", "Ananya Deshmukh", "Siddharth Nair", "Meera Iyer"]
+            },
+            "phone": {
+                "pii_type": "INDIAN_PHONE",
+                "recommended_technique": "tokenization",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.95,
+                "reasoning": "Customer contact mobile phone.",
+                "sample_values": ["9845012345", "9765432109", "9900112233"]
+            },
+            "address": {
+                "pii_type": "LOCATION",
+                "recommended_technique": "tokenization",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Customer residential physical address.",
+                "sample_values": ["Flat 402, Sai Residency, Indiranagar, Bengaluru", "12, Park Street, Kolkata"]
+            }
+        },
+        "accounts": {
+            "account_id": {
+                "pii_type": "IDENTIFIER",
+                "recommended_technique": "hashing",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Unique identification key for bank accounts.",
+                "sample_values": ["ACC-5051", "ACC-5052", "ACC-5053"]
+            },
+            "customer_id": {
+                "pii_type": "IDENTIFIER",
+                "recommended_technique": "hashing",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Foreign key referencing customers.customer_id.",
+                "sample_values": ["CUST9091", "CUST9092", "CUST9093"]
+            },
+            "balance": {
+                "pii_type": "FINANCIAL",
+                "recommended_technique": "differential_privacy",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Sensitive account balance.",
+                "sample_values": ["154300.50", "2300.00", "98450.75"]
+            }
+        },
+        "transactions": {
+            "transaction_id": {
+                "pii_type": "IDENTIFIER",
+                "recommended_technique": "hashing",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Transaction record primary identifier.",
+                "sample_values": ["TXN88001", "TXN88002", "TXN88003"]
+            },
+            "account_id": {
+                "pii_type": "IDENTIFIER",
+                "recommended_technique": "hashing",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Foreign key referencing accounts.account_id.",
+                "sample_values": ["ACC-5051", "ACC-5052", "ACC-5053"]
+            },
+            "amount": {
+                "pii_type": "FINANCIAL",
+                "recommended_technique": "differential_privacy",
+                "overridden_technique": null,
+                "is_pii": true,
+                "confidence": 0.9,
+                "reasoning": "Financial transaction amount.",
+                "sample_values": ["500.00", "15000.00", "230.50"]
+            }
+        }
+    }
+}

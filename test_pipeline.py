@@ -384,6 +384,37 @@ def test_pipeline():
     for table_name, columns in pii_report.items():
         pii_count = sum(1 for col in columns if col.get("is_pii"))
         print(f"  - {table_name}: {pii_count} PII columns detected")
+        
+    # Generate and save Anonymization Policy (Step 6) to JSON
+    import datetime
+    policy_data = {
+        "metadata": {
+            "enterprise_type": enterprise_type,
+            "compliance_law": "DPDP Act 2023",
+            "last_scanned": datetime.datetime.now().isoformat(),
+            "status": "pending_review"
+        },
+        "tables": {}
+    }
+    for table_name, columns in pii_report.items():
+        policy_data["tables"][table_name] = {}
+        for col in columns:
+            col_name = col["column_name"]
+            # Retrieve the already extracted sample values from Step 3
+            col_samples = samples.get(table_name, {}).get(col_name, [])
+            policy_data["tables"][table_name][col_name] = {
+                "pii_type": col.get("pii_type"),
+                "recommended_technique": col.get("recommended_technique", "NO_CHANGE"),
+                "overridden_technique": None,
+                "is_pii": col.get("is_pii", False),
+                "confidence": col.get("confidence", 0.0),
+                "reasoning": col.get("reasoning"),
+                "sample_values": col_samples
+            }
+            
+    with open("pii_policy.json", "w") as f:
+        json.dump(policy_data, f, indent=4)
+    print("\n✓ Saved Anonymization Policy to pii_policy.json")
     
     # Step 6: Build schema info for anonymization
     print("\n[STEP 6] Building schema information for anonymization...")
@@ -400,21 +431,27 @@ def test_pipeline():
     # Step 7: Anonymize data
     print("\n[STEP 7] Anonymizing data with schema-based relationship preservation...")
     try:
+        # Load the policy from json (this simulates reading the approved admin configuration)
+        with open("pii_policy.json", "r") as f:
+            active_policy = json.load(f)
+        tables_policy = active_policy.get("tables", {})
+        
         anonymizer = Anonymizer()
         anonymized_data = {}
         
-        for table_name, columns in pii_report.items():
+        for table_name, columns in tables_policy.items():
             anonymized_data[table_name] = {}
             table_schema = schema_info.get(table_name, {})
             primary_keys = table_schema.get('primary_keys', [])
             foreign_keys = table_schema.get('foreign_keys', [])
             
-            for col_result in columns:
-                column_name = col_result["column_name"]
-                technique = col_result.get("recommended_technique", "NO_CHANGE")
-                pii_type = col_result.get("pii_type")
+            for column_name, col_policy in columns.items():
+                is_pii = col_policy.get("is_pii", False)
+                # Read technique from policy (admin override takes precedence)
+                technique = col_policy.get("overridden_technique") or col_policy.get("recommended_technique", "NO_CHANGE")
+                pii_type = col_policy.get("pii_type")
                 
-                if technique == "NO_CHANGE":
+                if technique == "NO_CHANGE" or not is_pii:
                     continue
                 
                 # Determine if column is foreign key or primary key
@@ -425,15 +462,12 @@ def test_pipeline():
                         is_foreign_key = True
                         break
                 
-                # Fetch actual data from database (limit to 100 rows for fast verification)
-                query = f'SELECT "{column_name}" FROM "{table_name}" LIMIT 100'
+                # Reuse the already extracted 20 sample values directly
+                values = col_policy.get("sample_values", [])
+                if not values:
+                    continue
+                
                 try:
-                    import pandas as pd
-                    with connector.engine.connect() as conn:
-                        df = pd.read_sql(query, conn)
-                        conn.rollback()
-                    values = df[column_name].tolist()
-                    
                     # Apply anonymization with schema context
                     anonymized_values = anonymizer.anonymize_column(
                         values=values,
