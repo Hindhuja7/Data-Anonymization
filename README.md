@@ -1,228 +1,142 @@
-# Data Anonymization System
+# Enterprise Data Anonymization System (17-Step Pipeline)
 
-A comprehensive privacy-preserving data anonymization platform for Indian enterprises, designed to comply with DPDP Act 2023 and sector-specific regulations.
+A comprehensive, production-grade privacy-preserving data anonymization platform designed for Indian enterprises. The system complies with the **DPDP Act 2023** (Digital Personal Data Protection Act, India), **RBI Guidelines**, **IRDAI**, and **TRAI** sector-specific regulations.
 
-## Overview
+---
 
-This system provides automated detection and anonymization of Personally Identifiable Information (PII) in databases, with enterprise-aware context and regulatory compliance for Indian businesses.
+## 🗺️ Architectural Layers
 
-## Architecture
+The repository is organized into a modular, layer-by-layer structure corresponding to the data pipeline execution:
 
 ```
-data-anonymization/
-├── pii-detection/           # PII detection module
-│   ├── database_connector.py
-│   ├── schema_extractor.py
-│   ├── sample_extractor.py
-│   ├── enterprise_detector.py
-│   ├── llm_client.py
-│   ├── llm_pii_detection.py
-│   ├── india_regex_patterns.py
-│   ├── combined_detector.py
-│   └── database_pii_detection.py
-└── README.md
+Data-Anonymization/
+├── Layer_1_Connection_Extraction/      # Metadata & sampling layer
+│   ├── database_connector.py          # SQLAlchemy connection manager
+│   ├── schema_extractor.py            # Primary/Foreign Key metadata extractor
+│   └── sample_extractor.py            # Column-wise random sampler (20-row limit)
+│
+├── Layer_2_Enterprise_Classification/  # LLM industry classifier
+│   └── enterprise_detector.py         # Detects category (BANKING, HEALTHCARE, etc.)
+│
+├── Layer_3_PII_Detection/              # Multi-engine PII detection layers
+│   ├── combined_detector.py           # Merges LLM & heuristic regex results
+│   ├── llm_client.py                  # Client wrapper with model fallback & timeouts
+│   ├── llm_pii_detection.py           # LLM-based batch column detector
+│   ├── india_regex_patterns.py        # Aadhaar, PAN, GSTIN, Voter ID regex patterns
+│   └── database_pii_detection.py      # PII orchestration manager
+│
+├── Layer_4_Anonymization_Vault/        # Obfuscation & Vault Mapping Layer
+│   ├── anonymizer.py                  # Obfuscates columns using Faker, hashes, DP
+│   └── redis_mapping.py               # Fernet encrypted global mappings (Redis/In-memory)
+│
+├── test_pipeline.py                   # End-to-end execution validation script
+├── requirements.txt                   # Centralized Python dependencies list
+└── .env                               # Environment configurations (credentials & PATs)
 ```
 
-## Features
+---
 
-### PII Detection Module (`pii-detection/`)
+## ⚙️ The 17-Step Data Anonymization Pipeline
 
-- **Structured Database Support**: PostgreSQL, MySQL, SQL Server
-- **Enterprise-Aware Detection**: Automatically detects enterprise type (BANKING, HR, HEALTHCARE, etc.) from database schema
-- **Context-Aware LLM Detection**: Uses GitHub Models with enterprise context for accurate PII identification
-- **India-Specific Patterns**: Regex patterns for Aadhaar, PAN, GSTIN, Indian Phone, etc.
-- **Sequential Model Fallback**: Automatic fallback between GitHub models (gpt-4o → gpt-4o-mini → gpt-4-turbo)
-- **Column-Wise Random Sampling**: Privacy-preserving sample extraction
-- **Compliance Mapping**: Automatic compliance law mapping based on enterprise type
-- **Real-Time PII Detection**: On-demand scanning of database schemas and sample data
+The system executes the anonymization process in 17 distinct steps:
 
-### Supported Enterprise Types
+```mermaid
+graph TD
+    subgraph Layer 1: Connection & Extraction
+        S1[Step 1: Connect Database] --> S2[Step 2: Extract Schema & Keys]
+        S2 --> S4[Step 4: Privacy-Safe Sampling]
+    end
 
-| Type | Compliance Law |
-|------|----------------|
-| BANKING | RBI Guidelines + DPDP Act 2023 |
-| HEALTHCARE | DPDP Act 2023 + Medical Council |
-| HR | DPDP Act 2023 + Labour Code |
-| ECOMMERCE | DPDP Act 2023 + Consumer Protection |
-| INSURANCE | IRDAI Guidelines + DPDP Act 2023 |
-| TELECOM | TRAI Guidelines + DPDP Act 2023 |
-| GENERAL | DPDP Act 2023 |
+    subgraph Layer 2: Classification
+        S2 --> S3[Step 3: Enterprise Auto-Detection]
+    end
 
-### Supported Databases
+    subgraph Layer 3: PII Detection
+        S3 & S4 --> S5[Step 5: Parallel PII Detection]
+        S5 --> S6[Step 6: Build Anonymization Policy]
+    end
 
-- PostgreSQL
-- MySQL
-- SQL Server
+    subgraph Layer 4: Anonymization & Vault
+        S6 --> S7[Step 7: Admin Review & Override]
+        S7 --> S8[Step 8: Change Detection]
+        S8 --> S9[Step 9: In-Memory Encryption Mapping]
+        S9 --> S10[Step 10: Redis AOF Crash Safety]
+        S10 --> S11[Step 11: Chunk Processing]
+        S11 --> S12[Step 12: Anonymization Engine]
+        S12 --> S13[Step 13: Batch Loading Queue]
+    end
 
-## Quick Start
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/Hindhuja7/Data-Anonymization.git
-cd data-anonymization
+    subgraph Target Sandboxes
+        S13 --> S14[Step 14: Validation & Audits]
+        S14 --> S15[Step 15: Generate Safe Sandbox DB]
+        S15 --> S16[Step 16: Audit & Compliance Report]
+        S16 --> S17[Step 17: Dashboard Output]
+    end
 ```
 
-### 2. Navigate to PII detection module
-```bash
-cd pii-detection
+### Layer 1: Connect & Extract (Steps 1, 2, & 4)
+* **Step 1: Connect Database**: Establishes a secure read-only transaction connection to the source database (e.g. PostgreSQL, MySQL, SQL Server).
+* **Step 2: Extract Schema & Samples**: Reflects database constraints, extracting primary/foreign keys, indexes, and unique columns.
+* **Step 4: Privacy-Safe Column-Level Sampling**: Extracts random rows (up to 20) per column. Real data remains local to prevent exposure.
+
+### Layer 2: Enterprise Classification (Step 3)
+* **Step 3: Enterprise Auto-Detection**: Uses schema structure and columns context via LLM to classify the industry category (such as `BANKING`, `ECOMMERCE`, or `HEALTHCARE`) to determine compliance laws.
+
+### Layer 3: PII Detection (Steps 5 & 6)
+* **Step 5: PII Detection (LLM + Regex)**: Runs LLM batch matching and local India-specific regex checks in parallel.
+* **Step 6: Build Anonymization Policy**: Recommends techniques prioritised by: Enterprise rules > Regex > LLM > Masking (default fallback).
+
+### Layer 4: Anonymization & Vault (Steps 7 through 13)
+* **Step 7: Admin Review & Approval**: Allows overriding techniques and locking the approved policy rules.
+* **Step 8: Change Detection**: Listens to database events to track changes.
+* **Step 9: In-Memory Transformation (Redis Hash Vault)**: Cryptographically maps original values to consistent fake values using Fernet-encrypted Redis vaults (or in-memory cache).
+* **Step 10: Crash Safety (Redis AOF)**: Ensures mappings are saved and recoverable upon power loss/restart.
+* **Step 11: Chunk Processing**: Divides records into chunk buffers (1K–10K rows) to optimise memory.
+* **Step 12: Anonymization Engine**: Obfuscates data using Hashing (IDs), Tokenization/Faker (Names/Emails), Masking (Aadhaar/PAN), or Differential Privacy (Salary/Numerical).
+* **Step 13: Batch Loading**: Queue management to write safely in batches.
+
+### Validation & Output (Steps 14 through 17)
+* **Step 14: Validation Engine**: Re-scans destination data, checking type preservation, row counts, and calculating a Privacy Risk Score (0-100).
+* **Step 15: Generate Safe Database**: Writes target rows to the sandbox DB.
+* **Step 16: Audit & Compliance Report**: Exports detailed counts audit and compliance status HTML/PDF.
+* **Step 17: Output to Admin**: Dashboard displays audit stats, download links, and risk scores.
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Configure the Environment
+Create a `.env` file in the root directory:
+```ini
+DB_TYPE=postgresql
+DB_HOST=ep-gentle-wave-atqzagux.c-9.us-east-1.aws.neon.tech
+DB_PORT=5432
+DB_USERNAME=neondb_owner
+DB_PASSWORD=your_password
+DB_NAME=neondb
+GITHUB_API_KEY=your_github_models_pat_here
+LLM_PROVIDER=github
+LLM_MODEL=gpt-4o
 ```
 
-### 3. Install dependencies
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure API keys
+### 3. Run Pipeline Verification Test
+To execute the pipeline, run the validation test:
 ```bash
-# Create .env file
-GITHUB_API_KEY=your_github_pat_here
-LLM_MODEL=gpt-4o
-LLM_PROVIDER=github
+python test_pipeline.py
 ```
 
-### 5. Get GitHub API Key (FREE)
-- Go to https://github.com/models
-- Select a model (e.g., GPT-4o)
-- Click "Use this model" to generate a Personal Access Token
-- Add the PAT to `.env` as `GITHUB_API_KEY`
+---
 
-### 6. Run PII detection
-```python
-from database_pii_detection import detect_pii_from_database
+## 🛡️ Indian PII & Compliance Laws
 
-result = detect_pii_from_database(
-    database_type="postgresql",
-    host="your-host",
-    port=5432,
-    username="your-username",
-    password="your-password",
-    database_name="your-database",
-    provider="github",
-    model="gpt-4o"
-)
-```
-
-## PII Detection Types
-
-### India-Specific PII
-- AADHAAR - 12-digit unique identity
-- PAN - Permanent Account Number
-- INDIAN_PHONE - Mobile numbers starting with 6-9
-- GSTIN - Goods and Services Tax ID
-- INDIAN_PASSPORT - 8-character passport number
-- DRIVING_LICENSE - State-specific license formats
-- VOTER_ID - Elector's Photo Identity Card
-- UAN - Universal Account Number for EPF
-
-### Global PII
-- EMAIL - Email addresses
-- CREDIT_CARD - Credit card numbers
-- SSN - Social Security Numbers
-- IP_ADDRESS - IP addresses
-- FULL_NAME - Full names
-- ADDRESS - Physical addresses
-- DATE_OF_BIRTH - Birth dates
-
-### Financial/Sensitive (DPDP Act 2023)
-- FINANCIAL - Salary, balance, income, credit_score
-- BANK_ACCOUNT - Bank account numbers
-- MEDICAL - Diagnosis, blood_type, prescription
-
-## Anonymization Techniques
-
-| Technique | Use Case | Description |
-|-----------|----------|-------------|
-| TOKENIZATION | Names, emails, phones | Replace with realistic fake values |
-| MASKING | Aadhaar, PAN, credit_card | Replace sensitive characters with X |
-| HASHING | IDs (user_id, customer_id) | One-way hash |
-| DIFFERENTIAL_PRIVACY | Numerical (salary, age) | Add statistical noise |
-| NO_CHANGE | Non-PII columns | No modification |
-
-## Cost Estimation
-
-**Per database scan:**
-- 1 enterprise detection call
-- 4 PII detection calls (one per table)
-- ~2K-4K tokens per call
-- **Total cost:** ~$0.01-0.02 per scan (with GitHub Models)
-
-**GitHub Models Pricing:**
-- gpt-4o: ~$5-15 per 1M tokens
-- gpt-4o-mini: ~$0.15-0.60 per 1M tokens
-
-## Privacy Features
-
-1. **Column-wise random sampling** - No single user's complete record exposed
-2. **Read-only database access** - Prevents accidental data modification
-3. **Enterprise context awareness** - Improves detection accuracy
-4. **Conservative fallback** - Flags as PII if detection fails (better safe than sorry)
-
-## Compliance
-
-This system is designed to comply with:
-- **DPDP Act 2023** (Digital Personal Data Protection Act, India)
-- **RBI Guidelines** (for banking enterprises)
-- **IRDAI Guidelines** (for insurance enterprises)
-- **TRAI Guidelines** (for telecom enterprises)
-
-## Project Structure
-
-```
-data-anonymization/
-├── pii-detection/              # PII detection module
-│   ├── database_connector.py   # DB connection management
-│   ├── schema_extractor.py     # Schema metadata extraction
-│   ├── sample_extractor.py     # Column-wise random sampling
-│   ├── enterprise_detector.py  # Enterprise type detection
-│   ├── llm_client.py           # GitHub Models client with fallback
-│   ├── llm_pii_detection.py    # LLM-based PII detection
-│   ├── india_regex_patterns.py # India-specific regex patterns
-│   ├── combined_detector.py    # LLM + regex merger
-│   ├── database_pii_detection.py # Main pipeline entry point
-│   ├── requirements.txt        # Python dependencies
-│   ├── .env                    # Environment variables
-│   └── README.md               # Module documentation
-├── .gitignore
-└── README.md                   # This file
-```
-
-## Configuration
-
-### Database Connection
-```python
-detector = DatabasePIIDetector(
-    database_type="postgresql",  # or "mysql", "sqlserver"
-    host="localhost",
-    port=5432,
-    username="user",
-    password="password",
-    database_name="mydb",
-    provider="github",
-    model="gpt-4o"
-)
-```
-
-### Model Selection
-```python
-# Via parameter
-detector = DatabasePIIDetector(..., model="gpt-4o-mini")
-
-# Via .env file
-LLM_MODEL=gpt-4o-mini
-
-# Via environment variable
-export LLM_MODEL=gpt-4o-mini
-```
-
-## Ethical Notice
-
-This tool is intended solely for authorized privacy assessments of databases you own or have explicit permission to analyze. Misuse against third-party databases without consent is unethical and potentially illegal.
-
-
-<<<<<<< HEAD
-- [x] Anonymization module implementation
-- [ ] Admin dashboard for review and overrides
-- [ ] Integration with data pipelines
-- [ ] Automated compliance reporting
-=======
->>>>>>> 991010faeb2d81edd48452ecf71ea47618816603
+The system supports local regulatory checks for:
+* **AADHAAR**: 12-digit Indian national identity number.
+* **PAN**: 10-character alphanumeric Permanent Account Number.
+* **GSTIN**: 15-character Goods and Services Tax Identification Number.
+* **INDIAN_PHONE**: 10-digit mobile numbers starting with 6-9 (prefixed with +91).
+* **VOTER_ID & DRIVING_LICENSE**: State-registered alphanumeric card formats.

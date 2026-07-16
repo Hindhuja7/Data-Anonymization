@@ -133,6 +133,7 @@ class SampleExtractor:
 
                 logger.info(f"Extracted column-wise random samples from table: {table_name}")
 
+                conn.rollback()
                 return samples
 
                 
@@ -197,6 +198,7 @@ class SampleExtractor:
 
                 logger.info(f"Extracted {len(samples)} samples for column: {table_name}.{column_name}")
 
+                conn.rollback()
                 return samples
 
                 

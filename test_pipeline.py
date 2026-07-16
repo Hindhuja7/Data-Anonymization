@@ -7,8 +7,12 @@ import os
 import sys
 import json
 
-# Add pii-detection to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'pii-detection'))
+# Add pipeline layer folders to path
+_root = os.path.dirname(os.path.abspath(__file__))
+for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+    _path = os.path.join(_root, _layer)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
 
 from database_connector import DatabaseConnector
 from schema_extractor import SchemaExtractor
@@ -263,8 +267,17 @@ def test_pipeline():
     
     # Step 1: Connect to database
     print("\n[STEP 1] Connecting to database...")
-    # Use Neon connection string directly
-    connection_string = "postgresql://neondb_owner:npg_BsO9yw8dTRW@ep-gentle-wave-atqzagux-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require"
+    # Construct connection string from environment variables
+    from dotenv import load_dotenv
+    import os
+    load_dotenv()
+    
+    db_user = os.getenv("DB_USERNAME", "neondb_owner")
+    db_pass = os.getenv("DB_PASSWORD", "npg_BsO9tyw8dTRW")
+    db_host = os.getenv("DB_HOST", "ep-gentle-wave-atqzagux.c-9.us-east-1.aws.neon.tech")
+    db_name = os.getenv("DB_NAME", "neondb")
+    
+    connection_string = f"postgresql://{db_user}:{db_pass}@{db_host}/{db_name}?sslmode=require"
     
     # Create connector directly with connection string
     connector = DatabaseConnector(connection_string=connection_string)
@@ -291,11 +304,12 @@ def test_pipeline():
     
     # Step 3: Extract samples
     print("\n[STEP 3] Extracting sample values...")
-    sample_extractor = SampleExtractor(connector.engine)
+    sample_extractor = SampleExtractor(connector.engine, sample_size=5)
     samples = {}
     for schema in schemas:
         table_name = schema['table_name']
-        table_samples = sample_extractor.extract_table_samples(table_name, max_samples=5)
+        column_names = [col['column_name'] for col in schema['columns']]
+        table_samples = sample_extractor.get_table_samples(table_name, column_names)
         samples[table_name] = table_samples
         print(f"  - {table_name}: {len(table_samples)} columns with samples")
     
@@ -320,7 +334,7 @@ def test_pipeline():
         columns_for_detection = []
         for col_info in schema["columns"]:
             column_name = col_info["column_name"]
-            data_type = col_info["type"]
+            data_type = col_info.get("data_type") or col_info.get("type", "VARCHAR")
             sample_values = table_samples.get(column_name, [])
             
             # Add schema context
@@ -411,11 +425,13 @@ def test_pipeline():
                         is_foreign_key = True
                         break
                 
-                # Fetch actual data from database
-                query = f'SELECT "{column_name}" FROM "{table_name}"'
+                # Fetch actual data from database (limit to 100 rows for fast verification)
+                query = f'SELECT "{column_name}" FROM "{table_name}" LIMIT 100'
                 try:
                     import pandas as pd
-                    df = pd.read_sql(query, connector.engine)
+                    with connector.engine.connect() as conn:
+                        df = pd.read_sql(query, conn)
+                        conn.rollback()
                     values = df[column_name].tolist()
                     
                     # Apply anonymization with schema context
@@ -460,4 +476,4 @@ def test_pipeline():
     print("=" * 80)
 
 if __name__ == "__main__":
-    create_mock_test()
+    test_pipeline()

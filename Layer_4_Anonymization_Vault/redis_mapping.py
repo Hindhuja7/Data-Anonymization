@@ -58,8 +58,12 @@ class RedisMappingSystem:
             port=port,
             db=db,
             password=password,
-            decode_responses=False  # Store as bytes for encryption
+            decode_responses=False,  # Store as bytes for encryption
+            socket_timeout=0.05,
+            socket_connect_timeout=0.05
         )
+        
+        self.online = True
         
         # Enable AOF for crash safety
         self._enable_aof()
@@ -71,7 +75,8 @@ class RedisMappingSystem:
             self.redis_client.config_set('appendfsync', 'everysec')
             print("Redis AOF enabled for crash safety")
         except Exception as e:
-            print(f"Warning: Could not enable Redis AOF: {e}")
+            self.online = False
+            print(f"Warning: Could not enable Redis AOF: {e}. Falling back to in-memory vault.")
     
     def _encrypt(self, value: str) -> bytes:
         """
@@ -117,6 +122,9 @@ class RedisMappingSystem:
         if original_value is None:
             return None
         
+        if not self.online:
+            return None
+            
         # Create Redis key
         redis_key = f"mapping:{table_name}:{column_name}:{str(original_value)}"
         
@@ -125,7 +133,8 @@ class RedisMappingSystem:
             if encrypted_value:
                 return self._decrypt(encrypted_value)
         except Exception as e:
-            print(f"Error getting mapping from Redis: {e}")
+            self.online = False
+            print(f"Error getting mapping from Redis: {e}. Falling back to in-memory vault.")
         
         return None
     
@@ -151,6 +160,9 @@ class RedisMappingSystem:
         if original_value is None:
             return False
         
+        if not self.online:
+            return False
+            
         # Create Redis key
         redis_key = f"mapping:{table_name}:{column_name}:{str(original_value)}"
         
@@ -159,7 +171,8 @@ class RedisMappingSystem:
             self.redis_client.set(redis_key, encrypted_value)
             return True
         except Exception as e:
-            print(f"Error setting mapping in Redis: {e}")
+            self.online = False
+            print(f"Error setting mapping in Redis: {e}. Falling back to in-memory vault.")
             return False
     
     def get_global_mapping(
@@ -179,7 +192,9 @@ class RedisMappingSystem:
         """
         if original_value is None:
             return None
-        
+        if not self.online:
+            return None
+            
         # Create global Redis key (no table prefix)
         redis_key = f"global:{column_name}:{str(original_value)}"
         
@@ -188,7 +203,8 @@ class RedisMappingSystem:
             if encrypted_value:
                 return self._decrypt(encrypted_value)
         except Exception as e:
-            print(f"Error getting global mapping from Redis: {e}")
+            self.online = False
+            print(f"Error getting global mapping from Redis: {e}. Falling back to in-memory vault.")
         
         return None
     
@@ -212,6 +228,9 @@ class RedisMappingSystem:
         if original_value is None:
             return False
         
+        if not self.online:
+            return False
+            
         # Create global Redis key (no table prefix)
         redis_key = f"global:{column_name}:{str(original_value)}"
         
@@ -220,7 +239,8 @@ class RedisMappingSystem:
             self.redis_client.set(redis_key, encrypted_value)
             return True
         except Exception as e:
-            print(f"Error setting global mapping in Redis: {e}")
+            self.online = False
+            print(f"Error setting global mapping in Redis: {e}. Falling back to in-memory vault.")
             return False
     
     def clear_mappings(self, table_name: Optional[str] = None):
