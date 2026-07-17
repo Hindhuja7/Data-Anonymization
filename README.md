@@ -1,4 +1,4 @@
-# Enterprise Data Anonymization System (12-Layer Structure, 17-Step Pipeline)
+# Enterprise Data Anonymization System (Modular Structure, 17-Step Pipeline)
 
 A comprehensive, production-grade privacy-preserving data anonymization platform designed for Indian enterprises. The system complies with the **DPDP Act 2023** (Digital Personal Data Protection Act, India), **RBI Guidelines**, **IRDAI**, and **TRAI** sector-specific regulations.
 
@@ -10,46 +10,46 @@ The repository is organized into 12 distinct, sequential layers corresponding to
 
 ```
 Data-Anonymization/
-├── Layer_01_Connection_Extraction/    # DB connection and metadata read
+├── Connection_Extraction/             # DB connection and metadata read
 │   ├── database_connector.py          # SQLAlchemy connection manager
 │   ├── schema_extractor.py            # Primary/Foreign Key metadata extractor
 │   └── sample_extractor.py            # Column-wise random sampler (20-row limit)
 │
-├── Layer_02_Enterprise_Classification/# LLM-based industry classifier
+├── Enterprise_Classification/         # LLM-based industry classifier
 │   └── enterprise_detector.py         # Detects category (BANKING, HEALTHCARE, etc.)
 │
-├── Layer_03_PII_Detection/            # Multi-engine PII detection layers
+├── PII_Detection/                     # Multi-engine PII detection layers
 │   ├── combined_detector.py           # Merges LLM & heuristic regex results
 │   ├── llm_pii_detection.py           # LLM-based batch column detector
 │   ├── india_regex_patterns.py        # Aadhaar, PAN, GSTIN, Voter ID regex patterns
 │   └── database_pii_detection.py      # PII orchestration manager
 │
-├── Layer_04_Change_Detection/         # Live database event detection
+├── Change_Detection/                  # Live database event detection
 │   └── change_detector.py             # Event listener for INSERT/UPDATE schema shift
 │
-├── Layer_05_Redis_Hash_Vault/          # In-memory mapping & token vault
+├── Redis_Hash_Vault/                  # In-memory mapping & token vault
 │   ├── redis_mapping.py               # Memory-optimized encrypted Redis/Local cache client
 │   └── anonymizer.py                  # Tokenization, Masking, Hashing, and DP engines
 │
-├── Layer_06_Redis_AOF_Safety/         # Redis crash safety persistence layer
+├── Redis_AOF_Safety/                  # Redis crash safety persistence layer
 │   └── .gitkeep                       # Enforced appendonly & maxmemory noeviction configurations
 │
-├── Layer_07_Polling_Worker/           # Background polling worker
+├── Polling_Worker/                    # Background polling worker
 │   └── .gitkeep                       # 30-second scheduling worker
 │
-├── Layer_08_Destination_Loader/       # Transactional destination loading
+├── Destination_Loader/                # Transactional destination loading
 │   └── policy_executor.py             # Recreates schema, streams chunk data, handles transactions
 │
-├── Layer_09_Validation_Engine/        # Data validation and risk scoring
+├── Validation_Engine/                 # Data validation and risk scoring
 │   └── .gitkeep                       # Validates schema preservation and type matches
 │
-├── Layer_10_Audit_Report/             # Compliance logging and audits
+├── Audit_Report/                      # Compliance logging and audits
 │   └── .gitkeep                       # Stores operation logs, applied techniques history, and generates audits
 │
-├── Layer_11_Admin_Dashboard/          # Admin human-in-the-loop review interface
+├── Admin_Dashboard/                   # Admin human-in-the-loop review interface
 │   └── admin_policy_service.py        # Service managing technique overrides & approval gates
 │
-└── Layer_12_Approval_Workflow/        # Production approval gating workflow
+└── Approval_Workflow/                 # Production approval gating workflow
     └── .gitkeep                       # Approval status check block protecting sandbox insertion
 ```
 
