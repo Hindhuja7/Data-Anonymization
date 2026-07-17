@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 # Path bootstrapper to allow flat imports across layers
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+for _layer in ["Layer_01_Connection_Extraction", "Layer_02_Enterprise_Classification", "Layer_03_PII_Detection", "Layer_04_Change_Detection", "Layer_05_Redis_Hash_Vault", "Layer_06_Redis_AOF_Safety", "Layer_07_Polling_Worker", "Layer_08_Destination_Loader", "Layer_09_Validation_Engine", "Layer_10_Audit_Report", "Layer_11_Admin_Dashboard", "Layer_12_Approval_Workflow"]:
     _path = os.path.join(_root, _layer)
     if _path not in sys.path:
         sys.path.insert(0, _path)
@@ -107,7 +107,7 @@ class PolicyExecutor:
                 print(f"ERROR: Policy status is '{status}'. Only APPROVED policies can be executed.")
                 return False
             
-            print(f"✓ Policy loaded and approved (version {self.policy['policy_metadata']['policy_version']})")
+            print(f"[OK] Policy loaded and approved (version {self.policy['policy_metadata']['policy_version']})")
             return True
             
         except FileNotFoundError:
@@ -128,12 +128,12 @@ class PolicyExecutor:
             # Connect to source database
             self.source_connector = DatabaseConnector(**self.source_db_config)
             self.source_connector.connect(read_only=True)
-            print(f"✓ Connected to source database: {self.source_db_config['database_name']}")
+            print(f"[OK] Connected to source database: {self.source_db_config['database_name']}")
             
             # Connect to destination database
             self.destination_connector = DatabaseConnector(**self.destination_db_config)
             self.destination_connector.connect(read_only=False)
-            print(f"✓ Connected to destination database: {self.destination_db_config['database_name']}")
+            print(f"[OK] Connected to destination database: {self.destination_db_config['database_name']}")
             
             # Initialize schema extractor
             self.schema_extractor = SchemaExtractor(self.source_connector.engine)
@@ -168,7 +168,7 @@ class PolicyExecutor:
         """
         table_schemas = self.schema_extractor.get_all_schemas()
         self.source_schema = {schema["table_name"]: schema for schema in table_schemas}
-        print(f"✓ Extracted schema for {len(self.source_schema)} tables")
+        print(f"[OK] Extracted schema for {len(self.source_schema)} tables")
         return self.source_schema
     
     def determine_table_processing_order(self) -> List[str]:
@@ -209,7 +209,7 @@ class PolicyExecutor:
             order.extend(ready)
             processed.update(ready)
         
-        print(f"✓ Table processing order: {' → '.join(order)}")
+        print(f"[OK] Table processing order: {' -> '.join(order)}")
         return order
     
     def analyze_pk_fk_relationships(self):
@@ -232,10 +232,10 @@ class PolicyExecutor:
             for pk in schema.get("primary_keys", []):
                 if pk in policy_map:
                     technique = policy_map[pk]["anonymization_technique"]
-                    pii_type = policy_map[pk]["pii_type"]
+                    pii_type = policy_map[pk].get("pii_type")
                     
                     if technique != "NO_CHANGE":
-                        print(f"⚠ Primary Key: {table_name}.{pk}")
+                        print(f"[WARN] Primary Key: {table_name}.{pk}")
                         print(f"  Technique: {technique}")
                         print(f"  PII Type: {pii_type}")
                         print(f"  Note: This is a technical primary key. Ensure consistent mapping is applied.")
@@ -246,17 +246,17 @@ class PolicyExecutor:
                 fk_col = fk["constrained_columns"][0]
                 if fk_col in policy_map:
                     technique = policy_map[fk_col]["anonymization_technique"]
-                    pii_type = policy_map[fk_col]["pii_type"]
+                    pii_type = policy_map[fk_col].get("pii_type")
                     
                     if technique != "NO_CHANGE":
-                        print(f"⚠ Foreign Key: {table_name}.{fk_col}")
+                        print(f"[WARN] Foreign Key: {table_name}.{fk_col}")
                         print(f"  References: {fk['referred_table']}.{fk['referred_columns'][0]}")
                         print(f"  Technique: {technique}")
                         print(f"  PII Type: {pii_type}")
                         print(f"  Note: Ensure same transformation as referenced primary key.")
                         print()
         
-        print("✓ PK/FK analysis complete")
+        print("[OK] PK/FK analysis complete")
     
     def get_destination_data_type(self, source_type: str, technique: str) -> str:
         """
@@ -336,15 +336,15 @@ class PolicyExecutor:
                 # Check if the technique requires a different type than source
                 if technique != "NO_CHANGE" and technique != "DIFFERENTIAL_PRIVACY":
                     if source_type != expected_type:
-                        print(f"✓ {table_name}.{col_name}: {source_type} → {expected_type} ({technique})")
+                        print(f"[OK] {table_name}.{col_name}: {source_type} -> {expected_type} ({technique})")
                     else:
-                        print(f"⚠ {table_name}.{col_name}: {source_type} may not accommodate {technique} output")
+                        print(f"[WARN] {table_name}.{col_name}: {source_type} may not accommodate {technique} output")
                         all_valid = False
         
         if all_valid:
-            print("✓ Destination schema validation passed")
+            print("[OK] Destination schema validation passed")
         else:
-            print("✗ Destination schema validation failed")
+            print("[FAIL] Destination schema validation failed")
         
         return all_valid
     
@@ -362,7 +362,10 @@ class PolicyExecutor:
                     dest_table_name = table_name
                     
                     # Drop table if exists
-                    drop_sql = f'DROP TABLE IF EXISTS "{dest_table_name}" CASCADE'
+                    if "sqlite" in str(self.destination_connector.engine.url):
+                        drop_sql = f'DROP TABLE IF EXISTS "{dest_table_name}"'
+                    else:
+                        drop_sql = f'DROP TABLE IF EXISTS "{dest_table_name}" CASCADE'
                     conn.execute(text(drop_sql))
                     
                     # Get policy for this table
@@ -403,7 +406,7 @@ class PolicyExecutor:
                     create_sql = f'CREATE TABLE "{dest_table_name}" ({", ".join(columns_sql)})'
                     conn.execute(text(create_sql))
                     
-                    print(f"✓ Created table: {dest_table_name}")
+                    print(f"[OK] Created table: {dest_table_name}")
                 
                 # Add foreign key constraints after all tables are created
                 for table_name, schema in self.source_schema.items():
@@ -423,11 +426,11 @@ class PolicyExecutor:
                         '''
                         try:
                             conn.execute(text(fk_sql))
-                            print(f"✓ Added foreign key: {dest_table_name}.{fk_col} → {dest_ref_table}.{ref_col}")
+                            print(f"[OK] Added foreign key: {dest_table_name}.{fk_col} -> {dest_ref_table}.{ref_col}")
                         except Exception as e:
                             print(f"Warning: Could not add foreign key {dest_table_name}.{fk_col}: {e}")
             
-            print("✓ Destination schema created successfully")
+            print("[OK] Destination schema created successfully")
             return True
             
         except Exception as e:
@@ -514,7 +517,11 @@ class PolicyExecutor:
                 
                 column_policy = policy_map[column_name]
                 technique = column_policy["anonymization_technique"]
-                pii_type = column_policy["pii_type"]
+                
+                if technique == "NO_CHANGE":
+                    continue
+                
+                pii_type = column_policy.get("pii_type")
                 
                 # Get schema information for this column
                 table_schema = self.source_schema[table_name]
@@ -526,20 +533,17 @@ class PolicyExecutor:
                         break
                 
                 # Apply anonymization based on technique
-                if technique == "NO_CHANGE":
-                    continue  # Keep original value
-                else:
-                    anonymized_values = self.anonymizer.anonymize_column(
-                        values=df[column_name].tolist(),
-                        pii_type=pii_type,
-                        technique=technique,
-                        column_name=column_name,
-                        table_name=table_name,
-                        is_foreign_key=is_foreign_key,
-                        is_primary_key=is_primary_key,
-                        row_indices=row_indices
-                    )
-                    anonymized_df[column_name] = anonymized_values
+                anonymized_values = self.anonymizer.anonymize_column(
+                    values=df[column_name].tolist(),
+                    pii_type=pii_type,
+                    technique=technique,
+                    column_name=column_name,
+                    table_name=table_name,
+                    is_foreign_key=is_foreign_key,
+                    is_primary_key=is_primary_key,
+                    row_indices=row_indices
+                )
+                anonymized_df[column_name] = anonymized_values
             
             # Write to destination database within transaction
             dest_table_name = table_name  # Use original table name
@@ -621,17 +625,17 @@ class PolicyExecutor:
                 failed_chunks.append(chunk_num)
                 print(f"Table: {table_name}")
                 print(f"Chunk: {chunk_num + 1}")
-                print(f"✗ Failed")
+                print(f"[FAIL] Failed")
                 print()
         
         # Log results
         if failed_chunks:
-            print(f"✗ Table {table_name} completed with {len(failed_chunks)} failed chunks")
+            print(f"[FAIL] Table {table_name} completed with {len(failed_chunks)} failed chunks")
             self.progress["failed_chunks"].extend([
                 {"table": table_name, "chunk": chunk} for chunk in failed_chunks
             ])
         else:
-            print(f"✓ Table {table_name} completed successfully ({rows_processed:,} rows)")
+            print(f"[OK] Table {table_name} completed successfully ({rows_processed:,} rows)")
         
         self.progress["tables_processed"].append({
             "table_name": table_name,
@@ -713,9 +717,9 @@ class PolicyExecutor:
         print(f"Failed chunks: {len(self.progress['failed_chunks'])}")
         
         if all_success and len(self.progress["failed_chunks"]) == 0:
-            print("\n✓ EXECUTION COMPLETED SUCCESSFULLY")
+            print("\n[OK] EXECUTION COMPLETED SUCCESSFULLY")
         else:
-            print("\n✗ EXECUTION COMPLETED WITH ERRORS")
+            print("\n[FAIL] EXECUTION COMPLETED WITH ERRORS")
         
         return all_success and len(self.progress["failed_chunks"]) == 0
     
@@ -735,9 +739,9 @@ class PolicyExecutor:
             print(f"  Destination: {dest_count}")
             
             if source_count == dest_count:
-                print(f"  ✓ Row counts match")
+                print(f"  [OK] Row counts match")
             else:
-                print(f"  ✗ Row count mismatch")
+                print(f"  [FAIL] Row count mismatch")
     
     def cleanup(self):
         """Clean up resources."""

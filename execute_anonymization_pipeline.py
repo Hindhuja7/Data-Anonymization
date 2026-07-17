@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 # Path bootstrapper to allow flat imports across layers
 _root = os.path.dirname(os.path.abspath(__file__))
-for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+for _layer in ["Layer_01_Connection_Extraction", "Layer_02_Enterprise_Classification", "Layer_03_PII_Detection", "Layer_04_Change_Detection", "Layer_05_Redis_Hash_Vault", "Layer_06_Redis_AOF_Safety", "Layer_07_Polling_Worker", "Layer_08_Destination_Loader", "Layer_09_Validation_Engine", "Layer_10_Audit_Report", "Layer_11_Admin_Dashboard", "Layer_12_Approval_Workflow"]:
     _path = os.path.join(_root, _layer)
     if _path not in sys.path:
         sys.path.insert(0, _path)

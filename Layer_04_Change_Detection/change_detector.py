@@ -80,7 +80,7 @@ class ChangePollingWorker:
     def __init__(
         self,
         engine: Engine,
-        policy_path: str = "pii_policy.json",
+        policy_path: str = "anonymization_policy.json",
         interval_seconds: float = 30.0,
         change_callback: Callable[[str, str], None] = None
     ):
@@ -89,7 +89,7 @@ class ChangePollingWorker:
         
         Args:
             engine: SQLAlchemy Engine instance
-            policy_path: Path to the pii_policy.json file
+            policy_path: Path to the anonymization_policy.json file
             interval_seconds: Polling frequency (default 30s)
             change_callback: Callback function triggered when changes are found,
                             called with (table_name, change_reason)
@@ -115,9 +115,15 @@ class ChangePollingWorker:
             logger.warning(f"PII policy file not found at {self.policy_path}. Using empty table list.")
             return []
         try:
-            with open(self.policy_path, "r") as f:
+            with open(self.policy_path, "r", encoding="utf-8") as f:
                 policy = json.load(f)
-            return list(policy.get("tables", {}).keys())
+            
+            # Support both new list-based and old dict-based policy formats
+            if "column_policies" in policy:
+                tables = set(col["table_name"] for col in policy["column_policies"])
+                return list(tables)
+            else:
+                return list(policy.get("tables", {}).keys())
         except Exception as e:
             logger.error(f"Failed to load tables from policy: {e}")
             return []
@@ -174,9 +180,140 @@ class ChangePollingWorker:
         except Exception as e:
             logger.error(f"Error connecting to database for polling: {e}")
 
-    def _check_table_state(self, conn, table_name: str, initialize: bool):
-        """Check row count, max ID, and max timestamp constraints to find modifications."""
+    def _detect_and_handle_schema_shift(self, conn, table_name: str, inspector) -> bool:
+        """
+        Detects if new columns have been added to the table.
+        If found, extracts 20 samples, scans PII, updates policy to DRAFT, and returns True.
+        """
+        if not os.path.exists(self.policy_path):
+            return False
+            
         try:
+            # 1. Load current policy
+            with open(self.policy_path, "r", encoding="utf-8") as f:
+                policy = json.load(f)
+                
+            column_policies = policy.get("column_policies", [])
+            if not column_policies:
+                return False
+                
+            # Get columns currently in policy for this table
+            policy_cols = {col["column_name"] for col in column_policies if col["table_name"] == table_name}
+            
+            # 2. Get live columns from database
+            live_cols = inspector.get_columns(table_name)
+            
+            # Find new columns not in policy
+            new_cols = [col for col in live_cols if col["name"] not in policy_cols]
+            
+            if not new_cols:
+                return False
+                
+            logger.warning(f"[SCHEMA SHIFT DETECTED] Found {len(new_cols)} new columns in table '{table_name}': {[c['name'] for c in new_cols]}")
+            
+            # Get primary key and foreign key constraints for mapping
+            pk_constraint = inspector.get_pk_constraint(table_name)
+            pk_cols = pk_constraint.get("constrained_columns", [])
+            fkeys = inspector.get_foreign_keys(table_name)
+            
+            # 3. Process each new column
+            for col in new_cols:
+                col_name = col["name"]
+                col_type = str(col["type"])
+                
+                # Query 20 random sample values
+                random_func = "RANDOM()"
+                if "mysql" in str(self.engine.url):
+                    random_func = "RAND()"
+                elif "mssql" in str(self.engine.url):
+                    random_func = "NEWID()"
+                    
+                query = text(f'SELECT "{col_name}" FROM "{table_name}" ORDER BY {random_func} LIMIT 20')
+                try:
+                    sample_vals = [str(r[0]) for r in conn.execute(query).fetchall() if r[0] is not None]
+                except Exception as e:
+                    logger.error(f"Failed to query samples for {table_name}.{col_name}: {e}")
+                    sample_vals = []
+                
+                # Run Combined PII detection dynamically
+                from combined_detector import CombinedPIIDetector
+                detector = CombinedPIIDetector()
+                detection = detector.detect_column(
+                    column_name=col_name,
+                    data_type=col_type,
+                    sample_values=sample_vals,
+                    table_name=table_name
+                )
+                
+                # Check PK/FK
+                is_primary_key = col_name in pk_cols
+                is_foreign_key = False
+                fk_details = None
+                
+                for fk in fkeys:
+                    if col_name in fk.get("constrained_columns", []):
+                        is_foreign_key = True
+                        fk_details = {
+                            "referred_table": fk.get("referred_table"),
+                            "referred_columns": fk.get("referred_columns")
+                        }
+                        break
+                
+                # Build new policy entry
+                new_entry = {
+                    "table_name": table_name,
+                    "column_name": col_name,
+                    "is_pii": detection.get("is_pii", False),
+                    "pii_type": detection.get("pii_type") if detection.get("is_pii") else None,
+                    "confidence": detection.get("confidence", 0.0),
+                    "anonymization_technique": detection.get("recommended_technique", "NO_CHANGE") if detection.get("is_pii") else "NO_CHANGE",
+                    "reason": detection.get("reasoning", "Automatically detected schema shift column."),
+                    "is_primary_key": is_primary_key,
+                    "is_foreign_key": is_foreign_key,
+                    "foreign_key_details": fk_details,
+                    "data_type": col_type,
+                    "admin_override": False,
+                    "admin_comments": ""
+                }
+                
+                column_policies.append(new_entry)
+                logger.info(f"Generated policy for new column {table_name}.{col_name} (PII Type: {new_entry['pii_type']}, Technique: {new_entry['anonymization_technique']})")
+            
+            # 4. Revert status to DRAFT and save
+            policy["policy_metadata"]["status"] = "DRAFT"
+            policy["policy_metadata"]["generated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            policy["policy_metadata"]["comments"].append(
+                f"Schema shift automatically detected and scanned new columns in table '{table_name}'."
+            )
+            
+            with open(self.policy_path, "w", encoding="utf-8") as f:
+                json.dump(policy, f, indent=2, ensure_ascii=False)
+                
+            print("\n" + "!" * 80)
+            print(f"[SCHEMA SHIFT DETECTED] New columns added in table '{table_name}'!")
+            print(f"PII scanned, entries appended to '{self.policy_path}'.")
+            print("Policy has been reset to 'DRAFT'. Please review and approve in the terminal.")
+            print("!" * 80 + "\n")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error handling schema shift: {e}")
+            return False
+
+    def _check_table_state(self, conn, table_name: str, initialize: bool, inspector=None):
+        """Check schema shifts, row count, max ID, and max timestamp constraints."""
+        try:
+            if inspector is None:
+                from sqlalchemy import inspect
+                inspector = inspect(self.engine)
+            
+            # Detect and handle schema shift first (Scenario B)
+            if self._detect_and_handle_schema_shift(conn, table_name, inspector):
+                # If schema shifted, policy reverted to DRAFT.
+                # Stop further change detection actions on this table until approved.
+                return
+
             # 1. Check Row Count
             count_query = text(f'SELECT COUNT(*) FROM "{table_name}"')
             row_count = conn.execute(count_query).scalar()
@@ -191,9 +328,6 @@ class ChangePollingWorker:
             self.row_counts[table_name] = row_count
 
             # 2. Check Auto-Increment Primary Key Max Value
-            # Inspect table metadata to locate numerical ID primary key columns
-            from sqlalchemy import inspect
-            inspector = inspect(self.engine)
             pk_constraint = inspector.get_pk_constraint(table_name)
             pk_cols = pk_constraint.get("constrained_columns", [])
             

@@ -22,7 +22,7 @@ import numpy as np
 import sys
 import os
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+for _layer in ["Layer_01_Connection_Extraction", "Layer_02_Enterprise_Classification", "Layer_03_PII_Detection", "Layer_04_Change_Detection", "Layer_05_Redis_Hash_Vault", "Layer_06_Redis_AOF_Safety", "Layer_07_Polling_Worker", "Layer_08_Destination_Loader", "Layer_09_Validation_Engine", "Layer_10_Audit_Report", "Layer_11_Admin_Dashboard", "Layer_12_Approval_Workflow"]:
     _path = os.path.join(_root, _layer)
     if _path not in sys.path:
         sys.path.insert(0, _path)
@@ -72,7 +72,9 @@ class Anonymizer:
         column_name: Optional[str] = None,
         table_name: Optional[str] = None,
         is_foreign_key: bool = False,
-        is_primary_key: bool = False
+        is_primary_key: bool = False,
+        row_indices: Optional[List[int]] = None,
+        **kwargs
     ) -> List[Any]:
         """
         Anonymize a column of values based on PII type and technique.

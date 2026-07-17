@@ -55,7 +55,7 @@ class DatabaseConnector:
     
     def _validate_database_type(self):
         """Validate database type."""
-        valid_types = ['postgresql', 'mysql', 'sqlserver']
+        valid_types = ['postgresql', 'mysql', 'sqlserver', 'sqlite']
         if self.database_type not in valid_types:
             raise ValueError(f"Invalid database_type: {self.database_type}. Must be one of: {valid_types}")
     
@@ -69,6 +69,8 @@ class DatabaseConnector:
             return f"mysql+pymysql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}"
         elif self.database_type == 'sqlserver':
             return f"mssql+pyodbc://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}?driver=ODBC+Driver+17+for+SQL+Server"
+        elif self.database_type == 'sqlite':
+            return f"sqlite:///{self.database_name}"
         else:
             raise ValueError(f"Unsupported database type: {self.database_type}")
     
@@ -115,6 +117,8 @@ class DatabaseConnector:
                     conn.execute(text("SET SESSION TRANSACTION READ ONLY"))
                 elif self.database_type == 'sqlserver':
                     conn.execute(text("SET TRANSACTION ISOLATION LEVEL SNAPSHOT"))
+                elif self.database_type == 'sqlite':
+                    pass  # SQLite handled by application-level read-only logic
             logger.info("Set connection to read-only mode")
         except SQLAlchemyError as e:
             logger.warning(f"Could not set read-only mode: {e}. Connection will be read-only by application logic.")
