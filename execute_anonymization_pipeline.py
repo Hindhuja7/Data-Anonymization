@@ -8,6 +8,14 @@ and writes the anonymized data to a destination database.
 import os
 import sys
 from dotenv import load_dotenv
+
+# Path bootstrapper to allow flat imports across layers
+_root = os.path.dirname(os.path.abspath(__file__))
+for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+    _path = os.path.join(_root, _layer)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
 from policy_executor import PolicyExecutor
 
 load_dotenv()

@@ -12,8 +12,18 @@ or CLI tools. It wraps PolicyGenerator methods with a clean API.
 """
 
 import json
+import os
+import sys
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+
+# Path bootstrapper to allow flat imports across layers
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+    _path = os.path.join(_root, _layer)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
 from policy_generator import PolicyGenerator
 
 

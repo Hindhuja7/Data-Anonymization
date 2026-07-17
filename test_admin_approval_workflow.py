@@ -10,6 +10,16 @@ Demonstrates the complete backend approval workflow:
 """
 
 import json
+import os
+import sys
+
+# Path bootstrapper to allow flat imports across layers
+_root = os.path.dirname(os.path.abspath(__file__))
+for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+    _path = os.path.join(_root, _layer)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
 from admin_policy_service import AdminPolicyService
 
 
@@ -48,13 +58,13 @@ def main():
         
         # If already APPROVED, reset to DRAFT for testing
         if current_status['status'] == "APPROVED":
-            print("\n⚠ Policy is currently APPROVED. Resetting to DRAFT for testing...")
+            print("\n[WARN] Policy is currently APPROVED. Resetting to DRAFT for testing...")
             admin_service.reset_to_draft(
                 admin_name="test_admin",
                 reason="Resetting to DRAFT for workflow testing"
             )
             current_status = admin_service.get_policy_status()
-            print("\n✓ Policy reset to DRAFT")
+            print("\n[OK] Policy reset to DRAFT")
             print_policy_status(current_status)
         
         # Step 2: Retrieve policy for review
@@ -78,7 +88,7 @@ def main():
             print(f"   Technique: {col['anonymization_technique']}")
             print(f"   Confidence: {col['confidence']}")
             if col.get('admin_override'):
-                print(f"   ⚠ Admin Override: {col['admin_comments']}")
+                print(f"   [WARN] Admin Override: {col['admin_comments']}")
         
         # Step 4: Override a column technique
         print_section("STEP 4: Override Column Technique")
@@ -109,7 +119,7 @@ def main():
             )
             
             if success:
-                print("✓ Column override successful")
+                print("[OK] Column override successful")
                 
                 # Verify the override
                 updated_col = admin_service.get_column_policy(target_table, target_column)
@@ -117,9 +127,9 @@ def main():
                 print(f"Admin Override: {updated_col['admin_override']}")
                 print(f"Admin Comments: {updated_col['admin_comments']}")
             else:
-                print("✗ Column override failed")
+                print("[FAIL] Column override failed")
         else:
-            print("⚠ Could not find customers.phone for override test")
+            print("[WARN] Could not find customers.phone for override test")
         
         # Step 5: Approve the policy
         print_section("STEP 5: Approve Policy")
@@ -136,14 +146,14 @@ def main():
         )
         
         if success:
-            print("✓ Policy approved successfully")
+            print("[OK] Policy approved successfully")
             
             # Verify approval
             approved_status = admin_service.get_policy_status()
             print("\nApproved Policy Status:")
             print_policy_status(approved_status)
         else:
-            print("✗ Policy approval failed")
+            print("[FAIL] Policy approval failed")
         
         # Step 6: Verify executor accepts APPROVED policy
         print_section("STEP 6: Verify Executor Accepts APPROVED Policy")
@@ -163,11 +173,11 @@ def main():
         policy_valid = executor.load_policy()
         
         if policy_valid:
-            print("✓ Executor successfully loaded and validated APPROVED policy")
-            print(f"✓ Policy version: {executor.policy['policy_metadata']['policy_version']}")
-            print(f"✓ Status: {executor.policy['policy_metadata']['status']}")
+            print("[OK] Executor successfully loaded and validated APPROVED policy")
+            print(f"[OK] Policy version: {executor.policy['policy_metadata']['policy_version']}")
+            print(f"[OK] Status: {executor.policy['policy_metadata']['status']}")
         else:
-            print("✗ Executor rejected the policy")
+            print("[FAIL] Executor rejected the policy")
         
         # Step 7: Test rejection workflow
         print_section("STEP 7: Test Rejection Workflow (Reset to DRAFT first)")
@@ -177,7 +187,7 @@ def main():
             admin_name="test_admin",
             reason="Testing rejection workflow"
         )
-        print("✓ Policy reset to DRAFT")
+        print("[OK] Policy reset to DRAFT")
         
         # Try to reject
         try:
@@ -192,15 +202,15 @@ def main():
             )
             
             if success:
-                print("✓ Policy rejected successfully")
+                print("[OK] Policy rejected successfully")
                 
                 rejected_status = admin_service.get_policy_status()
                 print("\nRejected Policy Status:")
                 print_policy_status(rejected_status)
             else:
-                print("✗ Policy rejection failed")
+                print("[FAIL] Policy rejection failed")
         except ValueError as e:
-            print(f"✗ Rejection error: {e}")
+            print(f"[FAIL] Rejection error: {e}")
         
         # Step 8: Final cleanup - approve again for normal operation
         print_section("STEP 8: Final Cleanup - Approve for Normal Operation")
@@ -218,20 +228,20 @@ def main():
         )
         
         final_status = admin_service.get_policy_status()
-        print("✓ Final Policy Status:")
+        print("[OK] Final Policy Status:")
         print_policy_status(final_status)
         
         print_section("WORKFLOW TEST COMPLETED SUCCESSFULLY")
         print("\nSummary:")
-        print("✓ Policy retrieved for review")
-        print("✓ Column override applied successfully")
-        print("✓ Policy approved with audit trail")
-        print("✓ Executor validated APPROVED policy")
-        print("✓ Rejection workflow tested")
-        print("✓ Policy ready for execution")
+        print("[OK] Policy retrieved for review")
+        print("[OK] Column override applied successfully")
+        print("[OK] Policy approved with audit trail")
+        print("[OK] Executor validated APPROVED policy")
+        print("[OK] Rejection workflow tested")
+        print("[OK] Policy ready for execution")
         
     except Exception as e:
-        print(f"\n✗ Error during workflow test: {e}")
+        print(f"\n[FAIL] Error during workflow test: {e}")
         import traceback
         traceback.print_exc()
 

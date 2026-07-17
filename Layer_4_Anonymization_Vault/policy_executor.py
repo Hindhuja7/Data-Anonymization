@@ -12,11 +12,19 @@ Handles:
 
 import json
 import os
+import sys
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+
+# Path bootstrapper to allow flat imports across layers
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for _layer in ["Layer_1_Connection_Extraction", "Layer_2_Enterprise_Classification", "Layer_3_PII_Detection", "Layer_4_Anonymization_Vault"]:
+    _path = os.path.join(_root, _layer)
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
 
 from database_connector import DatabaseConnector
 from schema_extractor import SchemaExtractor

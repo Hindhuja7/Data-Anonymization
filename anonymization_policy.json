@@ -1,0 +1,148 @@
+{
+  "policy_metadata": {
+    "policy_version": "1.0",
+    "generated_at": "2026-07-17T18:00:00.000000",
+    "status": "DRAFT",
+    "approved_by": null,
+    "approved_at": null,
+    "comments": [
+      "[2026-07-17T22:00:54.880721] test_admin overridden technique from TOKENIZATION to MASKING: Testing override functionality - changing from TOKENIZATION to MASKING"
+    ]
+  },
+  "database_info": {
+    "database_name": "neondb",
+    "database_type": "postgresql"
+  },
+  "enterprise_info": {
+    "enterprise_type": "BANKING",
+    "enterprise_confidence": 0.85,
+    "compliance_law": "DPDP Act 2023"
+  },
+  "column_policies": [
+    {
+      "table_name": "employees",
+      "column_name": "employee_id",
+      "is_pii": true,
+      "pii_type": "IDENTIFIER",
+      "confidence": 0.9,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as IDENTIFIER.",
+      "is_primary_key": true,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "employees",
+      "column_name": "full_name",
+      "is_pii": true,
+      "pii_type": "FULL_NAME",
+      "confidence": 0.95,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as FULL_NAME.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "employees",
+      "column_name": "email",
+      "is_pii": true,
+      "pii_type": "EMAIL",
+      "confidence": 0.95,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as EMAIL.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "employees",
+      "column_name": "phone",
+      "is_pii": true,
+      "pii_type": "INDIAN_PHONE",
+      "confidence": 0.95,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as INDIAN_PHONE.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "customers",
+      "column_name": "customer_id",
+      "is_pii": true,
+      "pii_type": "IDENTIFIER",
+      "confidence": 0.9,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as IDENTIFIER.",
+      "is_primary_key": true,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "customers",
+      "column_name": "full_name",
+      "is_pii": true,
+      "pii_type": "FULL_NAME",
+      "confidence": 0.95,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as FULL_NAME.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "customers",
+      "column_name": "phone",
+      "is_pii": true,
+      "pii_type": "INDIAN_PHONE",
+      "confidence": 0.95,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as INDIAN_PHONE.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR",
+      "admin_override": true,
+      "admin_comments": "Testing override functionality - changing from TOKENIZATION to MASKING"
+    }
+  ],
+  "policy_summary": {
+    "total_columns": 7,
+    "pii_columns": 7,
+    "non_pii_columns": 0,
+    "pii_percentage": 100.0,
+    "technique_distribution": {
+      "HASHING": 2,
+      "TOKENIZATION": 5
+    },
+    "pii_type_distribution": {
+      "IDENTIFIER": 2,
+      "FULL_NAME": 2,
+      "EMAIL": 1,
+      "INDIAN_PHONE": 2
+    },
+    "table_distribution": {
+      "employees": 4,
+      "customers": 3
+    }
+  }
+}
