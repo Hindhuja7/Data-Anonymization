@@ -30,6 +30,8 @@ from database_connector import DatabaseConnector
 from schema_extractor import SchemaExtractor
 from anonymizer import Anonymizer
 from redis_mapping import RedisMappingSystem
+from approval_workflow import ApprovalWorkflow
+from validation_engine import ValidationEngine
 
 
 class PolicyExecutor:
@@ -102,12 +104,8 @@ class PolicyExecutor:
                 self.policy = json.load(f)
             
             # Check policy approval status
-            status = self.policy.get("policy_metadata", {}).get("status")
-            if status != "APPROVED":
-                print(f"ERROR: Policy status is '{status}'. Only APPROVED policies can be executed.")
+            if not ApprovalWorkflow.is_policy_approved(self.policy):
                 return False
-            
-            print(f"[OK] Policy loaded and approved (version {self.policy['policy_metadata']['policy_version']})")
             return True
             
         except FileNotFoundError:
@@ -305,48 +303,13 @@ class PolicyExecutor:
         Returns:
             True if validation passes, False otherwise
         """
-        print("\nValidating destination schema against anonymization techniques...")
-        print("-" * 80)
-        
-        all_valid = True
-        
-        for table_name, schema in self.source_schema.items():
-            # Get policy for this table
-            table_policy = [
-                col for col in self.policy["column_policies"]
-                if col["table_name"] == table_name
-            ]
-            
-            policy_map = {
-                col["column_name"]: col for col in table_policy
-            }
-            
-            for col in schema["columns"]:
-                col_name = col["column_name"]
-                source_type = col["data_type"]
-                
-                # Get anonymization technique
-                technique = "NO_CHANGE"
-                if col_name in policy_map:
-                    technique = policy_map[col_name]["anonymization_technique"]
-                
-                # Get expected destination type
-                expected_type = self.get_destination_data_type(source_type, technique)
-                
-                # Check if the technique requires a different type than source
-                if technique != "NO_CHANGE" and technique != "DIFFERENTIAL_PRIVACY":
-                    if source_type != expected_type:
-                        print(f"[OK] {table_name}.{col_name}: {source_type} -> {expected_type} ({technique})")
-                    else:
-                        print(f"[WARN] {table_name}.{col_name}: {source_type} may not accommodate {technique} output")
-                        all_valid = False
-        
-        if all_valid:
-            print("[OK] Destination schema validation passed")
-        else:
-            print("[FAIL] Destination schema validation failed")
-        
-        return all_valid
+        engine = ValidationEngine(
+            source_connector=self.source_connector,
+            destination_connector=self.destination_connector,
+            source_schema=self.source_schema,
+            policy=self.policy
+        )
+        return engine.validate_destination_schema()
     
     def create_destination_schema(self) -> bool:
         """
@@ -725,23 +688,13 @@ class PolicyExecutor:
     
     def validate_results(self):
         """Validate anonymization results."""
-        print("\nValidation Results:")
-        print("-" * 80)
-        
-        for table_result in self.progress["tables_processed"]:
-            table_name = table_result["table_name"]
-            source_count = table_result["total_rows"]
-            dest_table_name = table_name  # Use original table name
-            dest_count = self.get_destination_table_row_count(dest_table_name)
-            
-            print(f"{table_name}:")
-            print(f"  Source: {source_count}")
-            print(f"  Destination: {dest_count}")
-            
-            if source_count == dest_count:
-                print(f"  [OK] Row counts match")
-            else:
-                print(f"  [FAIL] Row count mismatch")
+        engine = ValidationEngine(
+            source_connector=self.source_connector,
+            destination_connector=self.destination_connector,
+            source_schema=self.source_schema,
+            policy=self.policy
+        )
+        engine.validate_results(self.progress["tables_processed"])
     
     def cleanup(self):
         """Clean up resources."""

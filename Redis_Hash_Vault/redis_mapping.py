@@ -16,6 +16,7 @@ import json
 from typing import Optional, Any, Dict
 from cryptography.fernet import Fernet
 import os
+from aof_config import configure_redis_mitigations
 
 # Try loading from .env if possible (reusing encryption key or generating one)
 DEFAULT_KEY = os.getenv("ENCRYPTION_KEY") or os.getenv("HMAC_SECRET")
@@ -102,18 +103,8 @@ class RedisMappingSystem:
             self.redis_client.ping()
             self.online = True
             
-            # 1. Enable AOF persistence
-            self.redis_client.config_set('appendonly', 'yes')
-            self.redis_client.config_set('appendfsync', 'everysec')
-            
-            # 2. Configure AOF auto-rewriting (percentage and min size) to prevent disk fill
-            self.redis_client.config_set('auto-aof-rewrite-percentage', '100')
-            self.redis_client.config_set('auto-aof-rewrite-min-size', '64mb')
-            
-            # 3. Configure eviction policy to noeviction to protect existing referential mappings
-            self.redis_client.config_set('maxmemory-policy', 'noeviction')
-            
-            print("[OK] Redis mitigation configurations applied successfully (AOF enabled, auto-rewrite set, noeviction set)")
+            # Delegate to Redis_AOF_Safety module
+            configure_redis_mitigations(self.redis_client)
         except Exception as e:
             self.online = False
             print(f"Warning: Could not configure Redis mitigations: {e}. Falling back to local cache.")
