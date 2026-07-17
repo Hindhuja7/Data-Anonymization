@@ -1,4 +1,4 @@
-# Enterprise Data Anonymization System (12-Layer Pipeline)
+# Enterprise Data Anonymization System (12-Layer Structure, 17-Step Pipeline)
 
 A comprehensive, production-grade privacy-preserving data anonymization platform designed for Indian enterprises. The system complies with the **DPDP Act 2023** (Digital Personal Data Protection Act, India), **RBI Guidelines**, **IRDAI**, and **TRAI** sector-specific regulations.
 
@@ -32,95 +32,93 @@ Data-Anonymization/
 │   └── anonymizer.py                  # Tokenization, Masking, Hashing, and DP engines
 │
 ├── Layer_06_Redis_AOF_Safety/         # Redis crash safety persistence layer
-│   └── (Auto-applied configurations to live Redis instance: appendonly, noeviction)
+│   └── .gitkeep                       # Enforced appendonly & maxmemory noeviction configurations
 │
 ├── Layer_07_Polling_Worker/           # Background polling worker
-│   └── (30-second scheduling worker)
+│   └── .gitkeep                       # 30-second scheduling worker
 │
 ├── Layer_08_Destination_Loader/       # Transactional destination loading
 │   └── policy_executor.py             # Recreates schema, streams chunk data, handles transactions
 │
 ├── Layer_09_Validation_Engine/        # Data validation and risk scoring
-│   └── (Validates schema preservation, type matches, and calculates Privacy Risk)
+│   └── .gitkeep                       # Validates schema preservation and type matches
 │
 ├── Layer_10_Audit_Report/             # Compliance logging and audits
-│   └── (Stores operation logs, applied techniques history, and generates audits)
+│   └── .gitkeep                       # Stores operation logs, applied techniques history, and generates audits
 │
 ├── Layer_11_Admin_Dashboard/          # Admin human-in-the-loop review interface
 │   └── admin_policy_service.py        # Service managing technique overrides & approval gates
 │
 └── Layer_12_Approval_Workflow/        # Production approval gating workflow
-    └── (Approval status check block protecting sandbox insertion)
+    └── .gitkeep                       # Approval status check block protecting sandbox insertion
 ```
 
 ---
 
-## ⚙️ The 12-Layer Data Anonymization Pipeline
+## ⚙️ The 17-Step Data Anonymization Pipeline
 
-The system executes the anonymization process in 12 distinct layers:
+The system executes the anonymization process in 17 distinct steps:
 
 ```mermaid
 graph TD
-    subgraph Data Connection & Detection
-        L1[Layer 01: Connect & Extract Schema] --> L2[Layer 02: Enterprise Auto-Detection]
-        L2 --> L3[Layer 03: Parallel PII Detection]
+    subgraph Layer 1: Connection & Extraction
+        S1[Step 1: Connect Database] --> S2[Step 2: Extract Schema & Keys]
+        S2 --> S4[Step 4: Privacy-Safe Sampling]
     end
 
-    subgraph Real-Time Sync & Mapping
-        L3 --> L4[Layer 04: Change & Schema Shift Detection]
-        L4 --> L5[Layer 05: In-Memory Redis Hash Vault]
-        L5 --> L6[Layer 06: Redis AOF Crash Safety]
+    subgraph Layer 2: Classification
+        S2 --> S3[Step 3: Enterprise Auto-Detection]
     end
 
-    subgraph Batch loading & Sandbox
-        L6 --> L7[Layer 07: Polling Worker]
-        L7 --> L8[Layer 08: ACID Destination Loader]
-        L8 --> L9[Layer 09: Validation Engine]
+    subgraph Layer 3: PII Detection
+        S3 & S4 --> S5[Step 5: Parallel PII Detection]
+        S5 --> S6[Step 6: Build Anonymization Policy]
     end
 
-    subgraph Audit & Management
-        L9 --> L10[Layer 10: Audit Report Generation]
-        L10 --> L11[Layer 11: Admin Review Dashboard]
-        L11 --> L12[Layer 12: Gated Approval Workflow]
+    subgraph Layer 4: Anonymization & Vault
+        S6 --> S7[Step 7: Admin Review & Override]
+        S7 --> S8[Step 8: Change Detection]
+        S8 --> S9[Step 9: In-Memory Encryption Mapping]
+        S9 --> S10[Step 10: Redis AOF Crash Safety]
+        S10 --> S11[Step 11: Chunk Processing]
+        S11 --> S12[Step 12: Anonymization Engine]
+        S12 --> S13[Step 13: Batch Loading Queue]
+    end
+
+    subgraph Target Sandboxes
+        S13 --> S14[Step 14: Validation & Audits]
+        S14 --> S15[Step 15: Generate Safe Sandbox DB]
+        S15 --> S16[Step 16: Audit & Compliance Report]
+        S16 --> S17[Step 17: Dashboard Output]
     end
 ```
 
-### 1. Connection & Extraction (Layer 01)
-* **database_connector.py**: Establishes a secure read-only transaction connection to the source database (PostgreSQL, MySQL, SQL Server, SQLite).
-* **schema_extractor.py & sample_extractor.py**: Extracts primary/foreign keys, indexes, and draws a safe 20-row random sample per column to keep real PII local.
+### Layer 1: Connect & Extract (Steps 1, 2, & 4)
+* **Step 1: Connect Database**: Establishes a secure read-only transaction connection to the source database (e.g. PostgreSQL, MySQL, SQL Server, SQLite).
+* **Step 2: Extract Schema & Keys**: Reflects database constraints, extracting primary/foreign keys, indexes, and unique columns.
+* **Step 4: Privacy-Safe Column-Level Sampling**: Extracts random rows (up to 20) per column. Real data remains local to prevent exposure.
 
-### 2. Enterprise Auto-Detection (Layer 02)
-* **enterprise_detector.py**: Uses LLM context processing to categorize the database industry class (e.g. `BANKING`, `HR`, `HEALTHCARE`) and maps them to corresponding compliance laws (e.g. RBI, DPDP, HIPAA).
+### Layer 2: Enterprise Classification (Step 3)
+* **Step 3: Enterprise Auto-Detection**: Uses schema structure and columns context via LLM to classify the industry category (such as `BANKING`, `ECOMMERCE`, or `HEALTHCARE`) to determine compliance laws.
 
-### 3. PII Detection (Layer 03)
-* **database_pii_detection.py**: Runs local regex checks for Indian PII formats and LLM batch scanning in parallel. Generates a draft policy.
+### Layer 3: PII Detection (Steps 5 & 6)
+* **Step 5: PII Detection (LLM + Regex)**: Runs LLM batch matching and local India-specific regex checks in parallel.
+* **Step 6: Build Anonymization Policy**: Recommends techniques prioritised by: Enterprise rules > Regex > LLM > Masking (default fallback).
 
-### 4. Change & Schema Shift Detection (Layer 04)
-* **change_detector.py**: Listens to database events to intercept changes. Automatically triggers re-scans if schema shifts (new columns/tables) are detected and resets the policy to `"DRAFT"` until reviewed.
+### Layer 4: Anonymization & Vault (Steps 7 through 13)
+* **Step 7: Admin Review & Approval**: Allows overriding techniques and locking the approved policy rules.
+* **Step 8: Change Detection**: Listens to database events to track changes.
+* **Step 9: In-Memory Transformation (Redis Hash Vault)**: Cryptographically maps original values to consistent fake values using Fernet-encrypted Redis vaults (or in-memory cache).
+* **Step 10: Crash Safety (Redis AOF)**: Ensures mappings are saved and recoverable upon power loss/restart.
+* **Step 11: Chunk Processing**: Divides records into chunk buffers (1K–10K rows) to optimise memory.
+* **Step 12: Anonymization Engine**: Obfuscates data using Hashing (IDs), Tokenization/Faker (Names/Emails), Masking (Aadhaar/PAN), or Differential Privacy (Salary/Numerical).
+* **Step 13: Batch Loading**: Queue management to write safely in batches.
 
-### 5. Redis Hash Vault (Layer 05)
-* **redis_mapping.py & anonymizer.py**: Cryptographically maps original values to consistent fake values using Fernet-encrypted Redis Hashes (`HSET`/`HGET`). Zero raw PII is written to Redis. Falls back to a local memory cache if Redis goes offline, with automatic sync-back.
-
-### 6. Redis AOF Safety (Layer 06)
-* Automatically configures Redis AOF persistence (`appendonly yes`, `maxmemory-policy noeviction`) on startup to ensure crash safety and mapping history durability.
-
-### 7. Polling Worker (Layer 07)
-* Pools newly anonymized records and processes changes in batches every 30 seconds to optimize performance and reduce target database locks.
-
-### 8. Destination Loader (Layer 08)
-* **policy_executor.py**: Reads the approved policy, creates empty tables in the target sandbox database with adapted data types (e.g. changing `INTEGER` to `VARCHAR(64)` for hashed primary keys), and streams data in chunks.
-
-### 9. Validation Engine (Layer 09)
-* Compares source and destination row counts, verifies data type preservation, and executes a compliance scanner to check for PII leakage.
-
-### 10. Audit Report (Layer 10)
-* Records timestamped anonymization logs, column mappings metadata, and generates regulatory compliance HTML/PDF audit reports.
-
-### 11. Admin Review Dashboard (Layer 11)
-* **admin_policy_service.py**: Provides interfaces for administrators to review PII findings, manually override anonymization techniques, and approve/reject the policy.
-
-### 12. Approval Workflow (Layer 12)
-* Ensures that the anonymization engine refuses execution unless the active policy is in `"APPROVED"` status, maintaining strict human-in-the-loop security.
+### Validation & Output (Steps 14 through 17)
+* **Step 14: Validation Engine**: Re-scans destination data, checking type preservation, row counts, and calculating a Privacy Risk Score (0-100).
+* **Step 15: Generate Safe Database**: Writes target rows to the sandbox DB.
+* **Step 16: Audit & Compliance Report**: Exports detailed counts audit and compliance status HTML/PDF.
+* **Step 17: Output to Admin**: Dashboard displays audit stats, download links, and risk scores.
 
 ---
 
