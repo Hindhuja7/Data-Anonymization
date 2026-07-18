@@ -17,12 +17,21 @@ for _layer in ["Connection_Extraction", "Enterprise_Classification", "PII_Detect
         sys.path.insert(0, _path)
 
 from policy_executor import PolicyExecutor
+from polling_worker import PollingWorker
+import argparse
+import time
 
 load_dotenv()
 
 
 def main():
     """Main execution function."""
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Anonymization Pipeline Runner")
+    parser.add_argument("--mode", choices=["batch", "polling"], default="batch", help="Execution mode (batch or polling)")
+    parser.add_argument("--interval", type=float, default=30.0, help="Polling interval in seconds (default 30s)")
+    args = parser.parse_args()
     
     # Source database configuration (read-only)
     source_db_config = {
@@ -58,6 +67,9 @@ def main():
     print("=" * 80)
     print("ANONYMIZATION PIPELINE EXECUTION")
     print("=" * 80)
+    print(f"Mode: {args.mode.upper()}")
+    if args.mode == "polling":
+        print(f"Polling Interval: {args.interval} seconds")
     print(f"\nSource Database: {source_db_config['database_name']}")
     print(f"Destination Database: {destination_db_config['database_name']}")
     print(f"Policy File: {policy_file}")
@@ -101,6 +113,30 @@ def main():
         print("Please run policy generation first: python test_policy_generation.py")
         sys.exit(1)
     
+    if args.mode == "polling":
+        print(f"\nStarting background Polling Worker...")
+        worker = PollingWorker(
+            source_db_config=source_db_config,
+            destination_db_config=destination_db_config,
+            policy_file=policy_file,
+            interval_seconds=args.interval,
+            redis_host=redis_host,
+            redis_port=redis_port,
+            hmac_secret=hmac_secret
+        )
+        try:
+            worker.start()
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nShutting down Polling Worker...")
+            worker.stop()
+            sys.exit(0)
+        except Exception as e:
+            print(f"\nERROR: {e}")
+            worker.stop()
+            sys.exit(1)
+            
     # Initialize executor
     executor = PolicyExecutor(
         source_db_config=source_db_config,

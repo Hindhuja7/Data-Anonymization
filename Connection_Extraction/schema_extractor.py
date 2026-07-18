@@ -53,12 +53,43 @@ class SchemaExtractor:
         try:
             # Extract all available schema information automatically
             columns = self.inspector.get_columns(table_name)
-            primary_keys = self.inspector.get_pk_constraint(table_name)
-            foreign_keys = self.inspector.get_foreign_keys(table_name)
-            unique_constraints = self.inspector.get_unique_constraints(table_name)
-            check_constraints = self.inspector.get_check_constraints(table_name)
-            indexes = self.inspector.get_indexes(table_name)
-            table_comment = self.inspector.get_table_comment(table_name)
+            
+            # Wrap optional dialect capabilities in try-except to prevent crashes on SQLite/unsupported engines
+            primary_keys = {}
+            try:
+                primary_keys = self.inspector.get_pk_constraint(table_name)
+            except Exception:
+                pass
+                
+            foreign_keys = []
+            try:
+                foreign_keys = self.inspector.get_foreign_keys(table_name)
+            except Exception:
+                pass
+                
+            unique_constraints = []
+            try:
+                unique_constraints = self.inspector.get_unique_constraints(table_name)
+            except Exception:
+                pass
+                
+            check_constraints = []
+            try:
+                check_constraints = self.inspector.get_check_constraints(table_name)
+            except Exception:
+                pass
+                
+            indexes = []
+            try:
+                indexes = self.inspector.get_indexes(table_name)
+            except Exception:
+                pass
+                
+            table_comment = None
+            try:
+                table_comment = self.inspector.get_table_comment(table_name)
+            except Exception:
+                pass
             
             # Enhanced column information with all metadata
             column_info = []
@@ -77,7 +108,7 @@ class SchemaExtractor:
             schema = {
                 "table_name": table_name,
                 "columns": column_info,
-                "primary_keys": primary_keys.get("constrained_columns", []),
+                "primary_keys": primary_keys.get("constrained_columns", []) if primary_keys else [],
                 "primary_key_constraint": primary_keys,
                 "foreign_keys": foreign_keys,
                 "unique_constraints": unique_constraints,
