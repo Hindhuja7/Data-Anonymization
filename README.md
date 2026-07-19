@@ -10,50 +10,50 @@ The repository is organized into 12 distinct, sequential layers corresponding to
 
 ```
 Data-Anonymization/
-├── Connection_Extraction/             # DB connection and metadata read
+├── 01_Connection_Extraction/             # DB connection and metadata read
 │   ├── database_connector.py          # SQLAlchemy connection manager
 │   ├── schema_extractor.py            # Primary/Foreign Key metadata extractor
 │   └── sample_extractor.py            # Column-wise random sampler (20-row limit)
 │
-├── Enterprise_Classification/         # LLM-based industry classifier
+├── 02_Enterprise_Classification/         # LLM-based industry classifier
 │   └── enterprise_detector.py         # Detects category (BANKING, HEALTHCARE, etc.)
 │
-├── PII_Detection/                     # Multi-engine PII detection layers
+├── 03_PII_Detection/                     # Multi-engine PII detection layers
 │   ├── combined_detector.py           # Merges LLM & heuristic regex results
 │   ├── llm_pii_detection.py           # LLM-based batch column detector
 │   ├── india_regex_patterns.py        # Aadhaar, PAN, GSTIN, Voter ID regex patterns
 │   ├── policy_generator.py            # Recommended anonymization policy builder
 │   └── database_pii_detection.py      # PII orchestration manager
 │
-├── Change_Detection/                  # Live database event detection
+├── 04_Change_Detection/                  # Live database event detection
 │   └── change_detector.py             # Event listener for INSERT/UPDATE schema shift
 │
-├── Redis_Hash_Vault/                  # In-memory mapping & token vault
+├── 05_Redis_Hash_Vault/                  # In-memory mapping & token vault
 │   ├── redis_mapping.py               # Memory-optimized encrypted Redis/Local cache client
 │   └── anonymizer.py                  # Tokenization, Masking, Hashing, and DP engines
 │
-├── Redis_AOF_Safety/                  # Redis crash safety persistence layer
+├── 06_Redis_AOF_Safety/                  # Redis crash safety persistence layer
 │   └── aof_config.py                  # Enforced appendonly & maxmemory noeviction configurations
 │
-├── Polling_Worker/                    # Background polling worker
+├── 07_Polling_Worker/                    # Background polling worker
 │   └── polling_worker.py              # 30-second scheduling worker for incremental replication
 │
-├── Destination_Loader/                # Transactional destination loading
+├── 08_Destination_Loader/                # Transactional destination loading
 │   └── policy_executor.py             # Recreates schema, streams chunk data, handles transactions
 │
-├── Validation_Engine/                 # Data validation and risk scoring
+├── 09_Validation_Engine/                 # Data validation and risk scoring
 │   ├── validation_engine.py           # Checks counts, regex leaks, and runs Thief Agent LLM
 │   └── test_validation_engine.py      # E2E validation and penetration test suite
 │
-├── Audit_Report/                      # Compliance logging and audits
+├── 10_Audit_Report/                      # Compliance logging and audits
 │   ├── audit_report_generator.py      # Generates JSON and print-ready text compliance certificates
 │   └── test_audit_report.py           # Compliance audit generator test suite
 │
-├── Admin_Dashboard/                   # Admin human-in-the-loop review interface
+├── 11_Admin_Dashboard/                   # Admin human-in-the-loop review interface
 │   ├── admin_policy_service.py        # Service managing technique overrides & approval gates
 │   └── test_admin_policy_risk.py      # Pre-execution forecast override test suite
 │
-└── Approval_Workflow/                 # Production approval gating workflow
+└── 12_Approval_Workflow/                 # Production approval gating workflow
     └── approval_workflow.py           # Approval status check block protecting sandbox insertion
 ```
 
