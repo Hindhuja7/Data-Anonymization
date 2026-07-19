@@ -12,12 +12,12 @@ from sqlalchemy import create_engine, text
 # Add layers to path
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for _layer in [
-    "Connection_Extraction", "Enterprise_Classification", 
-    "PII_Detection", "Change_Detection", 
-    "Redis_Hash_Vault", "Redis_AOF_Safety", 
-    "Polling_Worker", "Destination_Loader", 
-    "Validation_Engine", "Audit_Report", 
-    "Admin_Dashboard", "Approval_Workflow"
+    "01_Connection_Extraction", "02_Enterprise_Classification", 
+    "03_PII_Detection", "04_Change_Detection", 
+    "05_Redis_Hash_Vault", "06_Redis_AOF_Safety", 
+    "07_Polling_Worker", "08_Destination_Loader", 
+    "09_Validation_Engine", "10_Audit_Report", 
+    "11_Admin_Dashboard", "12_Approval_Workflow"
 ]:
     _path = os.path.join(_root, _layer)
     if _path not in sys.path:
