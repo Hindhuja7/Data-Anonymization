@@ -665,15 +665,42 @@ class PolicyExecutor:
         
         # Step 8: Validate results
         print("\n[STEP 8] Validating results...")
-        self.validate_results()
+        validation_passed = self.validate_results()
+        if not validation_passed:
+            all_success = False
         
         self.progress["end_time"] = datetime.now()
+        duration = (self.progress["end_time"] - self.progress["start_time"]).total_seconds()
+        
+        # Step 9 (Step 16 in 17-steps): Generate Audit Report
+        print("\n[STEP 9] Generating Audit & Compliance Report...")
+        try:
+            from audit_report_generator import AuditReportGenerator
+            
+            table_reports = getattr(self, "validation_engine", None)
+            reports_list = table_reports.table_reports if table_reports else []
+            
+            stats = {
+                "duration_seconds": duration,
+                "tables_processed": len(self.progress["tables_processed"]),
+                "total_rows_processed": self.progress["total_rows_processed"]
+            }
+            
+            generator = AuditReportGenerator(policy=self.policy)
+            generator.generate_report(
+                table_reports=reports_list,
+                execution_stats=stats,
+                output_dir="C:/Users/lokin/.gemini/antigravity/scratch/Data-Anonymization",
+                approved_by=self.policy.get("policy_metadata", {}).get("approved_by", "Admin")
+            )
+            print("[OK] Compliance report and certificate generated successfully.")
+        except Exception as e:
+            print(f"WARNING: Failed to generate compliance report: {e}")
         
         # Final summary
         print("\n" + "=" * 80)
         print("EXECUTION SUMMARY")
         print("=" * 80)
-        duration = (self.progress["end_time"] - self.progress["start_time"]).total_seconds()
         print(f"Duration: {duration:.2f} seconds")
         print(f"Tables processed: {len(self.progress['tables_processed'])}")
         print(f"Total rows processed: {self.progress['total_rows_processed']:,}")
@@ -686,15 +713,15 @@ class PolicyExecutor:
         
         return all_success and len(self.progress["failed_chunks"]) == 0
     
-    def validate_results(self):
+    def validate_results(self) -> bool:
         """Validate anonymization results."""
-        engine = ValidationEngine(
+        self.validation_engine = ValidationEngine(
             source_connector=self.source_connector,
             destination_connector=self.destination_connector,
             source_schema=self.source_schema,
             policy=self.policy
         )
-        engine.validate_results(self.progress["tables_processed"])
+        return self.validation_engine.validate_results(self.progress["tables_processed"])
     
     def cleanup(self):
         """Clean up resources."""

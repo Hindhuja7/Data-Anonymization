@@ -29,3 +29,8 @@ wheels/
 venv/
 env/
 ENV/
+
+# Databases and verification reports
+*.db
+compliance_report.json
+compliance_report.txt

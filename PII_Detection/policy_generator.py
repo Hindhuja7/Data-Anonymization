@@ -286,6 +286,8 @@ class PolicyGenerator:
             self.policy["policy_metadata"]["approved_at"] = datetime.now().isoformat()
         
         if comments:
+            if "comments" not in self.policy["policy_metadata"] or not isinstance(self.policy["policy_metadata"]["comments"], list):
+                self.policy["policy_metadata"]["comments"] = []
             self.policy["policy_metadata"]["comments"].extend(comments)
     
     def override_column_policy(

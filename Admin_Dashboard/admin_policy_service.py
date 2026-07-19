@@ -57,6 +57,9 @@ class AdminPolicyService:
         try:
             policy = self.policy_generator.load_policy(self.policy_file)
             
+            # Calculate risk forecast
+            forecast = self.get_policy_risk_forecast(policy)
+            
             # Add review metadata
             policy["review_metadata"] = {
                 "policy_file": self.policy_file,
@@ -64,7 +67,8 @@ class AdminPolicyService:
                 "is_approvable": policy["policy_metadata"]["status"] == "DRAFT",
                 "total_columns": len(policy["column_policies"]),
                 "pii_columns": sum(1 for col in policy["column_policies"] if col["is_pii"]),
-                "admin_overrides": sum(1 for col in policy["column_policies"] if col.get("admin_override", False))
+                "admin_overrides": sum(1 for col in policy["column_policies"] if col.get("admin_override", False)),
+                "risk_forecast": forecast
             }
             
             return policy
@@ -73,6 +77,91 @@ class AdminPolicyService:
             raise FileNotFoundError(f"Policy file not found: {self.policy_file}")
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in policy file: {e}")
+            
+    def get_policy_risk_forecast(self, policy: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Calculates the predicted Privacy Risk Score and flags for the proposed policy in memory.
+        """
+        column_policies = policy.get("column_policies", [])
+        if not column_policies:
+            return {
+                "predicted_risk_score": 0.0,
+                "risk_flag": "GREEN",
+                "vulnerabilities": [],
+                "legend": self._get_risk_legend()
+            }
+            
+        total_weight = 0.0
+        total_penalty = 0.0
+        vulnerabilities = []
+        
+        for col in column_policies:
+            pii_type = col.get("pii_type", "NONE")
+            technique = col.get("anonymization_technique", "NO_CHANGE")
+            col_name = col.get("column_name", "")
+            table_name = col.get("table_name", "")
+            
+            # 1. Determine Column Vulnerability Weight
+            if pii_type in ["IDENTIFIER", "NAME", "EMAIL", "PHONE", "AADHAAR", "PAN", "GSTIN"]:
+                weight = 1.0
+            elif pii_type in ["QUASI_IDENTIFIER", "DOB", "AGE", "GENDER", "LOCATION", "SALARY"]:
+                weight = 0.5
+            else:
+                weight = 0.0
+                
+            # 2. Determine Technique Penalty Factor
+            if technique == "NO_CHANGE" and col.get("is_pii", False):
+                penalty_factor = 1.0
+                vulnerabilities.append(f"PII Column '{table_name}.{col_name}' left unanonymized (NO_CHANGE).")
+            elif technique == "DIFFERENTIAL_PRIVACY":
+                penalty_factor = 0.2
+            else:
+                penalty_factor = 0.0
+                
+            total_weight += weight
+            total_penalty += (weight * penalty_factor)
+            
+        # Base policy risk score (scaled to 70)
+        base_risk_score = 0.0
+        if total_weight > 0:
+            base_risk_score = (total_penalty / total_weight) * 70.0
+            
+        # Simulate Thief Agent linkage penalty if quasi-identifiers are left raw
+        thief_penalty = 0.0
+        quasi_left_raw = any(
+            c.get("pii_type") in ["DOB", "AGE", "GENDER", "LOCATION", "SALARY"] and 
+            c.get("anonymization_technique") == "NO_CHANGE"
+            for c in column_policies
+        )
+        if quasi_left_raw:
+            thief_penalty = 15.0
+            vulnerabilities.append("Quasi-identifiers left raw might allow linkage attacks.")
+            
+        predicted_score = min(100.0, base_risk_score + thief_penalty)
+        predicted_score = round(predicted_score, 2)
+        
+        # Map to flag color
+        if predicted_score == 0.0:
+            risk_flag = "GREEN"
+        elif predicted_score < 70.0:
+            risk_flag = "YELLOW"
+        else:
+            risk_flag = "RED"
+            
+        return {
+            "predicted_risk_score": predicted_score,
+            "risk_flag": risk_flag,
+            "vulnerabilities": vulnerabilities,
+            "legend": self._get_risk_legend()
+        }
+        
+    def _get_risk_legend(self) -> Dict[str, str]:
+        """Returns description of the risk flags."""
+        return {
+            "GREEN": "SECURE. All PII columns anonymized, zero linkage risk.",
+            "YELLOW": "WARNING. All PII data is successfully fake/anonymized, but theoretical quasi-identifier linkages exist.",
+            "RED": "CRITICAL. Direct raw PII leaks detected in target database, or high correlation risk."
+        }
     
     def get_policy_status(self) -> Dict[str, Any]:
         """

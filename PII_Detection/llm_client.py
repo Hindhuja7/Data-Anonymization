@@ -93,13 +93,21 @@ class LLMClient:
         
         return models_to_try
     
-    def chat_completion(self, messages: List[Dict[str, str]], max_tokens: int = 1024) -> str:
+    def chat_completion(
+        self, 
+        messages: List[Dict[str, str]], 
+        max_tokens: int = 1024,
+        temperature: Optional[float] = None,
+        response_format: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Perform chat completion with model fallback.
         
         Args:
             messages: List of message dicts with 'role' and 'content'
             max_tokens: Maximum tokens in response
+            temperature: Sampling temperature
+            response_format: OpenAI response format dictionary
             
         Returns:
             Response text from successful model
@@ -112,11 +120,18 @@ class LLMClient:
                 logger.info(f"Trying {provider} model: {model}")
                 client = self._initialize_client(provider, model)
                 
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens
-                )
+                # Build completion parameters
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": max_tokens
+                }
+                if temperature is not None:
+                    kwargs["temperature"] = temperature
+                if response_format is not None:
+                    kwargs["response_format"] = response_format
+                    
+                response = client.chat.completions.create(**kwargs)
                 response_text = response.choices[0].message.content
                 
                 # Success - cache current client

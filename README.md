@@ -76,7 +76,7 @@ graph TD
     end
 
     subgraph Layer 4: Anonymization & Vault
-        S6 --> S7[Step 7: Admin Review & Override]
+        S6 --> S7[Step 7: Admin Review & Pre-Execution Risk Audit]
         S7 --> S8[Step 8: Change Detection]
         S8 --> S9[Step 9: In-Memory Encryption Mapping]
         S9 --> S10[Step 10: Redis AOF Crash Safety]
@@ -84,7 +84,6 @@ graph TD
         S11 --> S12[Step 12: Anonymization Engine]
         S12 --> S13[Step 13: Batch Loading Queue]
     end
-
     subgraph Target Sandboxes
         S13 --> S14[Step 14: Validation & Audits]
         S14 --> S15[Step 15: Generate Safe Sandbox DB]
@@ -106,7 +105,7 @@ graph TD
 * **Step 6: Build Anonymization Policy**: Recommends techniques prioritised by: Enterprise rules > Regex > LLM > Masking (default fallback).
 
 ### Layer 4: Anonymization & Vault (Steps 7 through 13)
-* **Step 7: Admin Review & Approval**: Allows overriding techniques and locking the approved policy rules.
+* **Step 7: Admin Review & Approval (Pre-Execution Risk Audit)**: Provides in-memory predicted Privacy Risk Scores and color-coded risk flag warnings (Green, Yellow, Red) with audit legends to guide the Admin before approving the policy and writing any data.
 * **Step 8: Change Detection**: Listens to database events to track changes.
 * **Step 9: In-Memory Transformation (Redis Hash Vault)**: Cryptographically maps original values to consistent fake values using Fernet-encrypted Redis vaults (or in-memory cache).
 * **Step 10: Crash Safety (Redis AOF)**: Ensures mappings are saved and recoverable upon power loss/restart.
@@ -117,7 +116,7 @@ graph TD
 ### Validation & Output (Steps 14 through 17)
 * **Step 14: Validation Engine**: Re-scans destination data, checking type preservation, row counts, and calculating a Privacy Risk Score (0-100).
 * **Step 15: Generate Safe Database**: Writes target rows to the sandbox DB.
-* **Step 16: Audit & Compliance Report**: Exports detailed counts audit and compliance status HTML/PDF.
+* **Step 16: Audit & Compliance Report**: Exports detailed counts audit, compliance status, and flag color legends in JSON and UTF-8 TXT formats.
 * **Step 17: Output to Admin**: Dashboard displays audit stats, download links, and risk scores.
 
 ---
