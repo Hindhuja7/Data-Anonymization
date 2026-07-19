@@ -103,7 +103,7 @@ class RedisMappingSystem:
             self.redis_client.ping()
             self.online = True
             
-            # Delegate to Redis_AOF_Safety module
+            # Delegate to 06_Redis_AOF_Safety module
             configure_redis_mitigations(self.redis_client)
         except Exception as e:
             self.online = False
