@@ -22,6 +22,7 @@ Data-Anonymization/
 │   ├── combined_detector.py           # Merges LLM & heuristic regex results
 │   ├── llm_pii_detection.py           # LLM-based batch column detector
 │   ├── india_regex_patterns.py        # Aadhaar, PAN, GSTIN, Voter ID regex patterns
+│   ├── policy_generator.py            # Recommended anonymization policy builder
 │   └── database_pii_detection.py      # PII orchestration manager
 │
 ├── Change_Detection/                  # Live database event detection
@@ -32,25 +33,28 @@ Data-Anonymization/
 │   └── anonymizer.py                  # Tokenization, Masking, Hashing, and DP engines
 │
 ├── Redis_AOF_Safety/                  # Redis crash safety persistence layer
-│   └── .gitkeep                       # Enforced appendonly & maxmemory noeviction configurations
+│   └── aof_config.py                  # Enforced appendonly & maxmemory noeviction configurations
 │
 ├── Polling_Worker/                    # Background polling worker
-│   └── .gitkeep                       # 30-second scheduling worker
+│   └── polling_worker.py              # 30-second scheduling worker for incremental replication
 │
 ├── Destination_Loader/                # Transactional destination loading
 │   └── policy_executor.py             # Recreates schema, streams chunk data, handles transactions
 │
 ├── Validation_Engine/                 # Data validation and risk scoring
-│   └── .gitkeep                       # Validates schema preservation and type matches
+│   ├── validation_engine.py           # Checks counts, regex leaks, and runs Thief Agent LLM
+│   └── test_validation_engine.py      # E2E validation and penetration test suite
 │
 ├── Audit_Report/                      # Compliance logging and audits
-│   └── .gitkeep                       # Stores operation logs, applied techniques history, and generates audits
+│   ├── audit_report_generator.py      # Generates JSON and print-ready text compliance certificates
+│   └── test_audit_report.py           # Compliance audit generator test suite
 │
 ├── Admin_Dashboard/                   # Admin human-in-the-loop review interface
-│   └── admin_policy_service.py        # Service managing technique overrides & approval gates
+│   ├── admin_policy_service.py        # Service managing technique overrides & approval gates
+│   └── test_admin_policy_risk.py      # Pre-execution forecast override test suite
 │
 └── Approval_Workflow/                 # Production approval gating workflow
-    └── .gitkeep                       # Approval status check block protecting sandbox insertion
+    └── approval_workflow.py           # Approval status check block protecting sandbox insertion
 ```
 
 ---
