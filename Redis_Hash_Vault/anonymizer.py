@@ -87,6 +87,7 @@ class Anonymizer:
             table_name: Name of the table (for Redis mapping)
             is_foreign_key: Whether column is a foreign key (for global mapping)
             is_primary_key: Whether column is a primary key (for global mapping)
+            row_indices: Optional list of row indices for row-level consistency
         
         Returns:
             List of anonymized values
@@ -95,7 +96,7 @@ class Anonymizer:
             return values
         
         if technique.upper() == "TOKENIZATION":
-            return self._tokenize(values, pii_type, column_name, table_name, is_foreign_key, is_primary_key)
+            return self._tokenize(values, pii_type, column_name, table_name, is_foreign_key, is_primary_key, row_indices)
         
         elif technique.upper() == "MASKING":
             return self._mask(values, pii_type, column_name, table_name, is_foreign_key, is_primary_key)
@@ -126,7 +127,8 @@ class Anonymizer:
         column_name: Optional[str],
         table_name: Optional[str] = None,
         is_foreign_key: bool = False,
-        is_primary_key: bool = False
+        is_primary_key: bool = False,
+        row_indices: Optional[List[int]] = None
     ) -> List[Any]:
         """
         Replace values with realistic fake values using Faker with Redis mapping.
@@ -138,6 +140,7 @@ class Anonymizer:
             table_name: Name of the table
             is_foreign_key: Whether column is a foreign key (for global mapping)
             is_primary_key: Whether column is a primary key (for global mapping)
+            row_indices: Optional list of row indices for row-level consistency
         
         Returns:
             List of tokenized values
@@ -147,6 +150,50 @@ class Anonymizer:
         # Use schema-based detection for global mapping (not keyword-based)
         needs_global_mapping = is_foreign_key or is_primary_key
         
+        # Handle related name columns with row-level consistency
+        if column_name in ["first_name", "last_name", "full_name"] and row_indices is not None:
+            import json
+            for i, value in enumerate(values):
+                if value is None or value == "":
+                    tokenized.append(value)
+                    continue
+                
+                row_idx = row_indices[i]
+                row_key = f"{table_name}_row_{row_idx}_name_identity"
+                
+                # Check Redis for existing row-level identity
+                existing_identity = self.redis_mapping.get_mapping(table_name, row_key, "identity")
+                if existing_identity:
+                    # Deserialize JSON
+                    try:
+                        identity_dict = json.loads(existing_identity)
+                        first_name = identity_dict.get("first_name", self.faker.first_name())
+                        last_name = identity_dict.get("last_name", self.faker.last_name())
+                    except:
+                        # Fallback if JSON parsing fails
+                        first_name = self.faker.first_name()
+                        last_name = self.faker.last_name()
+                else:
+                    # Generate new identity for this row
+                    first_name = self.faker.first_name()
+                    last_name = self.faker.last_name()
+                    identity = {"first_name": first_name, "last_name": last_name}
+                    # Serialize to JSON before storing
+                    self.redis_mapping.set_mapping(table_name, row_key, "identity", json.dumps(identity))
+                
+                # Return appropriate value based on column
+                if column_name == "first_name":
+                    fake_value = first_name
+                elif column_name == "last_name":
+                    fake_value = last_name
+                else:  # full_name - always derive from row identity
+                    fake_value = f"{first_name} {last_name}"
+                
+                tokenized.append(fake_value)
+            
+            return tokenized
+        
+        # Standard column-level processing for other columns
         for value in values:
             if value is None or value == "":
                 tokenized.append(value)
@@ -176,8 +223,25 @@ class Anonymizer:
             elif pii_type == "EMAIL" or "email" in column_name.lower():
                 fake_value = self.faker.email()
             
-            elif pii_type == "INDIAN_PHONE" or "phone" in column_name.lower() or "contact" in column_name.lower():
-                fake_value = self.faker.phone_number()
+            elif pii_type == "PHONE" or pii_type == "INDIAN_PHONE" or "phone" in column_name.lower() or "contact" in column_name.lower():
+                # Generate Indian phone number with +91 prefix
+                fake_value = f"+91 {self.faker.msisdn()[3:]}"  # Remove country code and add +91
+            
+            elif column_name == "city":
+                # Always handle city specifically
+                fake_value = self.faker.city()
+            
+            elif column_name == "state":
+                # Always handle state specifically
+                fake_value = self.faker.state()
+            
+            elif column_name == "pincode":
+                # Always handle pincode specifically - generate 6-digit Indian pincode
+                fake_value = str(random.randint(100000, 999999))
+            
+            elif pii_type == "LOCATION":
+                # Generic location - default to city
+                fake_value = self.faker.city()
             
             elif pii_type == "ADDRESS" or "address" in column_name.lower():
                 fake_value = self.faker.address()

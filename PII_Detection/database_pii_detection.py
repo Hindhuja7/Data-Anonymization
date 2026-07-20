@@ -22,6 +22,7 @@ from sample_extractor import SampleExtractor
 from combined_detector import CombinedPIIDetector
 from enterprise_detector import EnterpriseDetector
 from anonymizer import Anonymizer
+from policy_generator import PolicyGenerator
 
 load_dotenv()
 
@@ -294,6 +295,34 @@ class DatabasePIIDetector:
                     anonymized_data[table_name][column_name] = None
         
         return anonymized_data
+    
+    def generate_anonymization_policy(
+        self,
+        pii_report: Dict[str, Any],
+        output_file: str = "anonymization_policy.json"
+    ) -> Dict[str, Any]:
+        """
+        Generate an anonymization policy from PII detection results.
+        
+        Args:
+            pii_report: PII detection report from detect_pii()
+            output_file: Path to save the policy file
+        
+        Returns:
+            Dictionary containing the anonymization policy
+        """
+        # Get schema information for additional context
+        table_schemas = self.schema_extractor.get_all_schemas()
+        schema_info = {schema["table_name"]: schema for schema in table_schemas}
+        
+        # Generate policy
+        policy_generator = PolicyGenerator()
+        policy = policy_generator.generate_policy(pii_report, schema_info)
+        
+        # Save policy to file
+        policy_generator.save_policy(output_file)
+        
+        return policy
     
     def disconnect(self):
         """Close database connection."""
