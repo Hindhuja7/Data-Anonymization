@@ -54,7 +54,7 @@ class Anonymizer:
             redis_password: Redis password
         """
         self.faker = Faker(locale)
-        Faker.seed(12345)  # For reproducible results
+        Faker.seed(54321)  # Use a different seed to prevent collision with source test data seed
         
         # Initialize Redis mapping system
         self.redis_mapping = RedisMappingSystem(

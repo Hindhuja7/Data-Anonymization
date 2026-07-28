@@ -151,7 +151,8 @@ Respond in JSON only, no extra text:
                 if field not in result:
                     raise ValueError(f"Missing required field: {field}")
             
-            logger.info(f"Enterprise detected: {result['enterprise_type']} (confidence: {result['confidence']})")
+            result["classification_source"] = "AI"
+            logger.info(f"Enterprise detected via AI: {result['enterprise_type']} (confidence: {result['confidence']})")
             return result
             
         except Exception as e:
@@ -161,20 +162,12 @@ Respond in JSON only, no extra text:
     def _heuristic_fallback(self, table_schemas: list) -> Dict[str, Any]:
         """
         Fallback heuristic analysis if LLM fails.
-        
-        Args:
-            table_schemas: List of table schema dictionaries
-        
-        Returns:
-            Dictionary with enterprise_type, confidence, reasoning, compliance_law
         """
-        # Collect all table and column names
-        table_names = [schema["table_name"].lower() for schema in table_schemas]
+        table_names = [schema["table_name"].lower() for schema in table_schemas if "table_name" in schema]
         all_columns = []
         for schema in table_schemas:
-            all_columns.extend([col["column_name"].lower() for col in schema["columns"]])
+            all_columns.extend([col["column_name"].lower() for col in schema.get("columns", []) if "column_name" in col])
         
-        # Keyword matching
         enterprise_keywords = {
             "BANKING": ["account", "transaction", "loan", "credit", "ifsc", "emi", "balance", "bank"],
             "HEALTHCARE": ["patient", "doctor", "prescription", "diagnosis", "blood", "ward", "medical"],
@@ -184,7 +177,6 @@ Respond in JSON only, no extra text:
             "TELECOM": ["subscriber", "call", "data", "recharge", "sim"]
         }
         
-        # Score each enterprise type
         scores = {}
         for enterprise, keywords in enterprise_keywords.items():
             score = 0
@@ -193,20 +185,19 @@ Respond in JSON only, no extra text:
                 score += sum(1 for col in all_columns if keyword in col)
             scores[enterprise] = score
         
-        # Find highest score
-        max_score = max(scores.values())
+        max_score = max(scores.values()) if scores else 0
         if max_score == 0:
             return {
                 "enterprise_type": "GENERAL",
-                "confidence": 0.3,
-                "reasoning": "No clear enterprise signals detected in table/column names",
+                "classification_source": "unavailable",
+                "confidence": None,
+                "reasoning": "AI classification service unavailable. No clear heuristic signals detected in schema.",
                 "compliance_law": "DPDP Act 2023"
             }
         
         best_match = max(scores, key=scores.get)
-        confidence = min(0.7, max_score / 10.0)  # Cap at 0.7 for heuristic
+        confidence = min(0.7, max_score / 10.0)
         
-        # Map to compliance law
         compliance_map = {
             "BANKING": "RBI Guidelines + DPDP Act 2023",
             "HEALTHCARE": "DPDP Act 2023 + Indian Medical Council guidelines",
@@ -217,11 +208,16 @@ Respond in JSON only, no extra text:
             "GENERAL": "DPDP Act 2023"
         }
         
+        matched_cols = [col for col in all_columns if any(kw in col for kw in enterprise_keywords[best_match])]
+        tables_str = ", ".join(table_names)
+        
         return {
             "enterprise_type": best_match,
-            "confidence": confidence,
-            "reasoning": f"Heuristic analysis detected {best_match} based on keyword matching in table/column names",
-            "compliance_law": compliance_map.get(best_match, "DPDP Act 2023")
+            "classification_source": "local_heuristic",
+            "confidence": round(confidence, 2),
+            "reasoning": f"Local Heuristic detected {best_match} for target table(s) [{tables_str}]. Evidence columns: {', '.join(matched_cols[:5]) if matched_cols else 'table name'}.",
+            "compliance_law": compliance_map.get(best_match, "DPDP Act 2023"),
+            "evidence": matched_cols
         }
 
 

@@ -86,6 +86,7 @@ class RedisMappingSystem:
         )
         
         self.online = True
+        self.last_check_time = 0
         
         # 3. Local In-Memory Fallback Caches
         # Key format: "table:column:hashed_val"
@@ -130,6 +131,11 @@ class RedisMappingSystem:
     def check_connection(self) -> bool:
         """Check if Redis is back online and perform automatic cache synchronization if recovered."""
         if not self.online:
+            import time
+            now = time.time()
+            if now - self.last_check_time < 10:
+                return False
+            self.last_check_time = now
             try:
                 self.redis_client.ping()
                 self.online = True
@@ -395,6 +401,39 @@ class RedisMappingSystem:
                 "total_mappings": len(self.local_cache) + len(self.global_cache),
                 "storage_mode": "error_fallback_local"
             }
+
+    def push_change_event(self, event_dict: Dict[str, Any]) -> str:
+        """Push a standardized change event to the Redis queue 'datavault:change_events'."""
+        event_json = json.dumps(event_dict)
+        if self.redis_client:
+            try:
+                self.redis_client.rpush("datavault:change_events", event_json)
+                return event_dict.get("event_id", "")
+            except Exception as e:
+                print(f"[WARN] Failed pushing change event to Redis: {e}")
+        return event_dict.get("event_id", "")
+
+    def save_checkpoint(self, last_event_id: str, timestamp: str):
+        """Save processing checkpoint into Redis hash 'datavault:checkpoint'."""
+        if self.redis_client:
+            try:
+                self.redis_client.hset("datavault:checkpoint", mapping={
+                    "last_processed_event_id": last_event_id,
+                    "last_processed_timestamp": timestamp
+                })
+            except Exception as e:
+                print(f"[WARN] Failed saving checkpoint to Redis: {e}")
+
+    def get_checkpoint(self) -> Dict[str, Any]:
+        """Get current processing checkpoint from Redis hash 'datavault:checkpoint'."""
+        if self.redis_client:
+            try:
+                data = self.redis_client.hgetall("datavault:checkpoint")
+                if data:
+                    return {k.decode() if isinstance(k, bytes) else k: v.decode() if isinstance(v, bytes) else v for k, v in data.items()}
+            except Exception as e:
+                print(f"[WARN] Failed getting checkpoint from Redis: {e}")
+        return {"last_processed_event_id": "none", "last_processed_timestamp": ""}
     
     def close(self):
         """Close Redis connection."""

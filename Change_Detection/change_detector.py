@@ -39,29 +39,47 @@ class SQLAlchemyEventListener:
         def receive_before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
         ):
+            import uuid
+            from datetime import datetime
             stmt_upper = statement.strip().upper()
             
-            # Match INSERT INTO or UPDATE queries and extract table name
-            if stmt_upper.startswith("INSERT") or stmt_upper.startswith("UPDATE"):
-                # Regex matching INSERT INTO <table> or UPDATE <table>
+            # Match INSERT INTO, UPDATE, or DELETE FROM queries and extract table name
+            if stmt_upper.startswith("INSERT") or stmt_upper.startswith("UPDATE") or stmt_upper.startswith("DELETE"):
                 match = re.search(
-                    r'(?:INSERT\s+INTO|UPDATE)\s+["`]?([a-zA-Z0-9_-]+)["`]?',
+                    r'(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+["`]?([a-zA-Z0-9_-]+)["`]?',
                     statement,
                     re.IGNORECASE
                 )
                 if match:
                     table_name = match.group(1).lower()
-                    op_type = "INSERT" if stmt_upper.startswith("INSERT") else "UPDATE"
+                    if stmt_upper.startswith("INSERT"):
+                        op_type = "INSERT"
+                    elif stmt_upper.startswith("UPDATE"):
+                        op_type = "UPDATE"
+                    else:
+                        op_type = "DELETE"
                     
+                    pk_val = "auto"
+                    if parameters:
+                        if isinstance(parameters, (list, tuple)) and len(parameters) > 0:
+                            pk_val = str(parameters[0])
+                        elif isinstance(parameters, dict):
+                            pk_val = str(next(iter(parameters.values()), "auto"))
+
                     event_data = {
+                        "event_id": f"evt_{uuid.uuid4().hex[:8]}",
+                        "table": table_name,
                         "table_name": table_name,
                         "operation": op_type,
-                        "timestamp": time.time(),
+                        "primary_key": pk_val,
+                        "timestamp": datetime.now().isoformat(),
+                        "transaction_id": f"tx_{uuid.uuid4().hex[:8]}",
+                        "status": "queued",
                         "source": "orm_realtime"
                     }
                     self.changes_queue.append(event_data)
                     logger.info(
-                        f"[Real-Time Change] Detected {op_type} query on table: {table_name}"
+                        f"[Real-Time Change] Detected {op_type} query on table: {table_name} (Event ID: {event_data['event_id']})"
                     )
 
         self.is_listening = True

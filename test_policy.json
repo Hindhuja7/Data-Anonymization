@@ -1,0 +1,65 @@
+{
+  "policy_metadata": {
+    "created_at": "2024-01-01",
+    "approved_by": "TestAdmin",
+    "approved": true,
+    "status": "APPROVED"
+  },
+  "column_policies": {},
+  "tables": {
+    "customers": {
+      "columns": {
+        "id": {
+          "action": "keep"
+        },
+        "name": {
+          "action": "keep"
+        },
+        "email": {
+          "action": "hash"
+        },
+        "phone": {
+          "action": "mask"
+        },
+        "address": {
+          "action": "keep"
+        }
+      }
+    },
+    "orders": {
+      "columns": {
+        "id": {
+          "action": "keep"
+        },
+        "customer_id": {
+          "action": "keep"
+        },
+        "order_date": {
+          "action": "keep"
+        },
+        "amount": {
+          "action": "keep"
+        }
+      }
+    },
+    "order_items": {
+      "columns": {
+        "id": {
+          "action": "keep"
+        },
+        "order_id": {
+          "action": "keep"
+        },
+        "product_name": {
+          "action": "keep"
+        },
+        "quantity": {
+          "action": "keep"
+        },
+        "price": {
+          "action": "keep"
+        }
+      }
+    }
+  }
+}

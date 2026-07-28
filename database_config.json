@@ -1,0 +1,14 @@
+{
+  "database_type": "postgresql",
+  "type": "postgresql",
+  "host": "ep-gentle-wave-atqzagux-pooler.c-9.us-east-1.aws.neon.tech",
+  "port": 5432,
+  "database_name": "neondb",
+  "database": "neondb",
+  "username": "neondb_owner",
+  "password": "npg_BsO9tyw8dTRW",
+  "sslmode": "require",
+  "target_table": "accounts",
+  "user_id": "default",
+  "auto_start": false
+}

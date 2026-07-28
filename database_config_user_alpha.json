@@ -1,0 +1,10 @@
+{
+  "type": "postgresql",
+  "host": "ep-alpha-db.neon.tech",
+  "port": "5432",
+  "username": "user_a",
+  "password": "secret_password_a",
+  "database": "neondb",
+  "user_id": "user_alpha",
+  "auto_start": false
+}

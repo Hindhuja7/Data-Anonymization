@@ -1,0 +1,161 @@
+import json
+import os
+from typing import Dict, Any, Optional
+from fastapi.responses import Response, StreamingResponse
+from app.core.config import config
+from app.core.logger import logger
+from app.core.exceptions import ReportException
+
+class ReportService:
+    """Service for report generation and download"""
+    
+    def __init__(self):
+        self.report_path = config.COMPLIANCE_REPORT_PATH
+    
+    def generate_pdf_report(self) -> Response:
+        """Generate PDF compliance report"""
+        try:
+            # Mock PDF generation - in production, use reportlab or similar
+            logger.info("Generating PDF report")
+            
+            # Read existing report data
+            if os.path.exists(self.report_path):
+                with open(self.report_path, 'r') as f:
+                    report_data = json.load(f)
+            else:
+                report_data = {"error": "Report not found"}
+            
+            # Return as PDF (mock - would be actual PDF in production)
+            pdf_content = f"PDF Report: {json.dumps(report_data, indent=2)}"
+            
+            return Response(
+                content=pdf_content,
+                media_type="application/pdf",
+                headers={"Content-Disposition": "attachment; filename=compliance_report.pdf"}
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to generate PDF report: {e}")
+            raise ReportException(f"Failed to generate PDF report: {e}")
+    
+    def generate_csv_report(self) -> Response:
+        """Generate CSV compliance report"""
+        try:
+            logger.info("Generating CSV report")
+            
+            # Read existing report data
+            if os.path.exists(self.report_path):
+                with open(self.report_path, 'r') as f:
+                    report_data = json.load(f)
+            else:
+                report_data = {"error": "Report not found"}
+            
+            # Convert to CSV format
+            csv_content = self._convert_to_csv(report_data)
+            
+            return Response(
+                content=csv_content,
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=compliance_report.csv"}
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to generate CSV report: {e}")
+            raise ReportException(f"Failed to generate CSV report: {e}")
+    
+    def generate_sql_report(self) -> Response:
+        """Generate SQL compliance report"""
+        try:
+            logger.info("Generating SQL report")
+            
+            # Read existing report data
+            if os.path.exists(self.report_path):
+                with open(self.report_path, 'r') as f:
+                    report_data = json.load(f)
+            else:
+                report_data = {"error": "Report not found"}
+            
+            # Convert to SQL format
+            sql_content = self._convert_to_sql(report_data)
+            
+            return Response(
+                content=sql_content,
+                media_type="text/plain",
+                headers={"Content-Disposition": "attachment; filename=compliance_report.sql"}
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to generate SQL report: {e}")
+            raise ReportException(f"Failed to generate SQL report: {e}")
+    
+    def generate_txt_report(self) -> Response:
+        """Generate TXT compliance report"""
+        try:
+            logger.info("Generating TXT report")
+            
+            # Read existing report data
+            if os.path.exists(self.report_path):
+                with open(self.report_path, 'r') as f:
+                    report_data = json.load(f)
+            else:
+                report_data = {"error": "Report not found"}
+            
+            # Convert to TXT format
+            txt_content = self._convert_to_txt(report_data)
+            
+            return Response(
+                content=txt_content,
+                media_type="text/plain",
+                headers={"Content-Disposition": "attachment; filename=compliance_report.txt"}
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to generate TXT report: {e}")
+            raise ReportException(f"Failed to generate TXT report: {e}")
+    
+    def _convert_to_csv(self, data: Dict[str, Any]) -> str:
+        """Convert report data to CSV format"""
+        lines = []
+        
+        # Header
+        lines.append("Metric,Value")
+        
+        # Add metrics
+        for key, value in data.items():
+            if isinstance(value, (str, int, float)):
+                lines.append(f"{key},{value}")
+        
+        return "\n".join(lines)
+    
+    def _convert_to_sql(self, data: Dict[str, Any]) -> str:
+        """Convert report data to SQL format"""
+        lines = []
+        
+        lines.append("-- Compliance Report")
+        lines.append("-- Generated by DataVault AI")
+        lines.append("")
+        
+        # Add as comments
+        for key, value in data.items():
+            if isinstance(value, (str, int, float)):
+                lines.append(f"-- {key}: {value}")
+        
+        return "\n".join(lines)
+    
+    def _convert_to_txt(self, data: Dict[str, Any]) -> str:
+        """Convert report data to TXT format"""
+        lines = []
+        
+        lines.append("COMPLIANCE REPORT")
+        lines.append("=" * 50)
+        lines.append("")
+        
+        # Add metrics
+        for key, value in data.items():
+            if isinstance(value, (str, int, float)):
+                lines.append(f"{key}: {value}")
+        
+        return "\n".join(lines)
+
+# Global report service instance
+report_service = ReportService()

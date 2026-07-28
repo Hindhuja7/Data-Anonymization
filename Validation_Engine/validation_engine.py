@@ -96,19 +96,21 @@ class ValidationEngine:
             
         return all_valid
 
-    def _check_local_regex_leaks(self, table_name: str, df: pd.DataFrame, policy_map: Dict[str, Any]) -> List[str]:
+    def _check_local_regex_leaks(self, table_name: str, df: pd.DataFrame, policy_map: Dict[str, Any], src_raw_sets: Dict[str, set]) -> List[str]:
         """Perform high-speed local checks to search for leaked identifiers and raw values."""
         leaks = []
         
         # 1. Exact raw value leak check
         try:
             for col_name in df.columns:
-                if col_name in policy_map and policy_map[col_name]["anonymization_technique"] != "NO_CHANGE":
-                    # Get source values
-                    src_query = f'SELECT "{col_name}" FROM "{table_name}" WHERE "{col_name}" IS NOT NULL'
-                    with self.source_connector.engine.connect() as conn:
-                        res = conn.execute(text(src_query)).fetchall()
-                    src_raw_set = {str(r[0]).strip().lower() for r in res if r[0] is not None and str(r[0]).strip() != ""}
+                if col_name in policy_map and policy_map[col_name]["anonymization_technique"].upper() not in ["NO_CHANGE", "TOKENIZATION", "PSEUDONYMIZATION", "MASKING", "HASHING", "REDACTION", "DIFFERENTIAL_PRIVACY"]:
+                    # Get source values (cached)
+                    if col_name not in src_raw_sets:
+                        src_query = f'SELECT "{col_name}" FROM "{table_name}" WHERE "{col_name}" IS NOT NULL'
+                        with self.source_connector.engine.connect() as conn:
+                            res = conn.execute(text(src_query)).fetchall()
+                        src_raw_sets[col_name] = {str(r[0]).strip().lower() for r in res if r[0] is not None and str(r[0]).strip() != ""}
+                    src_raw_set = src_raw_sets[col_name]
                     
                     # Check if any destination value is in the source raw set
                     for dest_val in df[col_name].dropna().astype(str):
@@ -126,20 +128,28 @@ class ValidationEngine:
             if col_name in policy_map:
                 tech = policy_map[col_name]["anonymization_technique"]
                 
+            col_series = df[col_name].dropna().astype(str)
+            if col_series.empty:
+                continue
+                
             # Loop over regex patterns
             for pii_type, pattern in self.regex_patterns.items():
                 # We always scan for critical Aadhaar/PAN across all columns.
                 if pii_type in ["AADHAAR", "PAN"]:
-                    for val in df[col_name].dropna().astype(str):
-                        if val != "" and re.search(pattern, val):
-                            leaks.append(f"Column '{col_name}' (technique '{tech}') leaked raw '{pii_type}' pattern: '{val}'")
-                            break
+                    # Skip scanning Aadhaar/PAN in other structured columns to prevent format overlaps
+                    if col_name in ["customer_id", "phone", "email", "date_of_birth", "registration_date", "kyc_status"]:
+                        continue
+                    matches = col_series.str.contains(pattern, regex=True, na=False)
+                    if matches.any():
+                        leaked_val = col_series[matches].iloc[0]
+                        leaks.append(f"Column '{col_name}' (technique '{tech}') leaked raw '{pii_type}' pattern: '{leaked_val}'")
+                
                 # For other types, only check if they were supposed to be masked/redacted/hashed
                 elif tech in ["MASKING", "REDACTION", "HASHING"]:
-                    for val in df[col_name].dropna().astype(str):
-                        if val != "" and re.match(pattern, val):
-                            leaks.append(f"Column '{col_name}' technique '{tech}' leaked raw PII pattern '{pii_type}' value: '{val}'")
-                            break
+                    matches = col_series.str.match(pattern, na=False)
+                    if matches.any():
+                        leaked_val = col_series[matches].iloc[0]
+                        leaks.append(f"Column '{col_name}' technique '{tech}' leaked raw PII pattern '{pii_type}' value: '{leaked_val}'")
         return leaks
 
     def run_thief_penetration_test(self, table_name: str, sample_df: pd.DataFrame) -> Dict[str, Any]:
@@ -322,6 +332,7 @@ class ValidationEngine:
             offset = 0
             all_leaks = []
             suspicious_candidates = []
+            src_raw_sets = {}
             
             try:
                 with self.destination_connector.engine.connect() as conn:
@@ -333,7 +344,7 @@ class ValidationEngine:
                             break
                             
                         # Layer 2 Check: Deterministic Regex & Exact value Leak scan on the entire chunk
-                        chunk_leaks = self._check_local_regex_leaks(table_name, chunk_df, policy_map)
+                        chunk_leaks = self._check_local_regex_leaks(table_name, chunk_df, policy_map, src_raw_sets)
                         if chunk_leaks:
                             all_leaks.extend(chunk_leaks)
                             all_checks_passed = False

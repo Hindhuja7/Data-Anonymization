@@ -97,37 +97,22 @@ class SampleExtractor:
 
             with self.engine.connect() as conn:
 
-                # For each column, fetch random samples independently
+                # Use single query to fetch all columns at once
+                random_func = self._get_random_function()
+                columns_str = ', '.join([f'"{col}"' for col in column_names])
+                query = text(f'SELECT {columns_str} FROM "{table_name}" ORDER BY {random_func} LIMIT {self.sample_size}')
 
-                for column_name in column_names:
+                result = conn.execute(query)
+                rows = result.fetchall()
 
-                    # Use database-specific random sampling
-
-                    random_func = self._get_random_function()
-
-                    query = text(f'SELECT "{column_name}" FROM "{table_name}" ORDER BY {random_func} LIMIT {self.sample_size}')
-
-                    
-
-                    result = conn.execute(query)
-
-                    rows = result.fetchall()
-
-                    
-
-                    # Extract values
-
-                    for row in rows:
-
-                        value = row[0]
-
+                # Extract values column-wise
+                for row in rows:
+                    for i, value in enumerate(row):
+                        col_name = column_names[i]
                         if value is None:
-
-                            samples[column_name].append("NULL")
-
+                            samples[col_name].append("NULL")
                         else:
-
-                            samples[column_name].append(str(value))
+                            samples[col_name].append(str(value))
 
                 
 

@@ -33,6 +33,17 @@ class SchemaExtractor:
             List of table names
         """
         try:
+            import os
+            tables_env = os.getenv("TABLES_TO_PROCESS")
+            if tables_env:
+                table_names = [t.strip() for t in tables_env.split(",") if t.strip()]
+                logger.info(f"Using filtered tables from env: {table_names}")
+                # Ensure they actually exist in the database
+                db_tables = self.inspector.get_table_names()
+                table_names = [t for t in table_names if t in db_tables]
+                logger.info(f"Filtered tables existing in DB: {table_names}")
+                return table_names
+                
             table_names = self.inspector.get_table_names()
             logger.info(f"Found {len(table_names)} tables")
             return table_names
