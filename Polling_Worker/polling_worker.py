@@ -196,9 +196,25 @@ class PollingWorker:
                     self.checkpoints[table_name]["max_time"] = max_time_val
                     logger.info(f"Table '{table_name}': Restored checkpoints (Max ID: {max_id_val}, Max Time: {max_time_val})")
                 else:
-                    # No checkpoint saved yet. Establish baseline using CURRENT state of the SOURCE database.
-                    # This assumes all current source data was already loaded during the initial full sync.
+                    # No checkpoint saved yet. Verify destination completeness BEFORE creating baseline.
                     with self.source_connector.engine.connect() as src_conn:
+                        src_count_query = text(f'SELECT COUNT(*) FROM "{table_name}"')
+                        src_count = src_conn.execute(src_count_query).scalar() or 0
+
+                        with self.destination_connector.engine.connect() as dst_conn_chk:
+                            dst_count_query = text(f'SELECT COUNT(*) FROM "{table_name}"')
+                            try:
+                                dst_count = dst_conn_chk.execute(dst_count_query).scalar() or 0
+                            except Exception:
+                                dst_count = 0
+
+                        # STRICT BASELINE VALIDATION GUARD:
+                        # If destination row count does not match source row count, REFUSE to create an unsafe checkpoint!
+                        if src_count != dst_count:
+                            err_msg = f"Baseline synchronization error for table '{table_name}': Source count ({src_count}) does not match Destination count ({dst_count}). Refusing to create unsafe baseline checkpoint."
+                            logger.error(err_msg)
+                            raise ValueError(err_msg)
+
                         max_id_val = None
                         max_time_val = None
                         
@@ -213,8 +229,6 @@ class PollingWorker:
                                 pk_query = text(f'SELECT "{pk_col}" FROM "{table_name}"')
                                 try:
                                     src_pks = [r[0] for r in src_conn.execute(pk_query).fetchall() if r[0] is not None]
-                                    # Since destination is anonymized, we load destination keys directly to match seen_pks
-                                    # to avoid double-processing if string key
                                     with self.destination_connector.engine.connect() as conn:
                                         dest_pks = [r[0] for r in conn.execute(pk_query).fetchall() if r[0] is not None]
                                         self.checkpoints[table_name]["seen_pks"] = set(dest_pks)
@@ -238,7 +252,7 @@ class PollingWorker:
                             "max_id": str(max_id_val) if max_id_val is not None else None,
                             "max_time": str(max_time_val) if max_time_val is not None else None
                         })
-                        logger.info(f"Table '{table_name}': Saved initial baseline checkpoints (Max ID: {max_id_val}, Max Time: {max_time_val})")
+                        logger.info(f"Table '{table_name}': Verified baseline completeness ({src_count} rows). Saved initial baseline checkpoints (Max ID: {max_id_val}, Max Time: {max_time_val})")
 
     def poll_once(self):
         """Perform a single incremental scan and sync task across all tables in order."""
@@ -409,7 +423,13 @@ class PollingWorker:
             logger.error("Could not start Polling Worker: Database connections failed.")
             return
             
-        self.initialize_checkpoints()
+        try:
+            self.initialize_checkpoints()
+        except Exception as e:
+            logger.error(f"Could not start Polling Worker: Baseline initialization failed: {e}")
+            self.running = False
+            raise e
+
         self.running = True
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
         self.thread.start()

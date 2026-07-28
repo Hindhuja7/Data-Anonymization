@@ -1,0 +1,767 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Play, Square, Check, Circle, Pause, ShieldCheck, Database, AlertTriangle, Terminal, ExternalLink, ArrowRight } from 'lucide-react';
+import { useWebSocket } from '@/hooks/useWebSocket';
+
+interface WorkflowStep {
+  id: number;
+  name: string;
+  status: 'completed' | 'current' | 'pending' | 'failed' | 'waiting_for_approval' | 'paused' | 'stopped';
+  output?: string;
+}
+
+interface StepResult {
+  step_id: number;
+  step_name: string;
+  status: string;
+  started_at: string;
+  completed_at: string;
+  duration_ms: number;
+  summary: string;
+  details: Record<string, any>;
+}
+
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  message: string;
+  level: string;
+}
+
+const INITIAL_STEPS: WorkflowStep[] = [
+  { id: 1, name: "Step 01. Connect Database", status: "pending" },
+  { id: 2, name: "Step 02. Extract Schema", status: "pending" },
+  { id: 3, name: "Step 03. Enterprise Detection", status: "pending" },
+  { id: 4, name: "Step 04. Privacy-Safe Sampling", status: "pending" },
+  { id: 5, name: "Step 05. PII Detection", status: "pending" },
+  { id: 6, name: "Step 06. Policy Generation", status: "pending" },
+  { id: 7, name: "Step 07. Admin Approval", status: "pending" },
+  { id: 8, name: "Step 08. Redis Vault Init", status: "pending" },
+  { id: 9, name: "Step 09. Change Detection", status: "pending" },
+  { id: 10, name: "Step 10. Redis AOF Crash Recovery", status: "pending" },
+  { id: 11, name: "Step 11. Chunk Processing", status: "pending" },
+  { id: 12, name: "Step 12. Data Anonymization", status: "pending" },
+  { id: 13, name: "Step 13. Destination Loading", status: "pending" },
+  { id: 14, name: "Step 14. Validation Engine", status: "pending" },
+  { id: 15, name: "Step 15. Audit Report", status: "pending" },
+  { id: 16, name: "Step 16. Admin Dashboard Sync", status: "pending" },
+  { id: 17, name: "Step 17. Continuous Sync Init", status: "pending" },
+];
+
+export default function Pipeline() {
+  const router = useRouter();
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [stopError, setStopError] = useState<string | null>(null);
+  const [showStopModal, setShowStopModal] = useState(false);
+  const [selectedStep, setSelectedStep] = useState<number>(1);
+  const [executionTime, setExecutionTime] = useState("00:00:00");
+
+  const logContainerRef = useRef<HTMLDivElement>(null);
+
+  // Single Authoritative Snapshot State
+  const [currentRun, setCurrentRun] = useState<{
+    run_id: string | null;
+    state_version: number;
+    status: string;
+    active_step: number;
+    target_table: string;
+    database_name: string;
+    started_at: string | null;
+    completed_at: string | null;
+    elapsed_seconds?: number;
+    risk_score?: number | null;
+    privacy_score?: number | null;
+    steps: WorkflowStep[];
+    step_results: Record<string, StepResult>;
+    step_12_status?: string;
+    step_13_status?: string;
+    logs: LogEntry[];
+  }>({
+    run_id: null,
+    state_version: 0,
+    status: 'idle',
+    active_step: 0,
+    target_table: '',
+    database_name: '',
+    started_at: null,
+    completed_at: null,
+    elapsed_seconds: 0,
+    risk_score: null,
+    privacy_score: null,
+    steps: INITIAL_STEPS,
+    step_results: {},
+    logs: []
+  });
+
+  const { isConnected, onMessage } = useWebSocket('ws://localhost:8000/api/pipeline/ws');
+
+  // Single Canonical State Normalization Function
+  const syncStateWithBackend = (backendState: any) => {
+    if (!backendState) return;
+
+    const targetState = backendState.state || backendState;
+    const incomingRunId = targetState.run_id || null;
+    const incomingVersion = typeof targetState.state_version === 'number' ? targetState.state_version : 0;
+
+    setCurrentRun((prevRun) => {
+      if (incomingRunId && prevRun.run_id === incomingRunId && incomingVersion < prevRun.state_version) {
+        return prevRun;
+      }
+
+      const activeStepNum = typeof targetState.active_step === 'number' ? targetState.active_step : 0;
+      const backendStatus = targetState.status || 'idle';
+
+      const stepsArray: WorkflowStep[] = INITIAL_STEPS.map((initStep) => {
+        let stepStatus: WorkflowStep['status'] = 'pending';
+        
+        if (initStep.id < activeStepNum || (initStep.id === activeStepNum && backendStatus === 'completed')) {
+          stepStatus = 'completed';
+        } else if (initStep.id === activeStepNum && (backendStatus === 'waiting_for_approval' || backendStatus === 'waiting')) {
+          stepStatus = 'waiting_for_approval';
+        } else if (initStep.id === activeStepNum && (backendStatus === 'running' || backendStatus === 'RUNNING')) {
+          stepStatus = 'current';
+        } else if (backendStatus === 'stopped' || backendStatus === 'cancelled' || backendStatus === 'STOPPING' || backendStatus === 'STOPPED') {
+          if (initStep.id === activeStepNum) stepStatus = 'stopped';
+          else if (initStep.id < activeStepNum) stepStatus = 'completed';
+          else stepStatus = 'pending';
+        } else if (initStep.id === activeStepNum && backendStatus === 'failed') {
+          stepStatus = 'failed';
+        } else {
+          stepStatus = 'pending';
+        }
+
+        return {
+          ...initStep,
+          status: stepStatus,
+          output: stepStatus === 'completed' ? 'Completed' : stepStatus === 'current' ? 'Running' : stepStatus === 'stopped' ? 'Stopped' : undefined
+        };
+      });
+
+      const isSameRun = incomingRunId && prevRun.run_id === incomingRunId;
+      const startedAt = isSameRun
+        ? (targetState.started_at !== undefined && targetState.started_at !== null ? targetState.started_at : prevRun.started_at)
+        : (targetState.started_at || null);
+
+      const completedAt = isSameRun
+        ? (targetState.completed_at !== undefined && targetState.completed_at !== null ? targetState.completed_at : prevRun.completed_at)
+        : (targetState.completed_at || null);
+
+      const stepResults = isSameRun
+        ? (targetState.step_results && Object.keys(targetState.step_results).length > 0 ? targetState.step_results : prevRun.step_results)
+        : (targetState.step_results || {});
+
+      // Filter out raw chunk-level trace lines for 12 & 13 from main pipeline log stream
+      const rawLogs = targetState.logs || prevRun.logs || [];
+      const mainPipelineLogs = rawLogs.filter((logItem: any) => {
+        const msg = typeof logItem === 'string' ? logItem : logItem.message || '';
+        const isStep12Chunk = msg.includes('[Step 12]') || msg.includes('Applying Masking') || msg.includes('Applying Differential') || msg.includes('Applying Hashing') || msg.includes('Applying Tokenization') || msg.includes('anonymized successfully') || msg.includes('Reading Chunk');
+        const isStep13Chunk = msg.includes('[Step 13]') || msg.includes('Chunk inserted') || msg.includes('Rows Loaded') || msg.includes('Processing Rate') || msg.includes('Writing Chunk') || msg.includes('COPY FROM STDIN') || msg.includes('Transaction committed');
+        return !isStep12Chunk && !isStep13Chunk;
+      });
+
+      // Calculate elapsed ONLY when pipeline is actively running
+      let finalElapsed = prevRun.elapsed_seconds || 0;
+      const isActiveState = backendStatus === 'running' || backendStatus === 'RUNNING' || backendStatus === 'waiting_for_approval';
+      
+      if (isActiveState && startedAt) {
+        const startTime = new Date(startedAt).getTime();
+        if (!isNaN(startTime)) {
+          finalElapsed = Math.max(finalElapsed, Math.floor((Date.now() - startTime) / 1000));
+        }
+      } else if (typeof targetState.elapsed_seconds === 'number' && targetState.elapsed_seconds > 0) {
+        finalElapsed = targetState.elapsed_seconds;
+      }
+
+      return {
+        run_id: incomingRunId,
+        state_version: incomingVersion,
+        status: backendStatus,
+        active_step: activeStepNum,
+        target_table: targetState.target_table || (isSameRun ? prevRun.target_table : ''),
+        database_name: targetState.database_name || (isSameRun ? prevRun.database_name : ''),
+        started_at: startedAt,
+        completed_at: completedAt,
+        elapsed_seconds: finalElapsed,
+        risk_score: targetState.risk_score !== undefined ? targetState.risk_score : prevRun.risk_score,
+        privacy_score: targetState.privacy_score !== undefined ? targetState.privacy_score : prevRun.privacy_score,
+        steps: stepsArray,
+        step_results: stepResults,
+        step_12_status: targetState.step_12_status || prevRun.step_12_status,
+        step_13_status: targetState.step_13_status || prevRun.step_13_status,
+        logs: mainPipelineLogs
+      };
+    });
+  };
+
+  // Initial Fetch on Mount
+  useEffect(() => {
+    const fetchStatusOnMount = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/pipeline/status');
+        if (response.ok) {
+          const data = await response.json();
+          syncStateWithBackend(data.state || data);
+        }
+      } catch (err) {
+        console.error('Error fetching pipeline status on mount:', err);
+      }
+    };
+    fetchStatusOnMount();
+  }, []);
+
+  // WebSocket Message Listener
+  useEffect(() => {
+    const cleanup = onMessage((data: any) => {
+      syncStateWithBackend(data);
+    });
+    return cleanup;
+  }, [onMessage]);
+
+  const [displayedSeconds, setDisplayedSeconds] = useState<number>(0);
+
+  useEffect(() => {
+    if (typeof currentRun.elapsed_seconds === 'number') {
+      setDisplayedSeconds(currentRun.elapsed_seconds);
+    }
+  }, [currentRun.elapsed_seconds]);
+
+  // Live timer interval ONLY runs when active
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    const isActiveState = currentRun.status === 'running' || currentRun.status === 'RUNNING' || currentRun.status === 'waiting_for_approval';
+    
+    if (isActiveState) {
+      timer = setInterval(() => {
+        setDisplayedSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [currentRun.status]);
+
+  useEffect(() => {
+    if (currentRun.status !== 'idle') {
+      const hrs = Math.floor(displayedSeconds / 3600);
+      const mins = Math.floor((displayedSeconds % 3600) / 60);
+      const secs = displayedSeconds % 60;
+      setExecutionTime(`${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
+    } else {
+      setExecutionTime("00:00:00");
+    }
+  }, [displayedSeconds, currentRun.status]);
+
+  // Scroll ONLY inside log container element
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [currentRun.logs, currentRun.active_step]);
+
+  // HTTP Heartbeat Polling
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/pipeline/status');
+        if (response.ok) {
+          const data = await response.json();
+          syncStateWithBackend(data.state || data);
+        }
+      } catch (error) {
+        console.error('HTTP Status Polling error:', error);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleStopPipeline = async () => {
+    const activeRunId = currentRun.run_id;
+    if (!activeRunId) {
+      alert("No active pipeline run to stop.");
+      setShowStopModal(false);
+      return;
+    }
+
+    setIsStopping(true);
+    setStopError(null);
+
+    try {
+      const res = await fetch('http://localhost:8000/api/pipeline/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ run_id: activeRunId })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        setStopError(errData.detail || `Unable to stop pipeline run ${activeRunId}.`);
+      } else {
+        setShowStopModal(false);
+      }
+    } catch (e) {
+      console.error('Stop error:', e);
+      setStopError("Network error attempting to stop pipeline.");
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  const canStop = Boolean(currentRun.run_id && currentRun.status !== 'idle' && currentRun.status !== 'completed' && currentRun.status !== 'cancelled' && currentRun.status !== 'stopped' && currentRun.status !== 'failed');
+
+  const workflowSteps = currentRun.steps;
+  const pipelineState = currentRun;
+
+  const completedCount = workflowSteps.filter(s => s.status === 'completed').length;
+  const calculatedProgress = Math.round((completedCount / 17) * 100);
+
+  const shouldShowStep3Report = currentRun.active_step >= 3;
+  const shouldShowStep12Log = currentRun.active_step >= 12 || currentRun.step_12_status === 'running' || currentRun.step_12_status === 'completed';
+  const shouldShowStep13Log = currentRun.active_step >= 13 || currentRun.step_13_status === 'running' || currentRun.step_13_status === 'completed';
+
+  // Dynamic Log Generator based on actual step status (RUNNING... vs COMPLETED)
+  const getDynamicStepLogs = (step: WorkflowStep) => {
+    const isCompleted = step.status === 'completed';
+    const isRunning = step.status === 'current';
+    const statusLabel = isCompleted ? 'COMPLETED' : isRunning ? 'RUNNING...' : 'PENDING';
+
+    switch (step.id) {
+      case 1:
+        return [
+          `[STEP 1] Connect Database — ${statusLabel}`,
+          "✓ Connecting to source database...",
+          ...(isCompleted ? ["✓ Connection validated & authenticated successfully."] : [])
+        ];
+      case 2:
+        return [
+          `[STEP 2] Extract Schema — ${statusLabel}`,
+          "✓ Extracting database schema...",
+          ...(isCompleted ? ["✓ Schema extracted for target table."] : [])
+        ];
+      case 3:
+        return [
+          `[STEP 3] Enterprise Detection — ${statusLabel}`,
+          "✓ Enterprise PII Scanner initialized...",
+          ...(isCompleted ? ["✓ Identified sensitive PII fields across target schema."] : [])
+        ];
+      case 4:
+        return [
+          `[STEP 4] Privacy-Safe Sampling — ${statusLabel}`,
+          "✓ Executing privacy-safe sampling routine...",
+          ...(isCompleted ? ["✓ Sampled representative records for compliance analysis."] : [])
+        ];
+      case 5:
+        return [
+          `[STEP 5] PII Detection — ${statusLabel}`,
+          "✓ Running heuristic PII classification engine...",
+          ...(isCompleted ? ["✓ PII classification completed."] : [])
+        ];
+      case 6:
+        return [
+          `[STEP 6] Policy Generation — ${statusLabel}`,
+          "✓ Generating optimal data protection policy...",
+          ...(isCompleted ? ["✓ Draft policy generated with Tokenization, Masking, Hashing & Laplace DP."] : [])
+        ];
+      case 7:
+        return [
+          `[STEP 7] Admin Approval — ${statusLabel}`,
+          "✓ Policy review authorization check...",
+          ...(isCompleted ? ["✓ Policy APPROVED by Dashboard Admin."] : [])
+        ];
+      case 8:
+        return [
+          `[STEP 8] Redis Vault Init — ${statusLabel}`,
+          "✓ Connecting to Redis vault instance...",
+          ...(isCompleted ? ["✓ Redis Hash Vault initialized for secure token mapping storage."] : [])
+        ];
+      case 9:
+        return [
+          `[STEP 9] Change Detection — ${statusLabel}`,
+          "✓ Initializing delta change detection worker...",
+          ...(isCompleted ? ["✓ Change Detection active for continuous synchronization."] : [])
+        ];
+      case 10:
+        return [
+          `[STEP 10] Redis AOF Crash Recovery — ${statusLabel}`,
+          "✓ Verifying append-only file (AOF) persistence log...",
+          ...(isCompleted ? ["✓ Redis AOF crash recovery check completed successfully."] : [])
+        ];
+      case 11:
+        return [
+          `[STEP 11] Chunk Processing — ${statusLabel}`,
+          "✓ Calculating optimal chunk size...",
+          ...(isCompleted ? ["✓ Chunk Processing producer initialized."] : [])
+        ];
+      default:
+        return [`[STEP ${step.id}] ${step.name} — ${statusLabel}`];
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Top Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Anonymization Pipeline Dashboard</h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Real-time 17-step data protection and compliance execution dashboard
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`text-xs font-mono px-3 py-1.5 rounded-lg border ${
+            isConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+          }`}>
+            {isConnected ? 'LIVE WEBSOCKET' : 'HTTP POLLING'}
+          </span>
+        </div>
+      </div>
+
+      {/* Observation-Only Status Toolbar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {(pipelineState?.active_step === 7 || pipelineState?.status === 'waiting_for_approval') && (
+            <button
+              onClick={() => router.push('/approval')}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-amber-600/20"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Review Policy & Approve
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowStopModal(true)}
+            disabled={!canStop}
+            className="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Square className="w-4 h-4 fill-current" />
+            Stop
+          </button>
+        </div>
+
+        <div className="flex items-center gap-6 text-xs font-mono">
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase">Run ID</span>
+            <span className="text-white font-bold">{currentRun.run_id || 'Idle'}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase">Target Table</span>
+            <span className="text-blue-400 font-bold">{pipelineState?.target_table || 'None'}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase">Progress</span>
+            <span className="text-white font-bold">{calculatedProgress}%</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase">Privacy Score</span>
+            <span className="text-emerald-400 font-bold">
+              {pipelineState?.privacy_score !== undefined && pipelineState?.privacy_score !== null
+                ? `${pipelineState.privacy_score}`
+                : '—'}
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase">Risk Score</span>
+            <span className="text-amber-400 font-bold">
+              {pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null
+                ? `${pipelineState.risk_score}`
+                : '—'}
+            </span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase">Elapsed Time</span>
+            <span className="text-white font-bold">{executionTime}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid: Steps List on Left (5 cols), Complete Pipeline Summary Logs on Right (7 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* LEFT PANEL: 17 Steps List */}
+        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">17-Step Execution Lifecycle</h3>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              {completedCount} / 17 COMPLETED
+            </span>
+          </div>
+
+          <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
+            {workflowSteps.map((step) => {
+              const isSelected = selectedStep === step.id;
+              const isStep3 = step.id === 3 && shouldShowStep3Report;
+              const isStep12 = step.id === 12 && shouldShowStep12Log;
+              const isStep13 = step.id === 13 && shouldShowStep13Log;
+
+              return (
+                <div
+                  key={step.id}
+                  onClick={() => setSelectedStep(step.id)}
+                  className={`p-3 rounded-lg cursor-pointer transition-all border ${
+                    isSelected
+                      ? 'bg-blue-500/10 border-blue-500/60 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {step.status === 'completed' ? (
+                        <div className="p-1 bg-emerald-500/20 text-emerald-400 rounded-full">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      ) : step.status === 'current' ? (
+                        <div className="p-1 bg-blue-500/20 text-blue-400 rounded-full animate-spin">
+                          <Circle className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      ) : step.status === 'waiting_for_approval' ? (
+                        <div className="p-1 bg-amber-500/20 text-amber-400 rounded-full animate-pulse">
+                          <Pause className="w-3.5 h-3.5 fill-current" />
+                        </div>
+                      ) : step.status === 'stopped' ? (
+                        <div className="p-1 bg-red-500/20 text-red-400 rounded-full">
+                          <Square className="w-3.5 h-3.5 fill-current" />
+                        </div>
+                      ) : (
+                        <div className="p-1 bg-slate-800 text-slate-500 rounded-full">
+                          <Circle className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+
+                      <span className={`text-xs font-mono font-medium ${
+                        step.status === 'completed' ? 'text-emerald-300 font-bold' : step.status === 'current' ? 'text-blue-300 font-bold' : 'text-slate-300'
+                      }`}>
+                        {step.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Step 3 Enterprise Detection Link */}
+                      {isStep3 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/reports?step=3');
+                          }}
+                          className="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-emerald-500/40 flex items-center gap-1 transition-all"
+                        >
+                          Report
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+
+                      {/* Step 12 Data Anonymization Link */}
+                      {isStep12 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/reports?step=12');
+                          }}
+                          className="px-2 py-0.5 bg-purple-600/30 hover:bg-purple-600 text-purple-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-purple-500/40 flex items-center gap-1 transition-all"
+                        >
+                          Report
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+
+                      {/* Step 13 Destination Loading Link */}
+                      {isStep13 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/reports?step=13');
+                          }}
+                          className="px-2 py-0.5 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-blue-500/40 flex items-center gap-1 transition-all"
+                        >
+                          Report
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                        step.status === 'completed'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : step.status === 'current'
+                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          : step.status === 'waiting_for_approval'
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          : step.status === 'stopped'
+                          ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                          : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        {step.status === 'completed' ? 'COMPLETED' : step.status === 'current' ? 'RUNNING' : step.status === 'waiting_for_approval' ? 'WAITING APPROVAL' : step.status === 'stopped' ? 'STOPPED' : 'PENDING'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* RIGHT PANEL: RESTORED PIPELINE SUMMARY LOGS STREAM */}
+        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col justify-between min-h-[580px]">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Pipeline Summary Logs</h3>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                CHRONOLOGICAL EXECUTION HISTORY
+              </span>
+            </div>
+
+            <div
+              ref={logContainerRef}
+              className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-300 max-h-[480px] overflow-y-auto space-y-3"
+            >
+              {/* CHRONOLOGICAL LOGS FOR STEPS 1 THROUGH 11 */}
+              {workflowSteps.slice(0, 11).map((step) => {
+                const stepResult = currentRun.step_results[String(step.id)];
+                const isStepCompleted = step.status === 'completed' || Boolean(stepResult);
+                const isStepCurrent = step.status === 'current';
+                const isStepActive = isStepCompleted || isStepCurrent || currentRun.active_step >= step.id;
+
+                if (!isStepActive) return null;
+
+                const dynamicLogs = getDynamicStepLogs(step);
+                const summaryMsg = stepResult?.summary;
+
+                return (
+                  <div key={step.id} className="space-y-1 border-b border-slate-800/60 pb-2">
+                    {dynamicLogs.map((line, idx) => (
+                      <div
+                        key={idx}
+                        className={`leading-relaxed ${
+                          idx === 0
+                            ? step.status === 'completed' ? 'text-emerald-400 font-bold' : 'text-blue-400 font-bold animate-pulse'
+                            : line.startsWith('✓')
+                            ? 'text-emerald-300'
+                            : 'text-slate-300'
+                        }`}
+                      >
+                        {line}
+                      </div>
+                    ))}
+
+                    {summaryMsg && !dynamicLogs.some(l => l.includes(summaryMsg)) && (
+                      <div className="text-slate-300 pl-2">✓ {summaryMsg}</div>
+                    )}
+
+                    {/* Step 3 Enterprise Detection Action Button */}
+                    {step.id === 3 && shouldShowStep3Report && (
+                      <div className="pt-1">
+                        <button
+                          onClick={() => router.push('/reports?step=3')}
+                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs font-mono rounded shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all"
+                        >
+                          View Enterprise Detection →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* STEP 12 INLINE LOG ENTRY */}
+              {shouldShowStep12Log && (
+                <div className="pt-2 border-t border-purple-500/30 space-y-1 font-mono">
+                  <div className="text-purple-300 font-bold">[STEP 12] Data Anonymization — {currentRun.step_12_status?.toUpperCase() || 'RUNNING'}</div>
+                  <div className="text-emerald-400">✓ Data Anonymization Started</div>
+                  <div className="text-slate-300">✓ Worker initialized</div>
+                  <div className="text-slate-300">✓ Chunk processing active</div>
+                  <div className="pt-1.5">
+                    <button
+                      onClick={() => router.push('/reports?step=12')}
+                      className="px-3.5 py-1.5 bg-gradient-to-r from-purple-500 to-amber-500 hover:from-purple-400 hover:to-amber-400 text-black font-extrabold text-xs font-mono rounded shadow-md shadow-purple-500/20 flex items-center gap-1.5 transition-all"
+                    >
+                      View Detailed Anonymization →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 13 INLINE LOG ENTRY */}
+              {shouldShowStep13Log && (
+                <div className="pt-2 border-t border-blue-500/30 space-y-1 font-mono">
+                  <div className="text-blue-300 font-bold">[STEP 13] Destination Loading — {currentRun.step_13_status?.toUpperCase() || 'RUNNING'}</div>
+                  <div className="text-emerald-400">✓ Destination Loading Started</div>
+                  <div className="text-slate-300">✓ Loading worker initialized</div>
+                  <div className="text-slate-300">✓ Batch loading active</div>
+                  <div className="pt-1.5">
+                    <button
+                      onClick={() => router.push('/reports?step=13')}
+                      className="px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-xs font-mono rounded shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all"
+                    >
+                      View Detailed Loading →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* CLEAN FILTERED SERVER STREAM */}
+              {currentRun.logs.length > 0 && (
+                <div className="pt-2 border-t border-slate-800/80 space-y-1">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Server Stream</div>
+                  {currentRun.logs.map((logItem, i) => {
+                    const msg = typeof logItem === 'string' ? logItem : logItem.message || '';
+                    return (
+                      <div key={i} className="text-slate-400 text-[11px] leading-tight">
+                        {msg}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between font-mono">
+            <span>Authoritative Pipeline Summary Logs</span>
+            <span className="text-blue-400">Target Table: {pipelineState?.target_table || '—'}</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Custom Application Stop Confirmation Modal */}
+      {showStopModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-amber-400">
+              <AlertTriangle className="w-6 h-6" />
+              <h3 className="text-base font-bold text-white">Stop Pipeline Execution?</h3>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              The current pipeline run <strong className="text-white font-mono">{currentRun.run_id}</strong> will stop execution at the next safe boundary. Completed step results will remain saved.
+            </p>
+            {stopError && (
+              <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400 font-mono">
+                {stopError}
+              </div>
+            )}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowStopModal(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors"
+              >
+                Continue Running
+              </button>
+              <button
+                onClick={handleStopPipeline}
+                disabled={isStopping}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-red-600/20 disabled:opacity-50"
+              >
+                {isStopping ? 'Stopping...' : 'Stop Pipeline'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

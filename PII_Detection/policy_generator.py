@@ -8,7 +8,7 @@ This policy can be reviewed and modified by administrators before execution.
 import json
 import os
 import sys
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 # Path bootstrapper to allow flat imports across layers
@@ -81,9 +81,15 @@ class PolicyGenerator:
             for column_info in table.get("columns", []):
                 column_name = column_info["column_name"]
                 is_pii = column_info.get("is_pii", False)
-                pii_type = column_info.get("pii_type")
-                confidence = column_info.get("confidence", 0.0)
-                recommended_technique = column_info.get("recommended_technique", "NO_CHANGE")
+                pii_type = self._normalize_pii_type(column_name, column_info.get("pii_type"), is_pii)
+                confidence = column_info.get("confidence", 0.9 if is_pii else 0.0)
+                if confidence == 0.0 and is_pii:
+                    confidence = 0.9
+                
+                if is_pii:
+                    recommended_technique = self._get_default_technique(pii_type, column_name)
+                else:
+                    recommended_technique = "NO_CHANGE"
                 
                 # Determine if column is primary key or foreign key
                 is_primary_key = column_name in primary_keys
@@ -104,9 +110,9 @@ class PolicyGenerator:
                     "table_name": table_name,
                     "column_name": column_name,
                     "is_pii": is_pii,
-                    "pii_type": pii_type if is_pii else None,
+                    "pii_type": pii_type,
                     "confidence": confidence,
-                    "anonymization_technique": recommended_technique if is_pii else "NO_CHANGE",
+                    "anonymization_technique": (recommended_technique or "NO_CHANGE").upper(),
                     "reason": self._generate_reason(column_info, is_pii, pii_type, recommended_technique),
                     "is_primary_key": is_primary_key,
                     "is_foreign_key": is_foreign_key,
@@ -178,6 +184,57 @@ class PolicyGenerator:
             reason_parts.append("Lower confidence detection - manual review recommended")
         
         return ". ".join(reason_parts) + "."
+
+    def _normalize_pii_type(self, column_name: str, raw_type: Optional[str], is_pii: bool) -> Optional[str]:
+        if not is_pii:
+            return None
+        col_lower = column_name.lower()
+        if raw_type and str(raw_type).upper() not in ["UNKNOWN", "NONE", "NULL"]:
+            return str(raw_type).upper()
+        
+        if "email" in col_lower:
+            return "EMAIL"
+        elif any(k in col_lower for k in ["phone", "mobile", "contact"]):
+            return "PHONE"
+        elif any(k in col_lower for k in ["aadhaar", "uid"]):
+            return "AADHAAR"
+        elif "pan" in col_lower:
+            return "PAN"
+        elif any(k in col_lower for k in ["name", "first_name", "last_name", "full_name"]):
+            return "FULL_NAME"
+        elif any(k in col_lower for k in ["dob", "birth", "date_of_birth"]):
+            return "DATE_OF_BIRTH"
+        elif any(k in col_lower for k in ["address", "city", "state", "pin", "pincode", "location"]):
+            return "LOCATION"
+        elif any(k in col_lower for k in ["salary", "balance", "amount"]):
+            return "FINANCIAL"
+        elif any(k in col_lower for k in ["id", "customer_id", "account_id", "user_id"]):
+            return "IDENTIFIER"
+        return "SENSITIVE"
+
+    def _get_default_technique(self, pii_type: Optional[str], column_name: str = "") -> str:
+        col_lower = column_name.lower()
+        if any(k in col_lower for k in ["email", "phone", "mobile", "contact", "name", "first_name", "last_name", "full_name"]):
+            return "TOKENIZATION"
+        elif any(k in col_lower for k in ["aadhaar", "pan", "address", "city", "state", "pin", "pincode", "location"]):
+            return "MASKING"
+        elif any(k in col_lower for k in ["id", "customer_id", "account_id", "user_id", "ssn", "gstin", "account_number"]):
+            return "HASHING"
+        elif any(k in col_lower for k in ["salary", "balance", "amount", "income", "dob", "birth", "date_of_birth", "age"]):
+            return "DIFFERENTIAL_PRIVACY"
+
+        if not pii_type:
+            return "NO_CHANGE"
+        p_type = pii_type.upper()
+        if p_type in ["EMAIL", "PHONE", "FULL_NAME", "NAME", "INDIAN_PHONE"]:
+            return "TOKENIZATION"
+        elif p_type in ["AADHAAR", "PAN", "LOCATION", "ADDRESS", "CITY", "STATE", "PINCODE", "VOTER_ID", "DRIVING_LICENSE"]:
+            return "MASKING"
+        elif p_type in ["IDENTIFIER", "SSN", "GSTIN", "BANK_ACCOUNT"]:
+            return "HASHING"
+        elif p_type in ["FINANCIAL", "BALANCE", "SALARY", "DATE_OF_BIRTH", "DOB", "AGE", "HEALTH", "MEDICAL"]:
+            return "DIFFERENTIAL_PRIVACY"
+        return "MASKING"
     
     def _get_data_type(self, table_schema: Dict[str, Any], column_name: str) -> str:
         """

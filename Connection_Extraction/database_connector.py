@@ -25,7 +25,8 @@ class DatabaseConnector:
         password: str = None,
         database_name: str = None,
         sslmode: str = None,
-        connection_string: str = None
+        connection_string: str = None,
+        **kwargs
     ):
         """
         Initialize database connector.
@@ -62,9 +63,8 @@ class DatabaseConnector:
     def _build_connection_string(self) -> str:
         """Build SQLAlchemy connection string."""
         if self.database_type == 'postgresql':
-            if self.sslmode:
-                return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}?sslmode={self.sslmode}"
-            return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}"
+            ssl = self.sslmode or ("require" if (self.host and "neon.tech" in self.host) else os.getenv("SOURCE_DB_SSLMODE", "require"))
+            return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}?sslmode={ssl}"
         elif self.database_type == 'mysql':
             return f"mysql+pymysql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database_name}"
         elif self.database_type == 'sqlserver':
@@ -89,7 +89,10 @@ class DatabaseConnector:
                 connection_string = self.connection_string
             else:
                 connection_string = self._build_connection_string()
-            self.engine = create_engine(connection_string)
+            connect_args = {}
+            if self.database_type == 'postgresql':
+                connect_args["connect_timeout"] = 5
+            self.engine = create_engine(connection_string, connect_args=connect_args)
             
             # Test connection
             with self.engine.connect() as conn:

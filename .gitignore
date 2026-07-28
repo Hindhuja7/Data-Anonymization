@@ -32,5 +32,20 @@ ENV/
 
 # Databases and verification reports
 *.db
+neondb
+neondb_anonymized
 compliance_report.json
 compliance_report.txt
+
+# Database connection credentials configuration
+app/database_config.json
+
+# Next.js & Node
+node_modules/
+.next/
+out/
+.env.test
+
+scratch/
+*.pyc
+__pycache__/

@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+:root {
+  --bg-dark: #040816;
+  --bg-card: #0D1324;
+  --color-primary: #4F7CFF;
+  --color-success: #33D17A;
+  --text-primary: #FFFFFF;
+  --text-secondary: #8C96B5;
+  --border-color: rgba(255, 255, 255, 0.06);
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Glassmorphism panel styles */
+.glass-card {
+  background: rgba(13, 19, 36, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.glow-blue {
+  box-shadow: 0 0 30px rgba(79, 124, 255, 0.25);
+}
+
+/* Pulsing blue border animation */
+@keyframes pulse-blue-border {
+  0% {
+    border-color: rgba(79, 124, 255, 0.3);
+    box-shadow: 0 0 15px rgba(79, 124, 255, 0.15);
+  }
+  100% {
+    border-color: rgba(79, 124, 255, 0.65);
+    box-shadow: 0 0 25px rgba(79, 124, 255, 0.35);
+  }
+}
+
+.pulse-border {
+  animation: pulse-blue-border 2s infinite alternate;
+}
+
+/* Blueprint animations & vignette overlays */
+.blueprint-glow {
+  background: radial-gradient(circle at center, rgba(79, 124, 255, 0.18) 0%, transparent 65%);
+}
+
+.vignette-overlay {
+  box-shadow: inset 0 0 100px rgba(4, 8, 22, 0.95);
+}
+
+/* Floating particles animation */
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0); opacity: 0.1; }
+  50% { opacity: 0.7; }
+  100% { transform: translateY(-40px) translateX(20px); opacity: 0; }
+}
+
+.animate-particle {
+  animation: float-particle 4s infinite linear;
+}
+
+/* Connector data flow animation */
+@keyframes connector-flow {
+  0% {
+    top: -20%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 120%;
+    opacity: 0;
+  }
+}
+
+.animate-connector-flow {
+  animation: connector-flow 2.5s infinite linear;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
