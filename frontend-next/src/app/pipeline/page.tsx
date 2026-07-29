@@ -201,23 +201,17 @@ export default function Pipeline() {
         return !isStep12Chunk && !isStep13Chunk && !isServerStreamLog;
       });
 
-      // Calculate elapsed ONLY when pipeline is actively running or completed
-      let finalElapsed = prevRun.elapsed_seconds || 0;
-      const isActiveState = backendStatus === 'running' || backendStatus === 'RUNNING' || backendStatus === 'waiting_for_approval';
+      // Calculate elapsed continuously for active and continuous sync states (frozen when stopped)
+      let finalElapsed = Math.max(prevRun.elapsed_seconds || 0, targetState.elapsed_seconds || 0);
+      const isStep17Done = backendStatus === 'completed' || activeStepNum >= 17 || targetState.step_17_status === 'completed';
+      const isStoppedBackend = backendStatus === 'stopped' || backendStatus === 'cancelled' || backendStatus === 'STOPPED' || backendStatus === 'CANCELLED';
+      const isActiveState = (backendStatus === 'running' || backendStatus === 'RUNNING' || backendStatus === 'waiting_for_approval' || isStep17Done) && !isStoppedBackend;
       
       if (isActiveState && startedAt) {
         const startTime = new Date(startedAt).getTime();
         if (!isNaN(startTime)) {
           finalElapsed = Math.max(finalElapsed, Math.floor((Date.now() - startTime) / 1000));
         }
-      } else if (startedAt && completedAt) {
-        const startTime = new Date(startedAt).getTime();
-        const endTime = new Date(completedAt).getTime();
-        if (!isNaN(startTime) && !isNaN(endTime)) {
-          finalElapsed = Math.max(finalElapsed, Math.floor((endTime - startTime) / 1000));
-        }
-      } else if (typeof targetState.elapsed_seconds === 'number' && targetState.elapsed_seconds > 0) {
-        finalElapsed = Math.max(finalElapsed, targetState.elapsed_seconds);
       }
 
       return {
@@ -273,24 +267,25 @@ export default function Pipeline() {
     }
   }, [currentRun.elapsed_seconds]);
 
-  // Live timer interval ONLY runs when active and Step 17 is NOT completed
+  // Live timer interval runs ONLY during active states and FREEZES completely when stopped
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    const isStep17Done = currentRun.status === 'completed' || currentRun.steps.find(s => s.id === 17)?.status === 'completed';
-    const isActiveState = (currentRun.status === 'running' || currentRun.status === 'RUNNING' || currentRun.status === 'waiting_for_approval') && !isStep17Done;
+    const isStep17Done = currentRun.status === 'completed' || currentRun.active_step >= 17 || currentRun.steps.find(s => s.id === 17)?.status === 'completed';
+    const isStoppedState = currentRun.status === 'stopped' || currentRun.status === 'cancelled' || currentRun.status === 'STOPPING' || currentRun.status === 'STOPPED';
+    const isActiveState = (currentRun.status === 'running' || currentRun.status === 'RUNNING' || currentRun.status === 'waiting_for_approval' || isStep17Done) && !isStoppedState;
     
-    if (isActiveState) {
+    if (isActiveState && currentRun.status !== 'idle') {
       timer = setInterval(() => {
-        setDisplayedSeconds((prev) => prev + 1);
+        setDisplayedSeconds((prev) => Math.max(prev + 1, currentRun.elapsed_seconds || 0));
       }, 1000);
     }
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [currentRun.status, currentRun.steps]);
+  }, [currentRun.status, currentRun.active_step, currentRun.steps, currentRun.elapsed_seconds]);
 
   useEffect(() => {
-    if (currentRun.status !== 'idle') {
+    if (displayedSeconds > 0 || (currentRun.status !== 'idle' && currentRun.status !== 'none')) {
       const hrs = Math.floor(displayedSeconds / 3600);
       const mins = Math.floor((displayedSeconds % 3600) / 60);
       const secs = displayedSeconds % 60;
@@ -356,8 +351,19 @@ export default function Pipeline() {
     }
   };
 
-  const isStep17Finished = currentRun.status === 'completed' || currentRun.steps.find(s => s.id === 17)?.status === 'completed';
-  const canStop = Boolean(currentRun.run_id && !isStep17Finished && currentRun.status !== 'idle' && currentRun.status !== 'completed' && currentRun.status !== 'cancelled' && currentRun.status !== 'stopped' && currentRun.status !== 'failed');
+  const isStep17Completed = currentRun.status === 'completed' || currentRun.active_step >= 17 || currentRun.steps.find(s => s.id === 17)?.status === 'completed' || (currentRun.step_results && currentRun.step_results['17']?.status === 'completed');
+  const isStopped = currentRun.status === 'stopped' || currentRun.status === 'cancelled' || currentRun.status === 'STOPPING' || currentRun.status === 'STOPPED';
+  const canStop = Boolean(currentRun.run_id && !isStopped && currentRun.status !== 'failed' && currentRun.status !== 'idle');
+  
+  const pipelineStateLabel = isStopped
+    ? 'PIPELINE STOPPED'
+    : isStep17Completed
+    ? 'CONTINUOUS SYNC ACTIVE'
+    : currentRun.status === 'running' || currentRun.status === 'RUNNING'
+    ? 'PIPELINE RUNNING'
+    : currentRun.status === 'waiting_for_approval'
+    ? 'WAITING APPROVAL'
+    : 'IDLE';
 
   const workflowSteps = currentRun.steps;
   const pipelineState = currentRun;
@@ -458,6 +464,16 @@ export default function Pipeline() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded-lg border flex items-center gap-2 ${
+            isStep17Completed
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+              : currentRun.status === 'running' || currentRun.status === 'RUNNING'
+              ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+              : 'bg-slate-800 text-slate-400 border-slate-700'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isStep17Completed ? 'bg-emerald-400 animate-ping' : 'bg-blue-400'}`}></span>
+            STATE: {pipelineStateLabel}
+          </span>
           <span className={`text-xs font-mono px-3 py-1.5 rounded-lg border ${
             isConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           }`}>

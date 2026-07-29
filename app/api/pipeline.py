@@ -450,44 +450,147 @@ async def get_pipeline_samples():
 
 @router.get("/table-schema")
 async def get_table_schema(table: Optional[str] = None):
-    """Get columns and data types for the active target table for custom simulation forms"""
+    """Get columns, data types, and primary key for the target table dynamically"""
     try:
-        import sqlite3
         from app.pipeline.state import pipeline_state
         target_table = table or pipeline_state.get("target_table")
-        if not target_table:
-            config_path = os.path.join(config.DIRECTORY, "database_config.json")
-            if os.path.exists(config_path):
-                try:
-                    with open(config_path, "r") as f:
-                        db_cfg = json.load(f)
+        config_path = os.path.join(config.DIRECTORY, "database_config.json")
+        db_cfg = {}
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r") as f:
+                    db_cfg = json.load(f)
+                    if not target_table:
                         target_table = db_cfg.get("target_table")
-                except Exception:
-                    pass
+            except Exception:
+                pass
         if not target_table:
             return {"status": "error", "message": "No target table configured"}
 
-        db_path = os.path.join(config.DIRECTORY, "test_source.db")
-        if not os.path.exists(db_path):
-            return {"status": "error", "message": "Source database file not found"}
-
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute(f"PRAGMA table_info({target_table})")
-        cols_info = cursor.fetchall()
-        conn.close()
-
+        db_type = db_cfg.get("database_type") or db_cfg.get("type", "sqlite")
         columns = []
-        for c in cols_info:
-            cname = c[1]
-            ctype = c[2].upper()
-            is_pk = (c[5] == 1)
-            if not is_pk and cname != "created_at":
-                columns.append({"name": cname, "type": ctype})
+        pk_col = None
 
-        return {"status": "success", "target_table": target_table, "columns": columns}
+        if db_type == "postgresql":
+            import psycopg2
+            host = db_cfg.get("host") or os.getenv("SOURCE_DB_HOST")
+            port = int(db_cfg.get("port") or os.getenv("SOURCE_DB_PORT", 5432))
+            dbname = db_cfg.get("database_name") or db_cfg.get("database") or os.getenv("SOURCE_DB_NAME", "neondb")
+            user = db_cfg.get("username") or os.getenv("SOURCE_DB_USERNAME", "neondb_owner")
+            password = db_cfg.get("password") or os.getenv("SOURCE_DB_PASSWORD")
+            sslmode = db_cfg.get("sslmode") or os.getenv("SOURCE_DB_SSLMODE", "require")
+            
+            conn = psycopg2.connect(host=host, port=port, dbname=dbname, user=user, password=password, sslmode=sslmode)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT column_name, data_type
+                FROM information_schema.columns
+                WHERE table_name = %s
+                ORDER BY ordinal_position;
+            """, (target_table,))
+            cols = cursor.fetchall()
+            
+            # Primary key inspection
+            try:
+                cursor.execute("""
+                    SELECT a.attname
+                    FROM pg_index i
+                    JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+                    WHERE i.indrelid = %s::regclass AND i.indisprimary;
+                """, (target_table,))
+                pk_row = cursor.fetchone()
+                pk_col = pk_row[0] if pk_row else (cols[0][0] if cols else "id")
+            except Exception:
+                pk_col = cols[0][0] if cols else "id"
+            conn.close()
+
+            for cname, ctype in cols:
+                if cname != pk_col and cname != "created_at":
+                    columns.append({"name": cname, "type": ctype.upper()})
+        else:
+            import sqlite3
+            db_path = os.path.join(config.DIRECTORY, "test_source.db")
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute(f"PRAGMA table_info({target_table})")
+                cols_info = cursor.fetchall()
+                conn.close()
+                for c in cols_info:
+                    cname = c[1]
+                    ctype = c[2].upper()
+                    if c[5] == 1:
+                        pk_col = cname
+                    elif cname != "created_at":
+                        columns.append({"name": cname, "type": ctype})
+
+        return {"status": "success", "target_table": target_table, "pk_col": pk_col or "id", "columns": columns}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@router.get("/table-records")
+async def get_table_records(table: Optional[str] = None, limit: int = 15):
+    """Fetch existing records from target table to allow selection for UPDATE & DELETE"""
+    try:
+        from app.pipeline.state import pipeline_state
+        target_table = table or pipeline_state.get("target_table")
+        config_path = os.path.join(config.DIRECTORY, "database_config.json")
+        db_cfg = {}
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r") as f:
+                    db_cfg = json.load(f)
+                    if not target_table:
+                        target_table = db_cfg.get("target_table")
+            except Exception:
+                pass
+        if not target_table:
+            return {"status": "error", "message": "No target table configured", "records": []}
+
+        db_type = db_cfg.get("database_type") or db_cfg.get("type", "sqlite")
+        records = []
+
+        if db_type == "postgresql":
+            import psycopg2
+            host = db_cfg.get("host") or os.getenv("SOURCE_DB_HOST")
+            port = int(db_cfg.get("port") or os.getenv("SOURCE_DB_PORT", 5432))
+            dbname = db_cfg.get("database_name") or db_cfg.get("database") or os.getenv("SOURCE_DB_NAME", "neondb")
+            user = db_cfg.get("username") or os.getenv("SOURCE_DB_USERNAME", "neondb_owner")
+            password = db_cfg.get("password") or os.getenv("SOURCE_DB_PASSWORD")
+            sslmode = db_cfg.get("sslmode") or os.getenv("SOURCE_DB_SSLMODE", "require")
+            
+            conn = psycopg2.connect(host=host, port=port, dbname=dbname, user=user, password=password, sslmode=sslmode)
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT * FROM "{target_table}" ORDER BY 1 DESC LIMIT %s;', (limit,))
+            col_names = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            conn.close()
+
+            for row in rows:
+                record_dict = dict(zip(col_names, row))
+                # Format non-serializable fields
+                for k, v in record_dict.items():
+                    if hasattr(v, 'isoformat'):
+                        record_dict[k] = v.isoformat()
+                    elif not isinstance(v, (str, int, float, bool, type(None))):
+                        record_dict[k] = str(v)
+                records.append(record_dict)
+        else:
+            import sqlite3
+            db_path = os.path.join(config.DIRECTORY, "test_source.db")
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute(f"SELECT * FROM {target_table} ORDER BY 1 DESC LIMIT {limit}")
+                col_names = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+                conn.close()
+                for row in rows:
+                    records.append(dict(zip(col_names, row)))
+
+        return {"status": "success", "target_table": target_table, "records": records}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "records": []}
 
 @router.post("/simulate-traffic")
 async def simulate_traffic(payload: dict = Body(...)):
@@ -566,6 +669,7 @@ async def simulate_traffic(payload: dict = Body(...)):
             placeholder_char = "?"
 
         col_names = [c[1] for c in cols_info]
+        col_types = {c[1]: str(c[2]).upper() for c in cols_info}
         pk_col = next((c[1] for c in cols_info if c[5] == 1), col_names[0])
         
         rand_suffix = random.randint(1000, 9999)
@@ -576,10 +680,25 @@ async def simulate_traffic(payload: dict = Body(...)):
             if custom_data and isinstance(custom_data, dict):
                 for k, v in custom_data.items():
                     if k in col_names and v is not None and str(v).strip() != "":
-                        val_str = str(v).strip()
-                        if not val_str.startswith("sim_"):
-                            val_str = f"sim_{val_str}"
-                        insert_data[k] = val_str
+                        raw_val = str(v).strip()
+                        ctype = col_types.get(k, "VARCHAR")
+                        
+                        # Integer type check
+                        if any(t in ctype for t in ["INT", "SERIAL", "BIGINT", "SMALLINT"]):
+                            try:
+                                clean_digits = "".join(ch for ch in raw_val if ch.isdigit() or ch == '-')
+                                insert_data[k] = int(clean_digits) if clean_digits else random.randint(1000, 99999)
+                            except Exception:
+                                insert_data[k] = random.randint(1000, 99999)
+                        # Float / Numeric type check
+                        elif any(t in ctype for t in ["FLOAT", "REAL", "NUMERIC", "DOUBLE", "DECIMAL"]):
+                            try:
+                                clean_float = "".join(ch for ch in raw_val if ch.isdigit() or ch in ['.', '-'])
+                                insert_data[k] = float(clean_float) if clean_float else round(random.uniform(1000.0, 99999.0), 2)
+                            except Exception:
+                                insert_data[k] = round(random.uniform(1000.0, 99999.0), 2)
+                        else:
+                            insert_data[k] = raw_val
             
             if not insert_data:
                 if target_table == "customers":
@@ -626,11 +745,25 @@ async def simulate_traffic(payload: dict = Body(...)):
                         else:
                             insert_data[cname] = f"sim_{cname}_{rand_suffix}"
 
+            # Auto-generate Primary Key if missing from insert_data (e.g. for non-serial PK columns like account_id)
+            if pk_col and pk_col in col_names and pk_col not in insert_data:
+                try:
+                    if db_type == "postgresql":
+                        cursor.execute(f'SELECT COALESCE(MAX("{pk_col}"), 0) + 1 FROM "{target_table}";')
+                        next_pk = cursor.fetchone()[0]
+                        insert_data[pk_col] = next_pk
+                    else:
+                        cursor.execute(f'SELECT COALESCE(MAX({pk_col}), 0) + 1 FROM {target_table};')
+                        next_pk = cursor.fetchone()[0]
+                        insert_data[pk_col] = next_pk
+                except Exception as pk_err:
+                    print(f"[SIMULATOR] Auto-PK generation note for '{pk_col}': {pk_err}")
+
             fields = [k for k in insert_data.keys() if k in col_names]
             placeholders = ", ".join([placeholder_char] * len(fields))
             
             if db_type == "postgresql":
-                sql = f"INSERT INTO {target_table} ({', '.join(fields)}) VALUES ({placeholders}) RETURNING {pk_col}"
+                sql = f'INSERT INTO "{target_table}" ({", ".join([f"{f}" for f in fields])}) VALUES ({placeholders}) RETURNING "{pk_col}"'
                 cursor.execute(sql, [insert_data[f] for f in fields])
                 conn.commit()
                 row = cursor.fetchone()
@@ -683,26 +816,64 @@ async def simulate_traffic(payload: dict = Body(...)):
             }
 
         elif operation == "DELETE":
-            text_cols = [c[1] for c in cols_info if "TEXT" in c[2].upper() or "CHAR" in c[2].upper() or "VARCHAR" in c[2].upper()]
-            where_clauses = [f"{col} LIKE '%sim_%'" for col in text_cols]
-            where_sql = (" WHERE " + " OR ".join(where_clauses)) if where_clauses else ""
+            req_record_id = payload.get("record_id")
+            target_id = None
 
-            row = None
-            if where_sql:
-                cursor.execute(f"SELECT {pk_col} FROM {target_table}{where_sql} ORDER BY {pk_col} DESC LIMIT 1")
+            if req_record_id is not None and str(req_record_id).strip() != "":
+                target_id = req_record_id
+            else:
+                text_cols = [c[1] for c in cols_info if "TEXT" in c[2].upper() or "CHAR" in c[2].upper() or "VARCHAR" in c[2].upper()]
+                where_clauses = [f'"{col}" LIKE \'%sim_%\'' for col in text_cols]
+                where_sql = (" WHERE " + " OR ".join(where_clauses)) if where_clauses else ""
+
+                if where_sql:
+                    if db_type == "postgresql":
+                        cursor.execute(f'SELECT "{pk_col}" FROM "{target_table}"{where_sql} ORDER BY "{pk_col}" DESC LIMIT 1')
+                    else:
+                        cursor.execute(f'SELECT {pk_col} FROM {target_table}{where_sql} ORDER BY {pk_col} DESC LIMIT 1')
+                    row = cursor.fetchone()
+                    if row:
+                        target_id = row[0]
+
+            if not target_id:
+                if db_type == "postgresql":
+                    cursor.execute(f'SELECT "{pk_col}" FROM "{target_table}" ORDER BY "{pk_col}" DESC LIMIT 1')
+                else:
+                    cursor.execute(f'SELECT {pk_col} FROM {target_table} ORDER BY {pk_col} DESC LIMIT 1')
                 row = cursor.fetchone()
+                if row:
+                    target_id = row[0]
 
-            if not row:
+            if not target_id:
                 conn.close()
                 return {
                     "status": "error",
                     "code": "NO_SAFE_SIMULATION_RECORD",
-                    "message": "Create a simulated record before testing DELETE. Real database records are protected."
+                    "message": "No record available to delete. Please insert a record first."
                 }
 
-            target_id = row[0]
-            cursor.execute(f"DELETE FROM {target_table} WHERE {pk_col} = {placeholder_char}", (target_id,))
-            conn.commit()
+            try:
+                if db_type == "postgresql":
+                    cursor.execute(f'DELETE FROM "{target_table}" WHERE "{pk_col}" = %s', (target_id,))
+                else:
+                    cursor.execute(f'DELETE FROM {target_table} WHERE {pk_col} = ?', (target_id,))
+                conn.commit()
+            except Exception as del_err:
+                conn.rollback()
+                err_msg = str(del_err)
+                if "foreign key" in err_msg.lower() or "violates foreign key constraint" in err_msg.lower():
+                    # Extract referenced table if present
+                    ref_table = "child"
+                    if "table" in err_msg.lower():
+                        parts = err_msg.split('table "')
+                        if len(parts) > 2:
+                            ref_table = parts[2].split('"')[0]
+                    return {
+                        "status": "error",
+                        "code": "FOREIGN_KEY_VIOLATION",
+                        "message": f"Cannot delete record #{target_id} from '{target_table}' because dependent rows exist in table '{ref_table}' (Foreign Key Constraint). Insert a new record or pick a record without dependent child rows."
+                    }
+                raise del_err
 
             result_payload = {
                 "status": "success",
@@ -719,4 +890,10 @@ async def simulate_traffic(payload: dict = Body(...)):
 
     except Exception as e:
         logger.error(f"Failed traffic simulation: {e}")
-        return {"status": "error", "message": f"Simulation failed: {str(e)}"}
+        err_str = str(e)
+        if "foreign key constraint" in err_str.lower():
+            return {
+                "status": "error",
+                "message": f"Cannot delete record from '{target_table}': Active foreign key references exist in child tables. Create a new test record or pick a standalone row to delete."
+            }
+        return {"status": "error", "message": f"Simulation failed: {err_str}"}

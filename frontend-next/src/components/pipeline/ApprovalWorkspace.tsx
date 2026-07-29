@@ -32,6 +32,7 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [isApprovedState, setIsApprovedState] = useState(false);
   const [rawPolicy, setRawPolicy] = useState<any>(null);
+  const [allPolicyColumns, setAllPolicyColumns] = useState<PolicyColumn[]>([]);
   const [columns, setColumns] = useState<PolicyColumn[]>([]);
   const [samples, setSamples] = useState<Record<string, any[]>>({});
   const [selectedTable, setSelectedTable] = useState<string>('');
@@ -79,6 +80,8 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
             }
           });
         }
+
+        setAllPolicyColumns(columnsList);
 
         let activeTarget = policyData?.target_table || policyData?.policy_metadata?.target_table || state?.target_table;
         if (columnsList.length > 0) {
@@ -134,6 +137,34 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
     };
     fetchData();
   }, []);
+
+  const handleTableChange = async (newTable: string) => {
+    setSelectedTable(newTable);
+    const tableCols = allPolicyColumns.filter((c) => c.table_name === newTable);
+    const colsToUse = tableCols.length > 0 ? tableCols : allPolicyColumns;
+    setColumns(colsToUse);
+
+    try {
+      const riskRes = await fetch('http://localhost:8000/api/pipeline/recalculate-risk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_table: newTable, column_policies: colsToUse })
+      });
+      if (riskRes.ok) {
+        const riskData = await riskRes.json();
+        setCurrentScore(riskData.risk_score);
+        setPrivacyScore(riskData.privacy_score);
+        setRiskLevel(riskData.risk_level);
+        if (riskData.details && Array.isArray(riskData.details.vulnerabilities)) {
+          setVulnerabilities(riskData.details.vulnerabilities);
+        } else {
+          setVulnerabilities([]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to recalculate per-table risk score:', e);
+    }
+  };
 
   const inferPiiType = (colName: string): string => {
     const colLower = colName.toLowerCase();
@@ -276,8 +307,22 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
       <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
         <div className="flex items-center gap-4">
           <div>
-            <span className="text-[10px] text-slate-500 font-mono uppercase block">Target Table</span>
-            <span className="text-sm font-bold text-blue-400 font-mono">{activeTable}</span>
+            <span className="text-[10px] text-slate-500 font-mono uppercase block mb-1">Target Table</span>
+            {tableNames.length > 1 ? (
+              <select
+                value={selectedTable || activeTable}
+                onChange={(e) => handleTableChange(e.target.value)}
+                className="bg-slate-950 border border-slate-700 text-blue-400 text-xs font-bold font-mono rounded px-2.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+              >
+                {tableNames.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-sm font-bold text-blue-400 font-mono">{activeTable}</span>
+            )}
           </div>
           <div className="h-8 w-px bg-slate-800" />
           <div>
