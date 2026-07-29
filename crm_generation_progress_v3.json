@@ -1,0 +1,11 @@
+{
+  "tables": {
+    "contacts": {
+      "rows_completed": 10000,
+      "last_id": null,
+      "timestamp": "2026-07-29T01:58:26.561169"
+    }
+  },
+  "start_time": "2026-07-29T01:49:15.943193",
+  "last_update": "2026-07-29T01:58:26.561169"
+}

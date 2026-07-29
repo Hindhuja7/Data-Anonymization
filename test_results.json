@@ -1,0 +1,315 @@
+{
+  "enterprise_detection": {
+    "enterprise_type": "GENERAL",
+    "confidence": 0.3
+  },
+  "pii_report": {
+    "customers": [
+      {
+        "column_name": "customer_id",
+        "is_pii": true,
+        "pii_type": "IDENTIFIER",
+        "confidence": 1.0,
+        "recommended_technique": "hashing",
+        "reasoning": "LLM detected PII (context-aware). Regex did not detect. LLM: Customer IDs are internal identifiers and treated as PII under DPDP Act 2023.",
+        "detection_method": "llm_primary",
+        "llm_result": {
+          "column_name": "customer_id",
+          "is_pii": true,
+          "pii_type": "IDENTIFIER",
+          "confidence": 1.0,
+          "recommended_technique": "hashing",
+          "reasoning": "Customer IDs are internal identifiers and treated as PII under DPDP Act 2023.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "customer_id",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "full_name",
+        "is_pii": true,
+        "pii_type": "FULL_NAME",
+        "confidence": 1.0,
+        "recommended_technique": "tokenization",
+        "reasoning": "LLM detected PII (context-aware). Regex did not detect. LLM: Full name directly identifies individuals and is classified as PII globally under DPDP Act 2023.",
+        "detection_method": "llm_primary",
+        "llm_result": {
+          "column_name": "full_name",
+          "is_pii": true,
+          "pii_type": "FULL_NAME",
+          "confidence": 1.0,
+          "recommended_technique": "tokenization",
+          "reasoning": "Full name directly identifies individuals and is classified as PII globally under DPDP Act 2023.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "full_name",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "email",
+        "is_pii": true,
+        "pii_type": "EMAIL",
+        "confidence": 1.0,
+        "recommended_technique": "tokenization",
+        "reasoning": "LLM detected PII (context-aware). Regex did not detect. LLM: Email addresses are globally recognized identifiers for individuals under DPDP Act 2023.",
+        "detection_method": "llm_primary",
+        "llm_result": {
+          "column_name": "email",
+          "is_pii": true,
+          "pii_type": "EMAIL",
+          "confidence": 1.0,
+          "recommended_technique": "tokenization",
+          "reasoning": "Email addresses are globally recognized identifiers for individuals under DPDP Act 2023.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "email",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "phone",
+        "is_pii": true,
+        "pii_type": "INDIAN_PHONE",
+        "confidence": 0.99,
+        "recommended_technique": "masking",
+        "reasoning": "Both LLM and regex detected PII. LLM: Phone numbers are classified as PII under DPDP Act 2023 for identifying individuals in India.. Regex: Detected indian_phone in 3 sample values using India-specific regex patterns",
+        "detection_method": "combined",
+        "llm_result": {
+          "column_name": "phone",
+          "is_pii": true,
+          "pii_type": "INDIAN_PHONE",
+          "confidence": 1.0,
+          "recommended_technique": "masking",
+          "reasoning": "Phone numbers are classified as PII under DPDP Act 2023 for identifying individuals in India.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": true,
+          "pii_type": "indian_phone",
+          "confidence": 0.9,
+          "recommended_technique": "tokenization",
+          "reasoning": "Detected indian_phone in 3 sample values using India-specific regex patterns",
+          "column_name": "phone",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "address",
+        "is_pii": true,
+        "pii_type": "LOCATION",
+        "confidence": 1.0,
+        "recommended_technique": "tokenization",
+        "reasoning": "LLM detected PII (context-aware). Regex did not detect. LLM: Addresses contain location information and are treated as PII under DPDP Act 2023.",
+        "detection_method": "llm_primary",
+        "llm_result": {
+          "column_name": "address",
+          "is_pii": true,
+          "pii_type": "LOCATION",
+          "confidence": 1.0,
+          "recommended_technique": "tokenization",
+          "reasoning": "Addresses contain location information and are treated as PII under DPDP Act 2023.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "address",
+          "source": "regex"
+        }
+      }
+    ],
+    "orders": [
+      {
+        "column_name": "order_id",
+        "is_pii": false,
+        "pii_type": null,
+        "confidence": 0.0,
+        "recommended_technique": "no_change",
+        "reasoning": "Neither LLM nor regex detected PII",
+        "detection_method": "combined",
+        "llm_result": {
+          "column_name": "order_id",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.9,
+          "recommended_technique": "NO_CHANGE",
+          "reasoning": "The column represents a system-generated identifier for orders, which is not directly linked to a person.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "order_id",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "customer_id",
+        "is_pii": true,
+        "pii_type": "IDENTIFIER",
+        "confidence": 1.0,
+        "recommended_technique": "HASHING",
+        "reasoning": "LLM detected PII (context-aware). Regex did not detect. LLM: The customer_id is a unique identifier linked to customers, making it an IDENTIFIER under the DPDP Act 2023.",
+        "detection_method": "llm_primary",
+        "llm_result": {
+          "column_name": "customer_id",
+          "is_pii": true,
+          "pii_type": "IDENTIFIER",
+          "confidence": 1.0,
+          "recommended_technique": "HASHING",
+          "reasoning": "The customer_id is a unique identifier linked to customers, making it an IDENTIFIER under the DPDP Act 2023.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "customer_id",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "order_date",
+        "is_pii": false,
+        "pii_type": null,
+        "confidence": 0.0,
+        "recommended_technique": "no_change",
+        "reasoning": "Neither LLM nor regex detected PII",
+        "detection_method": "combined",
+        "llm_result": {
+          "column_name": "order_date",
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.8,
+          "recommended_technique": "NO_CHANGE",
+          "reasoning": "The column contains general date information and is not directly related to a person\u2019s identity.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "order_date",
+          "source": "regex"
+        }
+      },
+      {
+        "column_name": "total_amount",
+        "is_pii": true,
+        "pii_type": "FINANCIAL",
+        "confidence": 1.0,
+        "recommended_technique": "DIFFERENTIAL_PRIVACY",
+        "reasoning": "LLM detected PII (context-aware). Regex did not detect. LLM: The column contains transaction amounts, which qualify as sensitive financial information under the DPDP Act 2023.",
+        "detection_method": "llm_primary",
+        "llm_result": {
+          "column_name": "total_amount",
+          "is_pii": true,
+          "pii_type": "FINANCIAL",
+          "confidence": 1.0,
+          "recommended_technique": "DIFFERENTIAL_PRIVACY",
+          "reasoning": "The column contains transaction amounts, which qualify as sensitive financial information under the DPDP Act 2023.",
+          "model_used": "gpt-4o",
+          "provider_used": "github"
+        },
+        "regex_result": {
+          "is_pii": false,
+          "pii_type": null,
+          "confidence": 0.0,
+          "recommended_technique": null,
+          "reasoning": "No India-specific PII patterns detected in sample values",
+          "column_name": "total_amount",
+          "source": "regex"
+        }
+      }
+    ]
+  },
+  "anonymized_data": {
+    "customers": {
+      "customer_id": [
+        "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+        "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+      ],
+      "full_name": [
+        "Advaith Misra",
+        "Rishi Madan",
+        "Neel Prakash"
+      ],
+      "email": [
+        "santadvika@example.net",
+        "rachitpant@example.net",
+        "walinitara@example.net"
+      ],
+      "phone": [
+        "XXXXXXXXXXXXXX",
+        "XXXXXXXXXXXXXX",
+        "XXXXXXXXXXXXXX"
+      ],
+      "address": [
+        "135, Bajwa Path\nSonipat-860029",
+        "H.No. 619\nPrashad Street\nLoni-031738",
+        "68/20\nMitra Street\nJalgaon-585265"
+      ]
+    },
+    "orders": {
+      "order_id": [
+        "101",
+        "102",
+        "103"
+      ],
+      "customer_id": [
+        "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+        "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+      ],
+      "order_date": [
+        "2024-01-15",
+        "2024-01-16",
+        "2024-01-17"
+      ],
+      "total_amount": [
+        1500.74,
+        2501.94,
+        1781.21
+      ]
+    }
+  }
+}
