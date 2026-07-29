@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CRM Dataset Generation Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f8f9fa;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .metric-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .metric-value {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CRM Dataset Generation Report</h1>
+        
+        <h2>Generation Information</h2>
+        <div class="metric">
+            <span class="metric-label">Start Time:</span>
+            <span class="metric-value">2026-07-29T01:59:20.987600</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">End Time:</span>
+            <span class="metric-value">2026-07-29T01:59:21.544350</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Total Execution Time:</span>
+            <span class="metric-value">0s</span>
+        </div>
+        
+        <h2>Batch Metrics</h2>
+        <div class="metric">
+            <span class="metric-label">Total Batches:</span>
+            <span class="metric-value">5</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Total Rows Inserted:</span>
+            <span class="metric-value">5,000</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Average Batch Time:</span>
+            <span class="metric-value">0.1000s</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Average Throughput:</span>
+            <span class="metric-value">8980.69 rows/sec</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Peak Throughput:</span>
+            <span class="metric-value">10000.00 rows/sec</span>
+        </div>
+        
+        <h2>Error Handling</h2>
+        <div class="metric">
+            <span class="metric-label">Deadlock Count:</span>
+            <span class="metric-value">1</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Read-Only Event Count:</span>
+            <span class="metric-value">1</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Total Read-Only Wait Time:</span>
+            <span class="metric-value">5s</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Average Read-Only Wait Time:</span>
+            <span class="metric-value">5.00s</span>
+        </div>
+        
+        <h2>Resilience Metrics</h2>
+        <div class="metric">
+            <span class="metric-label">Resume Count:</span>
+            <span class="metric-value">1</span>
+        </div>
+        
+        
+        <h2>Table Breakdown</h2>
+        <table>
+            <tr>
+                <th>Table</th>
+                <th>Batches</th>
+                <th>Rows</th>
+                <th>Total Time (s)</th>
+                <th>Deadlocks</th>
+                <th>Read-Only Events</th>
+            </tr>
+            
+            <tr>
+                <td>test_table</td>
+                <td>5</td>
+                <td>5,000</td>
+                <td>0.50</td>
+                <td>1</td>
+                <td>0</td>
+            </tr>
+            
+        </table>
+            
+        
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            Report generated on 2026-07-29 01:59:21
+        </p>
+    </div>
+</body>
+</html>
