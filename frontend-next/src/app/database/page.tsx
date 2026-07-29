@@ -523,10 +523,8 @@ export default function DatabaseConnection() {
             <div className="pt-4 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
               <span>Dynamic PostgreSQL Metadata Query</span>
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-            </div>
           </div>
         </div>
-
       </div>
     </div>
   );

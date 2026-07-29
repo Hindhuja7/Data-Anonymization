@@ -592,6 +592,66 @@ async def get_table_records(table: Optional[str] = None, limit: int = 15):
     except Exception as e:
         return {"status": "error", "message": str(e), "records": []}
 
+@router.get("/destination-records")
+async def get_destination_records(table: Optional[str] = None, limit: int = 25):
+    """Fetch live anonymized records directly from destination database (neondb_anonymized)"""
+    try:
+        from app.pipeline.state import pipeline_state
+        target_table = table or pipeline_state.get("target_table") or "customers"
+        config_path = os.path.join(config.DIRECTORY, "database_config.json")
+        db_cfg = {}
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r") as f:
+                    db_cfg = json.load(f)
+            except Exception:
+                pass
+
+        db_type = db_cfg.get("database_type") or db_cfg.get("type", "sqlite")
+        records = []
+
+        if db_type == "postgresql":
+            import psycopg2
+            host = db_cfg.get("host") or os.getenv("DESTINATION_DB_HOST") or os.getenv("SOURCE_DB_HOST")
+            port = int(db_cfg.get("port") or os.getenv("DESTINATION_DB_PORT") or os.getenv("SOURCE_DB_PORT", 5432))
+            dbname = db_cfg.get("destination_database_name") or os.getenv("DESTINATION_DB_NAME", "neondb_anonymized")
+            user = db_cfg.get("username") or os.getenv("DESTINATION_DB_USERNAME") or os.getenv("SOURCE_DB_USERNAME", "neondb_owner")
+            password = db_cfg.get("password") or os.getenv("DESTINATION_DB_PASSWORD") or os.getenv("SOURCE_DB_PASSWORD")
+            sslmode = db_cfg.get("sslmode") or os.getenv("SOURCE_DB_SSLMODE", "require")
+            
+            conn = psycopg2.connect(host=host, port=port, dbname=dbname, user=user, password=password, sslmode=sslmode)
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT * FROM "{target_table}" ORDER BY 1 DESC LIMIT %s;', (limit,))
+            col_names = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            conn.close()
+
+            for row in rows:
+                record_dict = dict(zip(col_names, row))
+                for k, v in record_dict.items():
+                    if hasattr(v, 'isoformat'):
+                        record_dict[k] = v.isoformat()
+                    elif not isinstance(v, (str, int, float, bool, type(None))):
+                        record_dict[k] = str(v)
+                records.append(record_dict)
+        else:
+            import sqlite3
+            db_path = os.path.join(config.DIRECTORY, "test_destination.db")
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute(f"SELECT * FROM {target_table} ORDER BY 1 DESC LIMIT {limit}")
+                col_names = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+                conn.close()
+                for row in rows:
+                    records.append(dict(zip(col_names, row)))
+
+        return {"status": "success", "database": "neondb_anonymized", "target_table": target_table, "count": len(records), "records": records}
+    except Exception as e:
+        logger.error(f"Error fetching destination records: {e}")
+        return {"status": "error", "database": "neondb_anonymized", "target_table": table or "customers", "message": str(e), "records": []}
+
 @router.post("/simulate-traffic")
 async def simulate_traffic(payload: dict = Body(...)):
     """Simulate real-time CRUD traffic (INSERT, UPDATE, DELETE) against the source database safely for live demos."""

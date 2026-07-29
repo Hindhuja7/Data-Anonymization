@@ -50,7 +50,7 @@ export default function Sidebar({ pipelineProgress }: SidebarProps) {
       section: 'DATA',
       items: [
         { id: 'database', label: 'Database Connections', icon: Database },
-        { id: 'enterprise', label: 'Enterprise Detection', icon: Building2 },
+        { id: 'sandbox', label: 'Sandbox Environment', icon: HardDrive },
       ]
     },
     {
@@ -65,8 +65,6 @@ export default function Sidebar({ pipelineProgress }: SidebarProps) {
       section: 'COMPLIANCE',
       items: [
         { id: 'reports', label: 'Reports', icon: FileText },
-        { id: 'audit', label: 'Audit Logs', icon: ShieldCheck },
-        { id: 'policies', label: 'Policies', icon: Activity },
       ]
     },
     {
