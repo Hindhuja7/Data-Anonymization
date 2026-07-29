@@ -49,7 +49,7 @@ export function useWebSocket(url: string) {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.warn('WebSocket transient connection warning (polling fallback active):', error);
         setIsConnected(false);
       };
 

@@ -83,75 +83,25 @@ class AdminPolicyService:
         Calculates the predicted Privacy Risk Score and flags for the proposed policy in memory.
         """
         column_policies = policy.get("column_policies", [])
-        if not column_policies:
-            return {
-                "predicted_risk_score": 0.0,
-                "risk_flag": "GREEN",
-                "vulnerabilities": [],
-                "legend": self._get_risk_legend()
-            }
-            
-        total_weight = 0.0
-        total_penalty = 0.0
-        vulnerabilities = []
+        from risk_scoring_engine import RiskScoringEngine
+        scoring_engine = RiskScoringEngine()
+        result = scoring_engine.calculate_policy_risk(column_policies)
         
-        for col in column_policies:
-            pii_type = col.get("pii_type", "NONE")
-            technique = col.get("anonymization_technique", "NO_CHANGE")
-            col_name = col.get("column_name", "")
-            table_name = col.get("table_name", "")
-            
-            # 1. Determine Column Vulnerability Weight
-            if pii_type in ["IDENTIFIER", "NAME", "EMAIL", "PHONE", "AADHAAR", "PAN", "GSTIN"]:
-                weight = 1.0
-            elif pii_type in ["QUASI_IDENTIFIER", "DOB", "AGE", "GENDER", "LOCATION", "SALARY"]:
-                weight = 0.5
-            else:
-                weight = 0.0
-                
-            # 2. Determine Technique Penalty Factor
-            if technique == "NO_CHANGE" and col.get("is_pii", False):
-                penalty_factor = 1.0
-                vulnerabilities.append(f"PII Column '{table_name}.{col_name}' left unanonymized (NO_CHANGE).")
-            elif technique == "DIFFERENTIAL_PRIVACY":
-                penalty_factor = 0.2
-            else:
-                penalty_factor = 0.0
-                
-            total_weight += weight
-            total_penalty += (weight * penalty_factor)
-            
-        # Base policy risk score (scaled to 70)
-        base_risk_score = 0.0
-        if total_weight > 0:
-            base_risk_score = (total_penalty / total_weight) * 70.0
-            
-        # Simulate Thief Agent linkage penalty if quasi-identifiers are left raw
-        thief_penalty = 0.0
-        quasi_left_raw = any(
-            c.get("pii_type") in ["DOB", "AGE", "GENDER", "LOCATION", "SALARY"] and 
-            c.get("anonymization_technique") == "NO_CHANGE"
-            for c in column_policies
-        )
-        if quasi_left_raw:
-            thief_penalty = 15.0
-            vulnerabilities.append("Quasi-identifiers left raw might allow linkage attacks.")
-            
-        predicted_score = min(100.0, base_risk_score + thief_penalty)
-        predicted_score = round(predicted_score, 2)
+        predicted_risk_score = result["policy_risk_score"]
+        privacy_score = result["privacy_score"]
         
-        # Map to flag color
-        if predicted_score == 0.0:
+        if predicted_risk_score == 0.0:
             risk_flag = "GREEN"
-        elif predicted_score < 70.0:
+        elif predicted_risk_score < 50.0:
             risk_flag = "YELLOW"
         else:
             risk_flag = "RED"
             
         return {
-            "predicted_risk_score": predicted_score,
+            "predicted_risk_score": predicted_risk_score,
+            "privacy_score": privacy_score,
             "risk_flag": risk_flag,
-            "vulnerabilities": vulnerabilities,
+            "vulnerabilities": result["vulnerabilities"],
             "legend": self._get_risk_legend()
         }
         

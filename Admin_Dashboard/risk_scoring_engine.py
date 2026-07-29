@@ -13,9 +13,11 @@ class RiskScoringEngine:
         Calculate authoritative risk score and privacy score for a given column policy set.
         
         Formula Contract:
-        - risk_score: 0.0 (perfectly anonymized) to 100.0 (raw high-risk PII leaks)
+        - Each un-anonymized direct PII column (email, phone, aadhaar, pan, ssn, card) under NO_CHANGE adds 25.0 risk points.
+        - Each un-anonymized quasi-identifier (dob, location, salary) under NO_CHANGE adds 15.0 risk points.
+        - risk_score: min(100.0, total_penalties)
         - privacy_score: max(0.0, 100.0 - risk_score)
-        - risk_level: LOW (risk == 0.0), MEDIUM (0.0 < risk < 70.0), HIGH (risk >= 70.0)
+        - risk_level: LOW (0.0), MEDIUM (0.1 - 49.9), HIGH (50.0 - 100.0)
         """
         if not column_policies:
             return {
@@ -25,62 +27,58 @@ class RiskScoringEngine:
                 "vulnerabilities": []
             }
             
-        total_weight = 0.0
-        total_penalty = 0.0
+        risk_score = 0.0
         vulnerabilities = []
+        raw_direct_pii_count = 0
+        raw_quasi_pii_count = 0
         
         for col in column_policies:
-            pii_type = col.get("pii_type", "NONE")
-            technique = col.get("anonymization_technique", "NO_CHANGE")
-            col_name = col.get("column_name", "")
-            table_name = col.get("table_name", "")
+            col_name = str(col.get("column_name", ""))
+            table_name = str(col.get("table_name", ""))
+            technique = str(col.get("anonymization_technique") or "NO_CHANGE").upper()
+            pii_type = str(col.get("pii_type") or "").upper()
+            is_pii_flag = bool(col.get("is_pii", False))
             
-            if pii_type in ["IDENTIFIER", "NAME", "FULL_NAME", "EMAIL", "PHONE", "AADHAAR", "PAN", "GSTIN", "SSN", "CREDIT_CARD", "SENSITIVE"]:
-                weight = 1.0
-            elif pii_type in ["QUASI_IDENTIFIER", "DOB", "DATE_OF_BIRTH", "AGE", "GENDER", "LOCATION", "ADDRESS", "SALARY", "BALANCE", "FINANCIAL"]:
-                weight = 0.5
-            elif col.get("is_pii", False):
-                weight = 0.5
-            else:
-                weight = 0.0
-                
-            if technique == "NO_CHANGE" and col.get("is_pii", False):
-                penalty_factor = 1.0
-                vulnerabilities.append(f"PII Column '{table_name}.{col_name}' left unanonymized (NO_CHANGE).")
+            col_lower = col_name.lower()
+            is_direct_pii = (
+                pii_type in ["EMAIL", "PHONE", "AADHAAR", "PAN", "GSTIN", "SSN", "CREDIT_CARD", "NAME", "FULL_NAME", "IDENTIFIER"] or
+                any(k in col_lower for k in ["email", "phone", "mobile", "aadhaar", "pan", "ssn", "card", "credit_card"])
+            )
+            is_quasi_pii = (
+                pii_type in ["QUASI_IDENTIFIER", "DOB", "DATE_OF_BIRTH", "AGE", "GENDER", "LOCATION", "ADDRESS", "SALARY", "BALANCE", "FINANCIAL"] or
+                any(k in col_lower for k in ["dob", "birth", "address", "city", "state", "pincode", "zip", "salary", "balance", "amount"])
+            )
+            
+            # Direct or Quasi PII left as NO_CHANGE creates un-anonymized risk
+            if technique == "NO_CHANGE":
+                if is_direct_pii:
+                    raw_direct_pii_count += 1
+                    risk_score += 25.0
+                    vulnerabilities.append(f"CRITICAL: Direct PII column '{table_name}.{col_name}' ({pii_type or col_name}) left un-anonymized (NO_CHANGE).")
+                elif is_quasi_pii or is_pii_flag:
+                    raw_quasi_pii_count += 1
+                    risk_score += 15.0
+                    vulnerabilities.append(f"WARNING: Quasi-identifier column '{table_name}.{col_name}' left un-anonymized (NO_CHANGE).")
             elif technique == "DIFFERENTIAL_PRIVACY":
-                penalty_factor = 0.2
-            else:
-                penalty_factor = 0.0
+                risk_score += 2.0
                 
-            total_weight += weight
-            total_penalty += (weight * penalty_factor)
+        if raw_quasi_pii_count >= 2:
+            risk_score += 10.0
+            vulnerabilities.append("High linkage attack risk: Multiple quasi-identifiers left unprotected.")
             
-        base_risk_score = 0.0
-        if total_weight > 0:
-            base_risk_score = (total_penalty / total_weight) * 70.0
-            
-        quasi_left_raw = any(
-            c.get("pii_type") in ["QUASI_IDENTIFIER", "DOB", "AGE", "GENDER", "LOCATION", "SALARY", "BALANCE"] and 
-            c.get("anonymization_technique") == "NO_CHANGE"
-            for c in column_policies
-        )
-        thief_penalty = 15.0 if quasi_left_raw else 0.0
-        if quasi_left_raw:
-            vulnerabilities.append("Quasi-identifiers left raw might allow linkage attacks.")
-            
-        risk_score = round(min(100.0, base_risk_score + thief_penalty), 2)
-        privacy_score = round(max(0.0, 100.0 - risk_score), 2)
+        final_risk_score = round(min(100.0, max(0.0, risk_score)), 1)
+        final_privacy_score = round(max(0.0, 100.0 - final_risk_score), 1)
         
-        if risk_score == 0.0:
+        if final_risk_score == 0.0:
             risk_level = "LOW"
-        elif risk_score < 70.0:
+        elif final_risk_score < 50.0:
             risk_level = "MEDIUM"
         else:
             risk_level = "HIGH"
             
         return {
-            "policy_risk_score": risk_score,
-            "privacy_score": privacy_score,
+            "policy_risk_score": final_risk_score,
+            "privacy_score": final_privacy_score,
             "risk_level": risk_level,
             "vulnerabilities": vulnerabilities
         }

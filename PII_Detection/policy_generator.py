@@ -185,11 +185,11 @@ class PolicyGenerator:
         
         return ". ".join(reason_parts) + "."
 
-    def _normalize_pii_type(self, column_name: str, raw_type: Optional[str], is_pii: bool) -> Optional[str]:
+    def _normalize_pii_type(self, column_name: str, raw_type: Optional[str], is_pii: bool) -> str:
         if not is_pii:
-            return None
+            return "NON_PII"
         col_lower = column_name.lower()
-        if raw_type and str(raw_type).upper() not in ["UNKNOWN", "NONE", "NULL"]:
+        if raw_type and str(raw_type).upper() not in ["UNKNOWN", "NONE", "NON_PII", "NULL"]:
             return str(raw_type).upper()
         
         if "email" in col_lower:
@@ -206,9 +206,13 @@ class PolicyGenerator:
             return "DATE_OF_BIRTH"
         elif any(k in col_lower for k in ["address", "city", "state", "pin", "pincode", "location"]):
             return "LOCATION"
-        elif any(k in col_lower for k in ["salary", "balance", "amount"]):
+        elif any(k in col_lower for k in ["salary", "balance", "amount", "income"]):
             return "FINANCIAL"
-        elif any(k in col_lower for k in ["id", "customer_id", "account_id", "user_id"]):
+        elif any(k in col_lower for k in ["ssn", "social_security"]):
+            return "SSN"
+        elif any(k in col_lower for k in ["card", "credit_card", "card_number"]):
+            return "CREDIT_CARD"
+        elif any(k in col_lower for k in ["id", "customer_id", "account_id", "user_id", "employee_id", "transaction_id"]):
             return "IDENTIFIER"
         return "SENSITIVE"
 
@@ -223,14 +227,14 @@ class PolicyGenerator:
         elif any(k in col_lower for k in ["salary", "balance", "amount", "income", "dob", "birth", "date_of_birth", "age"]):
             return "DIFFERENTIAL_PRIVACY"
 
-        if not pii_type:
+        if not pii_type or pii_type.upper() in ["NON_PII", "NONE"]:
             return "NO_CHANGE"
         p_type = pii_type.upper()
         if p_type in ["EMAIL", "PHONE", "FULL_NAME", "NAME", "INDIAN_PHONE"]:
             return "TOKENIZATION"
         elif p_type in ["AADHAAR", "PAN", "LOCATION", "ADDRESS", "CITY", "STATE", "PINCODE", "VOTER_ID", "DRIVING_LICENSE"]:
             return "MASKING"
-        elif p_type in ["IDENTIFIER", "SSN", "GSTIN", "BANK_ACCOUNT"]:
+        elif p_type in ["IDENTIFIER", "SSN", "GSTIN", "BANK_ACCOUNT", "CREDIT_CARD"]:
             return "HASHING"
         elif p_type in ["FINANCIAL", "BALANCE", "SALARY", "DATE_OF_BIRTH", "DOB", "AGE", "HEALTH", "MEDICAL"]:
             return "DIFFERENTIAL_PRIVACY"

@@ -79,23 +79,33 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
             }
           });
         }
-        setColumns(columnsList);
 
-        const targetTbl = policyData?.policy_metadata?.target_table || (columnsList.length > 0 ? columnsList[0].table_name : '');
-        setSelectedTable(targetTbl);
+        let activeTarget = policyData?.target_table || policyData?.policy_metadata?.target_table || state?.target_table;
+        if (columnsList.length > 0) {
+          const availableTables = Array.from(new Set(columnsList.map(c => c.table_name).filter(Boolean)));
+          if (!activeTarget || !availableTables.includes(activeTarget)) {
+            activeTarget = availableTables[0] || columnsList[0].table_name || 'employees';
+          }
+        } else {
+          activeTarget = activeTarget || 'employees';
+        }
+        setSelectedTable(activeTarget);
+
+        const activeColumnsList = columnsList.filter(c => !c.table_name || c.table_name === activeTarget);
+        setColumns(activeColumnsList.length > 0 ? activeColumnsList : columnsList);
 
         // Check if policy is already approved
         if (policyData?.policy_metadata?.status === 'APPROVED' || policyData?.approval_state === 'approved') {
           setIsApprovedState(true);
         }
 
-        // Calculate initial authoritative risk score from backend
-        if (columnsList.length > 0) {
+        // Calculate initial authoritative risk score for active target table from backend
+        if (activeColumnsList.length > 0) {
           try {
             const riskRes = await fetch('http://localhost:8000/api/pipeline/recalculate-risk', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ column_policies: columnsList })
+              body: JSON.stringify({ target_table: activeTarget, column_policies: activeColumnsList })
             });
             if (riskRes.ok) {
               const riskData = await riskRes.json();
@@ -125,12 +135,37 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
     fetchData();
   }, []);
 
+  const inferPiiType = (colName: string): string => {
+    const colLower = colName.toLowerCase();
+    if (colLower.includes('email')) return 'EMAIL';
+    if (colLower.includes('phone') || colLower.includes('mobile')) return 'PHONE';
+    if (colLower.includes('name')) return 'FULL_NAME';
+    if (colLower.includes('aadhaar')) return 'AADHAAR';
+    if (colLower.includes('pan')) return 'PAN';
+    if (colLower.includes('ssn')) return 'SSN';
+    if (colLower.includes('card')) return 'CREDIT_CARD';
+    if (colLower.includes('dob') || colLower.includes('birth')) return 'DATE_OF_BIRTH';
+    if (colLower.includes('address') || colLower.includes('city') || colLower.includes('location')) return 'LOCATION';
+    if (colLower.includes('salary') || colLower.includes('balance') || colLower.includes('amount')) return 'FINANCIAL';
+    if (colLower.includes('id')) return 'IDENTIFIER';
+    return 'SENSITIVE';
+  };
+
   const handlePiiTypeChange = (globalIndex: number, newPiiType: string) => {
     const updated = [...columns];
     const item = { ...updated[globalIndex] };
-    const isPii = newPiiType !== 'NON_PII';
+    const isPii = newPiiType !== 'NON_PII' && newPiiType !== 'NONE';
     item.is_pii = isPii;
     item.pii_type = isPii ? newPiiType : 'NON_PII';
+    if (!isPii) {
+      item.anonymization_technique = 'NO_CHANGE';
+    } else if (item.anonymization_technique === 'NO_CHANGE') {
+      const p = newPiiType.toUpperCase();
+      if (['EMAIL', 'PHONE', 'FULL_NAME', 'NAME'].includes(p)) item.anonymization_technique = 'TOKENIZATION';
+      else if (['AADHAAR', 'PAN', 'LOCATION', 'ADDRESS'].includes(p)) item.anonymization_technique = 'MASKING';
+      else if (['IDENTIFIER', 'SSN', 'GSTIN', 'CREDIT_CARD'].includes(p)) item.anonymization_technique = 'HASHING';
+      else item.anonymization_technique = 'DIFFERENTIAL_PRIVACY';
+    }
     item.is_modified = true;
     item.modified_by = 'Dashboard Admin';
     item.modified_at = new Date().toISOString();
@@ -142,6 +177,12 @@ export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
     const updated = [...columns];
     const item = { ...updated[globalIndex] };
     item.anonymization_technique = technique;
+
+    // If technique is NOT NO_CHANGE and column was NON_PII, promote it to PII
+    if (technique !== 'NO_CHANGE' && (!item.is_pii || item.pii_type === 'NON_PII' || item.pii_type === 'NONE')) {
+      item.is_pii = true;
+      item.pii_type = inferPiiType(item.column_name);
+    }
     item.is_modified = true;
     item.modified_by = 'Dashboard Admin';
     item.modified_at = new Date().toISOString();

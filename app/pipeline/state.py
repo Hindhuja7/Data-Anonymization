@@ -81,6 +81,15 @@ class PipelineState:
         steps[0]["status"] = "running"
 
         import time
+        # Delete stale disk policy file from previous runs
+        try:
+            from app.core.config import config
+            disk_path = os.path.join(config.DIRECTORY, "anonymization_policy.json")
+            if os.path.exists(disk_path):
+                os.remove(disk_path)
+        except Exception:
+            pass
+
         self._state.update({
             "run_id": new_run_id,
             "state_version": 1,
@@ -92,7 +101,12 @@ class PipelineState:
             "steps": steps,
             "step_results": {},
             "generated_policy": None,
+            "modified_policy": None,
             "approved_policy": None,
+            "approval_session": None,
+            "approval_state": "pending",
+            "vulnerabilities": [],
+            "validation_report": None,
             "completed_steps": 0,
             "progress_percent": 0,
             "records_processed": 0,
@@ -101,6 +115,7 @@ class PipelineState:
             "risk_level": "",
             "step_12_status": "pending",
             "step_13_status": "pending",
+            "step_14_status": "pending",
             "step_12_chunk": 0,
             "step_13_chunk": 0,
             "step_12_total_chunks": 0,
@@ -148,10 +163,18 @@ class PipelineState:
 
         if 1 <= step_id <= 17:
             self._state["state_version"] = self._state.get("state_version", 0) + 1
-            self._state["active_step"] = step_id
+            curr_active = self._state.get("active_step", 0)
+            self._state["active_step"] = max(curr_active, step_id) if curr_active <= 17 else step_id
             name = step_name or STEP_NAMES[step_id - 1]
             self._state["current_step_name"] = name
-            self._state["status"] = status
+            
+            # Overall status remains 'running' for steps 1..16 when an individual step completes
+            if step_id == 17 and status == "completed":
+                self._state["status"] = "completed"
+            elif status in ["running", "waiting_for_approval", "PAUSED_BY_USER", "paused", "cancelled", "failed", "STOPPING"]:
+                self._state["status"] = status
+            elif status == "completed":
+                self._state["status"] = "running"
 
             # Monotonic step array update
             for s in self._state["steps"]:

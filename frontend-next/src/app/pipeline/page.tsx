@@ -45,9 +45,9 @@ const INITIAL_STEPS: WorkflowStep[] = [
   { id: 12, name: "Step 12. Data Anonymization", status: "pending" },
   { id: 13, name: "Step 13. Destination Loading", status: "pending" },
   { id: 14, name: "Step 14. Validation Engine", status: "pending" },
-  { id: 15, name: "Step 15. Audit Report", status: "pending" },
-  { id: 16, name: "Step 16. Admin Dashboard Sync", status: "pending" },
-  { id: 17, name: "Step 17. Continuous Sync Init", status: "pending" },
+  { id: 15, name: "Step 15. Safe Database Generation", status: "pending" },
+  { id: 16, name: "Step 16. Audit Report Generator", status: "pending" },
+  { id: 17, name: "Step 17. Output Delivery", status: "pending" },
 ];
 
 export default function Pipeline() {
@@ -117,20 +117,53 @@ export default function Pipeline() {
       const stepsArray: WorkflowStep[] = INITIAL_STEPS.map((initStep) => {
         let stepStatus: WorkflowStep['status'] = 'pending';
         
-        if (initStep.id < activeStepNum || (initStep.id === activeStepNum && backendStatus === 'completed')) {
-          stepStatus = 'completed';
-        } else if (initStep.id === activeStepNum && (backendStatus === 'waiting_for_approval' || backendStatus === 'waiting')) {
-          stepStatus = 'waiting_for_approval';
-        } else if (initStep.id === activeStepNum && (backendStatus === 'running' || backendStatus === 'RUNNING')) {
-          stepStatus = 'current';
-        } else if (backendStatus === 'stopped' || backendStatus === 'cancelled' || backendStatus === 'STOPPING' || backendStatus === 'STOPPED') {
-          if (initStep.id === activeStepNum) stepStatus = 'stopped';
-          else if (initStep.id < activeStepNum) stepStatus = 'completed';
-          else stepStatus = 'pending';
-        } else if (initStep.id === activeStepNum && backendStatus === 'failed') {
-          stepStatus = 'failed';
-        } else {
-          stepStatus = 'pending';
+        // Explicit lock for Step 12 (Data Anonymization) to prevent fluctuating
+        if (initStep.id === 12) {
+          const s12 = targetState.step_12_status || prevRun.step_12_status;
+          if (s12 === 'completed') {
+            stepStatus = 'completed';
+          } else if (s12 === 'running' || initStep.id === activeStepNum) {
+            stepStatus = 'current';
+          } else if (backendStatus === 'stopped' || backendStatus === 'cancelled') {
+            stepStatus = 'stopped';
+          } else if (initStep.id < activeStepNum && s12 !== 'running') {
+            stepStatus = 'completed';
+          } else {
+            stepStatus = 'pending';
+          }
+        }
+        // Explicit lock for Step 13 (Destination Loading) to prevent fluctuating
+        else if (initStep.id === 13) {
+          const s13 = targetState.step_13_status || prevRun.step_13_status;
+          if (s13 === 'completed') {
+            stepStatus = 'completed';
+          } else if (s13 === 'running' || initStep.id === activeStepNum) {
+            stepStatus = 'current';
+          } else if (backendStatus === 'stopped' || backendStatus === 'cancelled') {
+            stepStatus = 'stopped';
+          } else if (initStep.id < activeStepNum && s13 !== 'running') {
+            stepStatus = 'completed';
+          } else {
+            stepStatus = 'pending';
+          }
+        }
+        // Standard mapping for other steps
+        else {
+          if (initStep.id < activeStepNum || (initStep.id === activeStepNum && backendStatus === 'completed') || (initStep.id <= 17 && backendStatus === 'completed')) {
+            stepStatus = 'completed';
+          } else if (initStep.id === activeStepNum && (backendStatus === 'waiting_for_approval' || backendStatus === 'waiting')) {
+            stepStatus = 'waiting_for_approval';
+          } else if (initStep.id === activeStepNum && (backendStatus === 'running' || backendStatus === 'RUNNING')) {
+            stepStatus = 'current';
+          } else if (backendStatus === 'stopped' || backendStatus === 'cancelled' || backendStatus === 'STOPPING' || backendStatus === 'STOPPED') {
+            if (initStep.id === activeStepNum) stepStatus = 'stopped';
+            else if (initStep.id < activeStepNum) stepStatus = 'completed';
+            else stepStatus = 'pending';
+          } else if (initStep.id === activeStepNum && backendStatus === 'failed') {
+            stepStatus = 'failed';
+          } else {
+            stepStatus = 'pending';
+          }
         }
 
         return {
@@ -153,16 +186,22 @@ export default function Pipeline() {
         ? (targetState.step_results && Object.keys(targetState.step_results).length > 0 ? targetState.step_results : prevRun.step_results)
         : (targetState.step_results || {});
 
-      // Filter out raw chunk-level trace lines for 12 & 13 from main pipeline log stream
+      // Filter out raw chunk-level trace lines for 12 & 13 and raw server stream logs
       const rawLogs = targetState.logs || prevRun.logs || [];
       const mainPipelineLogs = rawLogs.filter((logItem: any) => {
-        const msg = typeof logItem === 'string' ? logItem : logItem.message || '';
+        const msg = typeof logItem === 'string' ? logItem : logItem?.message || '';
+        
+        // Filter out raw chunk-level trace lines for 12 & 13
         const isStep12Chunk = msg.includes('[Step 12]') || msg.includes('Applying Masking') || msg.includes('Applying Differential') || msg.includes('Applying Hashing') || msg.includes('Applying Tokenization') || msg.includes('anonymized successfully') || msg.includes('Reading Chunk');
         const isStep13Chunk = msg.includes('[Step 13]') || msg.includes('Chunk inserted') || msg.includes('Rows Loaded') || msg.includes('Processing Rate') || msg.includes('Writing Chunk') || msg.includes('COPY FROM STDIN') || msg.includes('Transaction committed');
-        return !isStep12Chunk && !isStep13Chunk;
+        
+        // Filter out raw server stream / HTTP request logs
+        const isServerStreamLog = msg.includes('HTTP/') || msg.includes('GET /api') || msg.includes('POST /api') || msg.includes('OPTIONS /api') || msg.includes('WebSocket') || msg.includes('INFO:uvicorn') || msg.includes('INFO:fastapi') || msg.includes('INFO:database_connector') || msg.includes('INFO:polling_worker');
+
+        return !isStep12Chunk && !isStep13Chunk && !isServerStreamLog;
       });
 
-      // Calculate elapsed ONLY when pipeline is actively running
+      // Calculate elapsed ONLY when pipeline is actively running or completed
       let finalElapsed = prevRun.elapsed_seconds || 0;
       const isActiveState = backendStatus === 'running' || backendStatus === 'RUNNING' || backendStatus === 'waiting_for_approval';
       
@@ -171,8 +210,14 @@ export default function Pipeline() {
         if (!isNaN(startTime)) {
           finalElapsed = Math.max(finalElapsed, Math.floor((Date.now() - startTime) / 1000));
         }
+      } else if (startedAt && completedAt) {
+        const startTime = new Date(startedAt).getTime();
+        const endTime = new Date(completedAt).getTime();
+        if (!isNaN(startTime) && !isNaN(endTime)) {
+          finalElapsed = Math.max(finalElapsed, Math.floor((endTime - startTime) / 1000));
+        }
       } else if (typeof targetState.elapsed_seconds === 'number' && targetState.elapsed_seconds > 0) {
-        finalElapsed = targetState.elapsed_seconds;
+        finalElapsed = Math.max(finalElapsed, targetState.elapsed_seconds);
       }
 
       return {
@@ -223,15 +268,16 @@ export default function Pipeline() {
   const [displayedSeconds, setDisplayedSeconds] = useState<number>(0);
 
   useEffect(() => {
-    if (typeof currentRun.elapsed_seconds === 'number') {
-      setDisplayedSeconds(currentRun.elapsed_seconds);
+    if (typeof currentRun.elapsed_seconds === 'number' && currentRun.elapsed_seconds > 0) {
+      setDisplayedSeconds((prev) => Math.max(prev, currentRun.elapsed_seconds!));
     }
   }, [currentRun.elapsed_seconds]);
 
-  // Live timer interval ONLY runs when active
+  // Live timer interval ONLY runs when active and Step 17 is NOT completed
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    const isActiveState = currentRun.status === 'running' || currentRun.status === 'RUNNING' || currentRun.status === 'waiting_for_approval';
+    const isStep17Done = currentRun.status === 'completed' || currentRun.steps.find(s => s.id === 17)?.status === 'completed';
+    const isActiveState = (currentRun.status === 'running' || currentRun.status === 'RUNNING' || currentRun.status === 'waiting_for_approval') && !isStep17Done;
     
     if (isActiveState) {
       timer = setInterval(() => {
@@ -241,7 +287,7 @@ export default function Pipeline() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [currentRun.status]);
+  }, [currentRun.status, currentRun.steps]);
 
   useEffect(() => {
     if (currentRun.status !== 'idle') {
@@ -310,7 +356,8 @@ export default function Pipeline() {
     }
   };
 
-  const canStop = Boolean(currentRun.run_id && currentRun.status !== 'idle' && currentRun.status !== 'completed' && currentRun.status !== 'cancelled' && currentRun.status !== 'stopped' && currentRun.status !== 'failed');
+  const isStep17Finished = currentRun.status === 'completed' || currentRun.steps.find(s => s.id === 17)?.status === 'completed';
+  const canStop = Boolean(currentRun.run_id && !isStep17Finished && currentRun.status !== 'idle' && currentRun.status !== 'completed' && currentRun.status !== 'cancelled' && currentRun.status !== 'stopped' && currentRun.status !== 'failed');
 
   const workflowSteps = currentRun.steps;
   const pipelineState = currentRun;
@@ -581,6 +628,20 @@ export default function Pipeline() {
                         </button>
                       )}
 
+                      {/* Step 14 Validation Engine Link */}
+                      {step.id === 14 && (step.status === 'completed' || currentRun.active_step >= 14) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/reports?step=14');
+                          }}
+                          className="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-emerald-500/40 flex items-center gap-1 transition-all"
+                        >
+                          Report
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
                         step.status === 'completed'
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -619,20 +680,26 @@ export default function Pipeline() {
               ref={logContainerRef}
               className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-300 max-h-[480px] overflow-y-auto space-y-3"
             >
-              {/* CHRONOLOGICAL LOGS FOR STEPS 1 THROUGH 11 */}
-              {workflowSteps.slice(0, 11).map((step) => {
+              {/* CHRONOLOGICAL LOGS FOR ALL STEPS 1 THROUGH 17 */}
+              {workflowSteps.map((step) => {
                 const stepResult = currentRun.step_results[String(step.id)];
                 const isStepCompleted = step.status === 'completed' || Boolean(stepResult);
                 const isStepCurrent = step.status === 'current';
-                const isStepActive = isStepCompleted || isStepCurrent || currentRun.active_step >= step.id;
+                const isStepActive = isStepCompleted || isStepCurrent || currentRun.active_step >= step.id || (step.id === 12 && currentRun.step_12_status === 'running') || (step.id === 13 && currentRun.step_13_status === 'running');
 
                 if (!isStepActive) return null;
 
                 const dynamicLogs = getDynamicStepLogs(step);
                 const summaryMsg = stepResult?.summary;
 
+                // Backend real log lines for this specific step
+                const backendStepLogs = (currentRun.logs || []).filter((logItem: any) => {
+                  const msg = typeof logItem === 'string' ? logItem : logItem?.message || '';
+                  return msg.includes(`[Step ${step.id}]`);
+                });
+
                 return (
-                  <div key={step.id} className="space-y-1 border-b border-slate-800/60 pb-2">
+                  <div key={step.id} className="space-y-1 border-b border-slate-800/60 pb-3.5">
                     {dynamicLogs.map((line, idx) => (
                       <div
                         key={idx}
@@ -648,75 +715,67 @@ export default function Pipeline() {
                       </div>
                     ))}
 
+                    {/* Backend Real Logs for this Step */}
+                    {backendStepLogs.map((logItem, i) => {
+                      const msg = typeof logItem === 'string' ? logItem : logItem?.message || '';
+                      return (
+                        <div key={i} className="text-slate-300 pl-2 text-[11px] leading-tight">
+                          {msg}
+                        </div>
+                      );
+                    })}
+
                     {summaryMsg && !dynamicLogs.some(l => l.includes(summaryMsg)) && (
-                      <div className="text-slate-300 pl-2">✓ {summaryMsg}</div>
+                      <div className="text-slate-300 pl-2 text-[11px]">✓ {summaryMsg}</div>
                     )}
 
-                    {/* Step 3 Enterprise Detection Action Button */}
+                    {/* Step Action Buttons */}
                     {step.id === 3 && shouldShowStep3Report && (
-                      <div className="pt-1">
+                      <div className="pt-1.5">
                         <button
                           onClick={() => router.push('/reports?step=3')}
-                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs font-mono rounded shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all"
+                          className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-[11px] font-mono rounded shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all"
                         >
                           View Enterprise Detection →
+                        </button>
+                      </div>
+                    )}
+
+                    {step.id === 12 && shouldShowStep12Log && (
+                      <div className="pt-1.5">
+                        <button
+                          onClick={() => router.push('/reports?step=12')}
+                          className="px-3 py-1 bg-gradient-to-r from-purple-500 to-amber-500 hover:from-purple-400 hover:to-amber-400 text-black font-extrabold text-[11px] font-mono rounded shadow-md shadow-purple-500/20 flex items-center gap-1.5 transition-all"
+                        >
+                          View Detailed Anonymization →
+                        </button>
+                      </div>
+                    )}
+
+                    {step.id === 13 && shouldShowStep13Log && (
+                      <div className="pt-1.5">
+                        <button
+                          onClick={() => router.push('/reports?step=13')}
+                          className="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-[11px] font-mono rounded shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all"
+                        >
+                          View Detailed Loading →
+                        </button>
+                      </div>
+                    )}
+
+                    {step.id === 14 && (step.status === 'completed' || currentRun.active_step >= 14) && (
+                      <div className="pt-1.5">
+                        <button
+                          onClick={() => router.push('/reports?step=14')}
+                          className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-[11px] font-mono rounded shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all"
+                        >
+                          View Validation Engine Report →
                         </button>
                       </div>
                     )}
                   </div>
                 );
               })}
-
-              {/* STEP 12 INLINE LOG ENTRY */}
-              {shouldShowStep12Log && (
-                <div className="pt-2 border-t border-purple-500/30 space-y-1 font-mono">
-                  <div className="text-purple-300 font-bold">[STEP 12] Data Anonymization — {currentRun.step_12_status?.toUpperCase() || 'RUNNING'}</div>
-                  <div className="text-emerald-400">✓ Data Anonymization Started</div>
-                  <div className="text-slate-300">✓ Worker initialized</div>
-                  <div className="text-slate-300">✓ Chunk processing active</div>
-                  <div className="pt-1.5">
-                    <button
-                      onClick={() => router.push('/reports?step=12')}
-                      className="px-3.5 py-1.5 bg-gradient-to-r from-purple-500 to-amber-500 hover:from-purple-400 hover:to-amber-400 text-black font-extrabold text-xs font-mono rounded shadow-md shadow-purple-500/20 flex items-center gap-1.5 transition-all"
-                    >
-                      View Detailed Anonymization →
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 13 INLINE LOG ENTRY */}
-              {shouldShowStep13Log && (
-                <div className="pt-2 border-t border-blue-500/30 space-y-1 font-mono">
-                  <div className="text-blue-300 font-bold">[STEP 13] Destination Loading — {currentRun.step_13_status?.toUpperCase() || 'RUNNING'}</div>
-                  <div className="text-emerald-400">✓ Destination Loading Started</div>
-                  <div className="text-slate-300">✓ Loading worker initialized</div>
-                  <div className="text-slate-300">✓ Batch loading active</div>
-                  <div className="pt-1.5">
-                    <button
-                      onClick={() => router.push('/reports?step=13')}
-                      className="px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-xs font-mono rounded shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all"
-                    >
-                      View Detailed Loading →
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* CLEAN FILTERED SERVER STREAM */}
-              {currentRun.logs.length > 0 && (
-                <div className="pt-2 border-t border-slate-800/80 space-y-1">
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Server Stream</div>
-                  {currentRun.logs.map((logItem, i) => {
-                    const msg = typeof logItem === 'string' ? logItem : logItem.message || '';
-                    return (
-                      <div key={i} className="text-slate-400 text-[11px] leading-tight">
-                        {msg}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
 

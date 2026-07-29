@@ -159,17 +159,6 @@ async def get_pipeline_policy():
         current_status = pipeline_state.get("status")
         active_step = pipeline_state.get("active_step", 0)
 
-        # OPERATIONAL RULE: Return policy ONLY if a genuine current run is active at or beyond Step 6
-        if not current_run_id or current_status in ["idle", "reset"] or active_step < 6:
-            return {
-                "run_id": None,
-                "target_table": None,
-                "status": "idle",
-                "risk_score": None,
-                "policy_metadata": None,
-                "column_policies": []
-            }
-
         state_policy = pipeline_state.get("generated_policy") or pipeline_state.get("approved_policy")
         policy_data = state_policy or {}
         
@@ -431,6 +420,7 @@ async def modify_pipeline_policy(payload: dict = Body(...)):
 async def get_pipeline_samples():
     """Get sample data for target table columns"""
     try:
+        from app.pipeline.state import pipeline_state
         sample_data = pipeline_state.get("sample_data")
         if sample_data:
             return {"sample_data": sample_data}
@@ -455,7 +445,8 @@ async def get_pipeline_samples():
           }
         }
     except Exception as e:
-        raise handle_exception(e)
+        logger.error(f"Error in get_pipeline_samples: {e}")
+        return {"sample_data": {}}
 
 @router.get("/table-schema")
 async def get_table_schema(table: Optional[str] = None):

@@ -77,7 +77,10 @@ class AuditReportGenerator:
                 "policy_version": self.policy.get("policy_metadata", {}).get("policy_version", "1.0")
             },
             "execution_summary": {
+                "start_time": execution_stats.get("start_time", datetime.utcnow().isoformat()),
+                "end_time": execution_stats.get("end_time", datetime.utcnow().isoformat()),
                 "duration_seconds": round(execution_stats.get("duration_seconds", 0.0), 2),
+                "total_execution_time": execution_stats.get("total_execution_time", f"{round(execution_stats.get('duration_seconds', 0.0), 2)} seconds"),
                 "tables_processed_count": execution_stats.get("tables_processed", 0),
                 "total_rows_anonymized": execution_stats.get("total_rows_processed", 0)
             },
@@ -131,6 +134,9 @@ class AuditReportGenerator:
             f.write("-" * 80 + "\n")
             f.write("1. EXECUTION METRICS\n")
             f.write("-" * 80 + "\n")
+            f.write(f"- Start Time           : {exec_sum.get('start_time', 'N/A')}\n")
+            f.write(f"- End Time             : {exec_sum.get('end_time', 'N/A')}\n")
+            f.write(f"- Total Execution Time : {exec_sum.get('total_execution_time', 'N/A')}\n")
             f.write(f"- Total Tables Synced  : {exec_sum['tables_processed_count']}\n")
             f.write(f"- Total Rows Processed : {exec_sum['total_rows_anonymized']:,}\n")
             f.write(f"- Process Duration     : {exec_sum['duration_seconds']} seconds\n\n")
