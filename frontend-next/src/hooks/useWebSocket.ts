@@ -55,11 +55,11 @@ export function useWebSocket(url: string) {
 
       ws.onclose = () => {
         setIsConnected(false);
-        console.log('WebSocket disconnected, scheduling reconnect...');
+        console.log('WebSocket disconnected, scheduling instant 1s reconnect...');
         
         reconnectTimeoutRef.current = setTimeout(() => {
           connect();
-        }, 3000);
+        }, 1000);
       };
     } catch (error) {
       console.error('Error creating WebSocket:', error);

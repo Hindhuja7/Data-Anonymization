@@ -40,15 +40,40 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
     const fetchUserConfig = async () => {
       setLoadingConfig(true);
       try {
-        const res = await fetch('http://localhost:8000/api/database/config');
+        let userId = 'a@gmail.com';
+        if (typeof window !== 'undefined') {
+          userId = localStorage.getItem('datavault_user_email') || localStorage.getItem('datavault_user_id') || localStorage.getItem('datavault_active_user') || 'a@gmail.com';
+        }
+        
+        let target = '';
+        let res = await fetch(`/api/database/config?user_id=${encodeURIComponent(userId)}`);
+        if (!res.ok) {
+          res = await fetch(`http://127.0.0.1:8000/api/database/config?user_id=${encodeURIComponent(userId)}`);
+        }
         if (res.ok) {
           const data = await res.json();
-          if (data && data.target_table) {
-            setActiveTable(data.target_table);
+          target = data.target_table || data.config?.target_table || '';
+        }
+
+        if (!target) {
+          let statusRes = await fetch('/api/pipeline/status');
+          if (!statusRes.ok) {
+            statusRes = await fetch('http://127.0.0.1:8000/api/pipeline/status');
           }
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            target = statusData.state?.target_table || statusData.target_table || '';
+          }
+        }
+
+        if (target) {
+          setActiveTable(target);
+        } else {
+          setActiveTable('accounts');
         }
       } catch (err) {
         console.warn('Could not fetch user database config for simulator:', err);
+        setActiveTable('accounts');
       } finally {
         setLoadingConfig(false);
       }
@@ -146,7 +171,11 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
     setLogMessage(null);
 
     try {
-      const payload: any = { operation, target_table: activeTable };
+      const activeUserId = typeof window !== 'undefined' 
+        ? localStorage.getItem('datavault_active_user') || localStorage.getItem('user_email') || 'lokinenihindhuja@gmail.com'
+        : 'lokinenihindhuja@gmail.com';
+
+      const payload: any = { operation, target_table: activeTable, user_id: activeUserId };
 
       if (subTab === 'insert') {
         payload.custom_data = insertFormData;
@@ -252,9 +281,24 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
       {/* Header & Dedicated Sub-Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-800">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Live Traffic Simulator</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Live Traffic Simulator</h3>
+            </div>
+            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded px-2 py-0.5">
+              <span className="text-[10px] text-slate-400 uppercase font-bold">Target Table:</span>
+              <select
+                value={activeTable}
+                onChange={(e) => setActiveTable(e.target.value)}
+                className="bg-transparent text-cyan-300 font-bold text-xs outline-none cursor-pointer"
+              >
+                <option value="accounts" className="bg-slate-900 text-white">accounts</option>
+                <option value="transactions" className="bg-slate-900 text-white">transactions</option>
+                <option value="customers" className="bg-slate-900 text-white">customers</option>
+                <option value="employees" className="bg-slate-900 text-white">employees</option>
+              </select>
+            </div>
           </div>
           <p className="text-[11px] text-slate-400 mt-0.5">
             Test continuous Change Data Capture (CDC) & Polling Worker on target table <strong className="text-cyan-300">{activeTable}</strong>

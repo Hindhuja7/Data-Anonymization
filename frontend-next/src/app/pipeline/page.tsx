@@ -295,10 +295,14 @@ export default function Pipeline() {
     }
   }, [displayedSeconds, currentRun.status]);
 
-  // Scroll ONLY inside log container element
+  // Scroll inside log container element only when user is near bottom
   useEffect(() => {
     if (logContainerRef.current) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+      const container = logContainerRef.current;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+      if (isNearBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   }, [currentRun.logs, currentRun.active_step]);
 
@@ -520,18 +524,18 @@ export default function Pipeline() {
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Privacy Score</span>
-            <span className="text-emerald-400 font-bold">
-              {pipelineState?.privacy_score !== undefined && pipelineState?.privacy_score !== null
-                ? `${pipelineState.privacy_score}`
-                : '—'}
+            <span className="text-emerald-400 font-bold font-mono">
+              {(pipelineState?.active_step >= 7 || pipelineState?.approval_state === 'approved') && pipelineState?.privacy_score !== undefined && pipelineState?.privacy_score !== null
+                ? `${pipelineState.privacy_score}%`
+                : 'Pending (Step 7)'}
             </span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Risk Score</span>
-            <span className="text-amber-400 font-bold">
-              {pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null
+            <span className="text-amber-400 font-bold font-mono">
+              {(pipelineState?.active_step >= 7 || pipelineState?.approval_state === 'approved') && pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null
                 ? `${pipelineState.risk_score}`
-                : '—'}
+                : 'Pending (Step 7)'}
             </span>
           </div>
           <div>

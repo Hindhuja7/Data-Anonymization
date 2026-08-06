@@ -9,7 +9,8 @@ from app.api import (
     policy_router,
     reports_router,
     auth_router,
-    websocket_router
+    websocket_router,
+    audit_router
 )
 
 # Initialize FastAPI application
@@ -35,6 +36,7 @@ app.include_router(policy_router)
 app.include_router(reports_router)
 app.include_router(auth_router)
 app.include_router(websocket_router)
+app.include_router(audit_router)
 
 # Mount static files for frontend
 try:

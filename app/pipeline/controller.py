@@ -207,6 +207,12 @@ class PipelineController:
                 f.write("APPROVED")
 
             policy_path = os.path.join(config.DIRECTORY, "anonymization_policy.json")
+            active_uid = pipeline_state.get("user_id")
+            user_policy_path = None
+            if active_uid and active_uid not in ["null", "undefined", "anonymous", "default", "admin@datavault.ai"]:
+                safe_user = "".join(c for c in str(active_uid) if c.isalnum() or c in ['-', '_'])
+                user_policy_path = os.path.join(config.DIRECTORY, f"anonymization_policy_{safe_user}.json")
+
             if os.path.exists(policy_path):
                 try:
                     with open(policy_path, "r") as f:
@@ -217,6 +223,9 @@ class PipelineController:
                         pdata["policy_metadata"]["approved_at"] = str(datetime.now())
                         with open(policy_path, "w") as f:
                             json.dump(pdata, f, indent=2)
+                        if user_policy_path:
+                            with open(user_policy_path, "w") as uf:
+                                json.dump(pdata, uf, indent=2)
                 except Exception as e:
                     logger.warning(f"Failed updating policy metadata on approval: {e}")
 
@@ -252,7 +261,7 @@ class PipelineController:
             approval_session_data = {
                 "approval_state": "approved",
                 "run_id": pipeline_state.get("run_id"),
-                "target_table": pipeline_state.get("target_table") or "customers",
+                "target_table": pipeline_state.get("target_table") or "accounts",
                 "approved_at": datetime.now().isoformat(),
                 "approved_by": "Dashboard Admin",
                 "final_risk_score": final_risk,
@@ -266,6 +275,25 @@ class PipelineController:
 
             pipeline_state.set("status", "running")
             pipeline_state.set("active_step", 8)
+
+            # Log Approval Granted Event to Audit Logs
+            try:
+                from app.services.audit_service import audit_service
+                act_tbl = pipeline_state.get("target_table") or "accounts"
+                act_uid = pipeline_state.get("user_id") or "a@gmail.com"
+                audit_service.log_event(
+                    action="Human-in-the-Loop Policy Approved",
+                    details=f"User '{act_uid}' approved anonymization policy for target table '{act_tbl}' (Privacy Score: {final_privacy}/100, Risk Score: {final_risk}/100). Step 7 marked APPROVED and pipeline resumed to Step 8.",
+                    category="approval",
+                    level="success",
+                    user_id=act_uid,
+                    run_id=pipeline_state.get("run_id"),
+                    step_index=7,
+                    step_name="Approval Workflow"
+                )
+            except Exception as log_err:
+                logger.warning(f"Failed to log policy approval audit event: {log_err}")
+
             logger.info("Admin approval granted. Step 7 marked APPROVED and pipeline resumed to Step 8.")
             return {"status": "success", "approval_session": approval_session_data, "message": "Policy approved successfully. Pipeline resumed."}
         except Exception as e:
@@ -275,7 +303,7 @@ class PipelineController:
     async def modify_policy(self, payload: dict) -> dict:
         """Modify draft policy for active run_id and recalculate risk/privacy scores authoritatively"""
         column_policies = payload.get("column_policies", [])
-        target_table = payload.get("target_table") or pipeline_state.get("target_table") or "customers"
+        target_table = payload.get("target_table") or pipeline_state.get("target_table") or "accounts"
 
         try:
             from risk_scoring_engine import RiskScoringEngine
@@ -316,6 +344,29 @@ class PipelineController:
         pipeline_state.set("risk_level", risk_lvl)
         pipeline_state.set("approval_state", "pending")
 
+        # Log Approval Queue Modification Event to Audit Logs
+        try:
+            from app.services.audit_service import audit_service
+            act_uid = pipeline_state.get("user_id") or "a@gmail.com"
+            
+            # Format clean column technique summary
+            col_tech_summary = ", ".join([f"{c.get('column_name', '')} -> {c.get('anonymization_technique', '')}" for c in column_policies[:5]])
+            if len(column_policies) > 5:
+                col_tech_summary += f" and {len(column_policies) - 5} more columns"
+
+            audit_service.log_event(
+                action="Approval Queue Policy Modified",
+                details=f"User '{act_uid}' modified column techniques for target table '{target_table}' ({col_tech_summary}). Recalculated Privacy Score: {privacy_score}/100, Risk Level: {risk_lvl}.",
+                category="approval",
+                level="info",
+                user_id=act_uid,
+                run_id=pipeline_state.get("run_id"),
+                step_index=7,
+                step_name="Approval Workflow"
+            )
+        except Exception as log_err:
+            logger.warning(f"Failed to log policy modification audit event: {log_err}")
+
         return {
             "status": "modified",
             "run_id": pipeline_state.get("run_id"),
@@ -336,11 +387,28 @@ class PipelineController:
             raise PipelineException(f"Failed to approve validation: {e}")
 
     async def modify_and_reanonymize(self, modified_policy: dict) -> dict:
-        """Update policy and resume from step 8."""
+        """Update policy and resume from step 8, recording previous policy into history."""
         try:
             policy_path = os.path.join(config.DIRECTORY, "anonymization_policy.json")
             with open(policy_path, "w") as f:
                 json.dump(modified_policy, f, indent=2)
+
+            active_uid = pipeline_state.get("user_id") or "b@gmail.com"
+            table = pipeline_state.get("target_table") or "employees"
+            run_id = pipeline_state.get("run_id") or f"RUN-REANON-{int(time.time())}"
+
+            try:
+                from app.services.audit_service import audit_service
+                audit_service.record_run_history(
+                    user_id=active_uid,
+                    run_id=run_id,
+                    table_name=table,
+                    policy_data=modified_policy,
+                    status="modified_re_anonymized"
+                )
+            except Exception as hist_err:
+                logger.warning(f"Failed to record run history: {hist_err}")
+
             return await self.approve_pipeline()
         except Exception as e:
             logger.error(f"Failed to modify and reanonymize policy: {e}")

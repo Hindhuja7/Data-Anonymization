@@ -44,23 +44,27 @@ export default function LoginPage() {
 
       const data = await response.json();
       
-      // Save token in Zustand store
+      // Save token & active user email in localStorage and Zustand store
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('datavault_user_email', email);
+        localStorage.setItem('datavault_user_id', email);
+        localStorage.setItem('datavault_active_user', email);
+      }
       loginStore.setToken(data.token || data.access_token || null);
       loginStore.setUser({
-        id: "admin-id",
+        id: email,
         email: email,
-        name: "Administrator",
+        name: email.split('@')[0],
         role: "admin",
       });
 
       router.replace('/dashboard');
 
-      // Clear states dynamically on login
+      // Preserve existing user runs and policies across login sessions
       try {
         usePipelineStore.getState().reset();
-        await fetch('/api/pipeline/reset', { method: 'POST' });
       } catch (err) {
-        console.error("Pipeline reset failed:", err);
+        console.error("Pipeline store sync error:", err);
       }
 
       // Redirect to main console dashboard page

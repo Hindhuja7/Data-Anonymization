@@ -64,6 +64,7 @@ export default function Sidebar({ pipelineProgress }: SidebarProps) {
     {
       section: 'COMPLIANCE',
       items: [
+        { id: 'audit', label: 'Audit Logs', icon: ShieldCheck },
         { id: 'reports', label: 'Reports', icon: FileText },
       ]
     },

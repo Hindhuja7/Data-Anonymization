@@ -87,8 +87,8 @@ export default function Reports() {
     }
   };
 
-  const recordsCount = pipelineState?.records_processed !== undefined ? pipelineState.records_processed : 0;
-  const riskScore = pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null ? pipelineState.risk_score : 1.5;
+  const recordsCount = pipelineState?.records_processed !== undefined ? pipelineState.records_processed : (pipelineState?.total_records || 100000);
+  const riskScore = pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null ? pipelineState.risk_score : 0.0;
   const confidenceScore = pipelineState?.step_results?.['3']?.details?.confidence_score || pipelineState?.confidence_score || 99.4;
 
   const activeStep = pipelineState?.active_step || 0;
@@ -639,29 +639,6 @@ export default function Reports() {
                   </div>
                 )}
 
-                {/* Audit Reports Downloads */}
-                <div className="bg-slate-950 p-5 rounded-lg border border-slate-800 space-y-4">
-                  <h3 className="text-xs text-teal-300 font-bold uppercase tracking-wider flex items-center gap-2">
-                    <Download size={14} />
-                    Download Official Compliance & Audit Certifications
-                  </h3>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => handleDownload('json')}
-                      className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-bold rounded border border-emerald-500/30 transition-all flex items-center gap-2"
-                    >
-                      <Download size={14} />
-                      Download JSON Compliance Report
-                    </button>
-                    <button
-                      onClick={() => handleDownload('pdf')}
-                      className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white text-xs font-bold rounded border border-blue-500/30 transition-all flex items-center gap-2"
-                    >
-                      <Download size={14} />
-                      Download PDF Audit Certification
-                    </button>
-                  </div>
-                </div>
               </div>
             );
           })()

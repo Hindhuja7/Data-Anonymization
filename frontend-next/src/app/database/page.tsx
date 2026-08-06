@@ -146,6 +146,10 @@ export default function DatabaseConnection() {
     setIsConnecting(true);
 
     try {
+      const activeUserId = typeof window !== 'undefined'
+        ? localStorage.getItem('datavault_user_email') || localStorage.getItem('datavault_user_id') || localStorage.getItem('datavault_active_user') || 'a@gmail.com'
+        : 'a@gmail.com';
+
       const savePayload = {
         type: formData.type,
         host: formData.host.trim(),
@@ -154,6 +158,7 @@ export default function DatabaseConnection() {
         password: formData.password,
         database: formData.database.trim(),
         target_table: selectedTable,
+        user_id: activeUserId
       };
 
       const response = await fetch('/api/database/config', {
@@ -523,6 +528,7 @@ export default function DatabaseConnection() {
             <div className="pt-4 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
               <span>Dynamic PostgreSQL Metadata Query</span>
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+            </div>
           </div>
         </div>
       </div>

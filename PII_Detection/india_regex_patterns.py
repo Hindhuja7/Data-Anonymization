@@ -175,6 +175,9 @@ class IndiaPIIPatterns:
             column_name: Optional column name for context-aware disambiguation
                          (e.g., helps distinguish Aadhaar vs UAN which both match 12 digits)
         """
+        if not isinstance(value, str):
+            value = str(value) if value is not None else ""
+
         matches = []
         
         detectors = [

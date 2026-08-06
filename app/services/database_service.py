@@ -92,7 +92,11 @@ class DatabaseService:
     def _sanitize_connection_error(self, err_str: str, host: str, port: int, username: str, database: str) -> str:
         """Sanitize raw database error messages to prevent exposing secrets or verbose traces."""
         err_lower = err_str.lower()
-        if "timeout" in err_lower or "timed out" in err_lower or "could not connect" in err_lower or "name or service not known" in err_lower or "connection refused" in err_lower:
+        if "name or service not known" in err_lower or "could not translate host name" in err_lower:
+            return f"DNS lookup failed for host '{host}'. Please verify the host address (e.g. Neon host format: 'ep-something-pooler.us-east-1.aws.neon.tech' without extra subdomains like '.c-9' or URL prefixes)."
+        elif "timeout" in err_lower or "timed out" in err_lower:
+            return f"Connection attempt timed out for {host}:{port}. If using Neon PostgreSQL, the compute endpoint may be waking from an auto-paused state — please try clicking Test Connection again."
+        elif "could not connect" in err_lower or "connection refused" in err_lower:
             return f"Unable to reach database server at {host}:{port}. Please verify host address, port, and network/firewall rules."
         elif "password authentication failed" in err_lower or "access denied" in err_lower:
             return f"Authentication failed for user '{username}'. Please check your password."

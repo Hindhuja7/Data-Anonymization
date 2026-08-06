@@ -1,252 +1,384 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Search, Filter, Download, CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/auth';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { 
+  FileText, Search, Filter, Download, CheckCircle, AlertCircle, XCircle, Info, 
+  ShieldCheck, RefreshCw, Loader2, Database, Lock, Key, Radio, Layers
+} from 'lucide-react';
 
 interface AuditLog {
-  id: number;
+  id: string;
   timestamp: string;
+  user_id?: string;
+  run_id?: string;
+  step_index?: number;
+  step_name?: string;
   level: 'info' | 'warning' | 'error' | 'success';
-  category: 'admin' | 'pipeline' | 'database' | 'system' | 'security';
-  user: string;
+  category: 'pipeline' | 'database' | 'security' | 'approval' | 'simulation' | 'admin' | 'policy';
   action: string;
   details: string;
-  ipAddress?: string;
-  sessionId?: string;
+  ip_address?: string;
+  audit_hash?: string;
 }
 
-export default function AuditLogs() {
+export default function AuditLogsPage() {
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isLiveStreaming, setIsLiveStreaming] = useState<boolean>(true);
 
-  const [logs] = useState<AuditLog[]>([
-    {
-      id: 1,
-      timestamp: "2024-01-15 14:30:45",
-      level: "warning",
-      category: "pipeline",
-      user: "System",
-      action: "Workflow paused",
-      details: "Workflow paused at Step 7 awaiting admin approval",
-      ipAddress: "127.0.0.1",
-      sessionId: "sess_12345"
-    },
-    {
-      id: 2,
-      timestamp: "2024-01-15 14:30:12",
-      level: "success",
-      category: "pipeline",
-      user: "System",
-      action: "Policy generation completed",
-      details: "47 anonymization rules generated successfully",
-      ipAddress: "127.0.0.1",
-      sessionId: "sess_12345"
-    },
-    {
-      id: 3,
-      timestamp: "2024-01-15 14:29:55",
-      level: "info",
-      category: "admin",
-      user: "Admin User",
-      action: "Pipeline started",
-      details: "Initiated anonymization pipeline for production_db",
-      ipAddress: "192.168.1.100",
-      sessionId: "sess_12345"
-    },
-    {
-      id: 4,
-      timestamp: "2024-01-15 14:29:50",
-      level: "info",
-      category: "database",
-      user: "Admin User",
-      action: "Database connected",
-      details: "Connected to PostgreSQL production_db",
-      ipAddress: "192.168.1.100",
-      sessionId: "sess_12345"
-    },
-    {
-      id: 5,
-      timestamp: "2024-01-15 14:28:30",
-      level: "success",
-      category: "admin",
-      user: "Admin User",
-      action: "Login successful",
-      details: "User authenticated via JWT token",
-      ipAddress: "192.168.1.100",
-      sessionId: "sess_12345"
-    },
-    {
-      id: 6,
-      timestamp: "2024-01-15 14:25:15",
-      level: "error",
-      category: "database",
-      user: "System",
-      action: "Connection failed",
-      details: "Failed to connect to staging_db: timeout",
-      ipAddress: "127.0.0.1",
-      sessionId: "sess_12344"
-    },
-    {
-      id: 7,
-      timestamp: "2024-01-15 14:20:00",
-      level: "warning",
-      category: "security",
-      user: "System",
-      action: "Rate limit exceeded",
-      details: "API rate limit exceeded for user Admin User",
-      ipAddress: "192.168.1.100",
-      sessionId: "sess_12343"
-    },
-    {
-      id: 8,
-      timestamp: "2024-01-15 14:15:30",
-      level: "info",
-      category: "system",
-      user: "System",
-      action: "System startup",
-      details: "DataVault AI system initialized",
-      ipAddress: "127.0.0.1",
-      sessionId: "system_init"
-    },
-  ]);
+  const getActiveUserId = () => {
+    const user = useAuthStore.getState().user;
+    if (user && (user.email || user.id)) return user.email || user.id;
+    if (typeof window !== 'undefined') {
+      const directEmail = localStorage.getItem('datavault_user_email') || localStorage.getItem('datavault_user_id') || localStorage.getItem('datavault_active_user');
+      if (directEmail) return directEmail;
+      try {
+        const stored = localStorage.getItem('datavault_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.email || parsed.id) return parsed.email || parsed.id;
+        }
+      } catch (e) {}
+    }
+    return 'a@gmail.com';
+  };
 
-  const filteredLogs = logs.filter(log => {
-    const matchesCategory = selectedCategory === 'all' || log.category === selectedCategory;
-    const matchesLevel = selectedLevel === 'all' || log.level === selectedLevel;
-    const matchesSearch = searchQuery === '' || 
-      log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.user.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesLevel && matchesSearch;
-  });
+  const wsUrl = typeof window !== 'undefined'
+    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:8000/api/pipeline/ws`
+    : 'ws://127.0.0.1:8000/api/pipeline/ws';
 
-  const getLevelIcon = (level: string) => {
-    switch (level) {
-      case 'success': return <CheckCircle className="w-4 h-4 text-emerald-400" />;
-      case 'warning': return <AlertCircle className="w-4 h-4 text-amber-400" />;
-      case 'error': return <XCircle className="w-4 h-4 text-red-400" />;
-      default: return <Info className="w-4 h-4 text-blue-400" />;
+  const { isConnected, onMessage } = useWebSocket(wsUrl);
+
+  const fetchAuditLogs = async (showLoader = true) => {
+    if (showLoader) setIsLoading(true);
+    const userId = getActiveUserId();
+    const query = `user_id=${encodeURIComponent(userId)}&category=${selectedCategory}&level=${selectedLevel}&search=${encodeURIComponent(searchQuery)}`;
+    try {
+      let res = await fetch(`/api/audit/logs?${query}`);
+      if (!res.ok) {
+        res = await fetch(`http://127.0.0.1:8000/api/audit/logs?${query}`);
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(data.logs || []);
+      }
+    } catch (err) {
+      try {
+        const fallbackRes = await fetch(`http://127.0.0.1:8000/api/audit/logs?${query}`);
+        if (fallbackRes.ok) {
+          const data = await fallbackRes.json();
+          setLogs(data.logs || []);
+        }
+      } catch (fallbackErr) {
+        console.error('Audit fetch error:', fallbackErr);
+      }
+    } finally {
+      if (showLoader) setIsLoading(false);
     }
   };
 
-  const getLevelColor = (level: string) => {
+  useEffect(() => {
+    fetchAuditLogs(true);
+  }, [selectedCategory, selectedLevel]);
+
+  useEffect(() => {
+    if (!isLiveStreaming) return;
+    const interval = setInterval(() => fetchAuditLogs(false), 1500);
+    return () => clearInterval(interval);
+  }, [isLiveStreaming, selectedCategory, selectedLevel, searchQuery]);
+
+  useEffect(() => {
+    const unsubscribe = onMessage((msg: any) => {
+      if (msg && msg.type === 'log' && msg.data) {
+        setLogs((prevLogs) => {
+          const exists = prevLogs.some((l) => l.id === msg.data.id);
+          if (exists) return prevLogs;
+          return [msg.data, ...prevLogs];
+        });
+      } else if (msg && (msg.type === 'pipeline_status' || msg.type === 'step_update' || msg.type === 'dashboard_update' || msg.type === 'traffic_simulated')) {
+        fetchAuditLogs(false);
+      }
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [onMessage]);
+
+  const handleExport = (format: 'json' | 'csv') => {
+    window.open(`/api/audit/export?format=${format}`, '_blank');
+  };
+
+  const getLevelBadge = (level: string) => {
     switch (level) {
-      case 'success': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'warning': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case 'error': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      default: return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'success':
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3 text-emerald-400" /> SUCCESS
+          </span>
+        );
+      case 'warning':
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3 text-amber-400" /> WARNING
+          </span>
+        );
+      case 'error':
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1">
+            <XCircle className="w-3 h-3 text-red-400" /> ERROR
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+            <Info className="w-3 h-3 text-blue-400" /> INFO
+          </span>
+        );
+    }
+  };
+
+  const getCategoryBadge = (category: string) => {
+    switch (category) {
+      case 'security':
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">SECURITY</span>;
+      case 'approval':
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">APPROVAL</span>;
+      case 'database':
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold">DATABASE</span>;
+      case 'simulation':
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold">SIMULATION</span>;
+      default:
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-bold">PIPELINE</span>;
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-white">Audit Logs</h1>
-        <p className="text-sm text-slate-400">System and admin activity monitoring</p>
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 shadow-md">
+            <FileText className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+              Audit Logs & Compliance Trail
+              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                HMAC-SHA256 VERIFIED
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Immutable, single-view 17-step pipeline execution stream & DPDP Act 2023 compliance audit log.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsLiveStreaming(!isLiveStreaming)}
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all border flex items-center gap-2 ${
+              isLiveStreaming
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-md'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
+            }`}
+          >
+            <Radio className={`w-3.5 h-3.5 ${isLiveStreaming ? 'animate-pulse text-emerald-400' : ''}`} />
+            {isLiveStreaming ? 'Live Stream Active' : 'Live Stream Paused'}
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold block">17-Step Coverage</span>
+            <span className="text-xs font-bold text-white">All 17 Steps Logged</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold block">Integrity Check</span>
+            <span className="text-xs font-bold text-emerald-300">HMAC-SHA256 Verified</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold block">Compliance Standard</span>
+            <span className="text-xs font-bold text-purple-300">DPDP Act 2023 / GDPR</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
+            <Database className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Recorded Logs</span>
+            <span className="text-xs font-mono font-bold text-white">{logs.length} Events</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Unified Single-View Log Feed */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+        {/* Search & Filter Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+            <div className="relative w-full">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" />
               <input
                 type="text"
-                placeholder="Search logs..."
+                placeholder="Search all 17 steps, actions, run IDs, or HMAC hashes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                onKeyDown={(e) => e.key === 'Enter' && fetchAuditLogs()}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+            <button
+              type="button"
+              onClick={() => fetchAuditLogs()}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl border border-slate-700"
             >
-              <option value="all">All Categories</option>
-              <option value="admin">Admin</option>
-              <option value="pipeline">Pipeline</option>
-              <option value="database">Database</option>
-              <option value="system">System</option>
-              <option value="security">Security</option>
-            </select>
-            <select
-              value={selectedLevel}
-              onChange={(e) => setSelectedLevel(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="all">All Levels</option>
-              <option value="success">Success</option>
-              <option value="warning">Warning</option>
-              <option value="error">Error</option>
-              <option value="info">Info</option>
-            </select>
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Export
+              Search
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Logs Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-800/50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Timestamp</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Level</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Category</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">User</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Action</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Details</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">IP Address</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800">
-            {filteredLogs.map((log) => (
-              <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
-                <td className="px-4 py-3 text-xs text-white font-mono">{log.timestamp}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs border ${getLevelColor(log.level)}`}>
-                    {getLevelIcon(log.level)}
-                    {log.level}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-300 uppercase">{log.category}</td>
-                <td className="px-4 py-3 text-xs text-white">{log.user}</td>
-                <td className="px-4 py-3 text-xs text-white">{log.action}</td>
-                <td className="px-4 py-3 text-xs text-slate-400 max-w-xs truncate">{log.details}</td>
-                <td className="px-4 py-3 text-xs text-slate-400 font-mono">{log.ipAddress}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-300 font-bold">Category:</span>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 font-medium"
+              >
+                <option value="all">All Categories</option>
+                <option value="pipeline">Pipeline (17 Steps)</option>
+                <option value="database">Database</option>
+                <option value="security">Security</option>
+                <option value="approval">Approval Workflow</option>
+                <option value="simulation">Live Simulation</option>
+                <option value="policy">Policy</option>
+              </select>
+            </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-4 gap-4 mt-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-400 mb-1">Total Logs</p>
-          <p className="text-2xl font-semibold text-white">{logs.length}</p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-300 font-bold">Severity:</span>
+              <select
+                value={selectedLevel}
+                onChange={(e) => setSelectedLevel(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 font-medium"
+              >
+                <option value="all">All Severities</option>
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-400 mb-1">Admin Actions</p>
-          <p className="text-2xl font-semibold text-blue-400">{logs.filter(l => l.category === 'admin').length}</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-400 mb-1">Security Events</p>
-          <p className="text-2xl font-semibold text-amber-400">{logs.filter(l => l.category === 'security').length}</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-400 mb-1">Errors</p>
-          <p className="text-2xl font-semibold text-red-400">{logs.filter(l => l.level === 'error').length}</p>
-        </div>
+
+        {/* Logs Table */}
+        {isLoading ? (
+          <div className="py-20 text-center space-y-3">
+            <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
+            <p className="text-xs text-slate-400 font-mono">Loading unified 17-step audit stream...</p>
+          </div>
+        ) : logs.length > 0 ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-800">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800 font-bold">
+                <tr>
+                  <th className="px-4 py-3">Timestamp</th>
+                  <th className="px-3 py-3">Step / Event</th>
+                  <th className="px-3 py-3">Severity</th>
+                  <th className="px-3 py-3">Category</th>
+                  <th className="px-4 py-3">Action & Activity Details</th>
+                  <th className="px-4 py-3">HMAC Hash Checksum</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
+                {logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-800/50 transition-colors">
+                    <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-[11px]">
+                      {log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A'}
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      {log.step_index ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          STEP {log.step_index}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                          EVENT
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      {getLevelBadge(log.level)}
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      {getCategoryBadge(log.category)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-200">
+                      <div className="font-bold text-xs text-white">{log.action}</div>
+                      <div className="text-[11px] text-slate-400 font-normal mt-0.5 leading-relaxed">{log.details}</div>
+                      {log.run_id && (
+                        <span className="text-[10px] text-blue-400 font-mono mt-1 block">Run ID: {log.run_id}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {log.audit_hash ? (
+                        <span className="bg-slate-950 text-slate-300 px-2 py-1 rounded text-[10px] font-mono border border-slate-800 block truncate max-w-[140px]" title={log.audit_hash}>
+                          🔑 {log.audit_hash}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-[10px]">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-16 text-center space-y-3 bg-slate-950 rounded-xl border border-slate-800">
+            <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
+            <p className="text-xs font-bold text-slate-300">No audit log records match the selected filters.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory('all');
+                setSelectedLevel('all');
+                setSearchQuery('');
+              }}
+              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Reset Filters
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

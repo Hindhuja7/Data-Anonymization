@@ -227,6 +227,31 @@ class PipelineState:
             self._state["completed_steps"] = completed
             self._state["progress_percent"] = int((completed / 17.0) * 100)
 
+        # Log real-time audit event for user
+        try:
+            from app.services.audit_service import audit_service
+            uid = self._state.get("user_id") or "b@gmail.com"
+            audit_service.log_event(
+                user_id=uid,
+                action=f"STEP_{step_id}_{status.upper()}",
+                category="PIPELINE",
+                level="INFO" if status in ["completed", "running"] else "WARNING",
+                step_name=name,
+                details=summary,
+                run_id=self._state.get("run_id")
+            )
+            if step_id == 17 and status == "completed":
+                policy = self._state.get("approved_policy") or self._state.get("generated_policy") or {}
+                audit_service.record_run_history(
+                    user_id=uid,
+                    run_id=self._state.get("run_id") or f"RUN-{step_id}",
+                    table_name=self._state.get("target_table") or "employees",
+                    policy_data=policy,
+                    status="completed"
+                )
+        except Exception as e:
+            logger.warning(f"Error logging audit/history on step result: {e}")
+
     def get(self, key: str, default: Any = None) -> Any:
         return self._state.get(key, default)
 
@@ -303,6 +328,27 @@ class PipelineState:
                 state_copy["elapsed_seconds"] = state_copy.get("elapsed_seconds", int(accumulated))
         else:
             state_copy["elapsed_seconds"] = 0
+
+        # Dynamically compute privacy_score and risk_score from active policy using RiskScoringEngine
+        try:
+            from app.services.audit_service import audit_service
+            cols = (
+                (state_copy.get("approved_policy") or {}).get("column_policies") or
+                (state_copy.get("generated_policy") or {}).get("column_policies") or
+                (state_copy.get("modified_policy") or {}).get("column_policies") or
+                []
+            )
+            if not cols:
+                hist = audit_service.get_run_history()
+                if hist:
+                    cols = hist[0].get("policy_snapshot", {}).get("column_policies", [])
+
+            risk_calc = audit_service._calculate_policy_risk_dynamic(cols)
+            state_copy["privacy_score"] = risk_calc["privacy_score"]
+            state_copy["risk_score"] = risk_calc["policy_risk_score"]
+            state_copy["risk_level"] = risk_calc["risk_level"]
+        except Exception:
+            pass
             
         return state_copy
 

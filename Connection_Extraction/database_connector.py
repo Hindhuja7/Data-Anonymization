@@ -43,7 +43,16 @@ class DatabaseConnector:
         """
         self.connection_string = connection_string
         self.database_type = database_type.lower() if database_type else None
-        self.host = host
+        clean_host = str(host).strip() if host else None
+        if clean_host:
+            if "://" in clean_host:
+                clean_host = clean_host.split("://")[-1]
+            if "/" in clean_host:
+                clean_host = clean_host.split("/")[0]
+            if "?" in clean_host:
+                clean_host = clean_host.split("?")[0]
+        
+        self.host = clean_host
         self.port = port
         self.username = username
         self.password = password
@@ -91,7 +100,7 @@ class DatabaseConnector:
                 connection_string = self._build_connection_string()
             connect_args = {}
             if self.database_type == 'postgresql':
-                connect_args["connect_timeout"] = 5
+                connect_args["connect_timeout"] = 25
             self.engine = create_engine(connection_string, connect_args=connect_args)
             
             # Test connection

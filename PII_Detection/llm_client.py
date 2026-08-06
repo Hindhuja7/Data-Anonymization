@@ -56,22 +56,26 @@ class LLMClient:
     def _get_all_api_keys(self) -> List[str]:
         """Collect all configured GitHub PAT keys from environment variables."""
         keys = []
-        # 1. Check GITHUB_API_KEYS (comma-separated string)
-        raw_keys = os.getenv("GITHUB_API_KEYS", "")
-        if raw_keys:
-            keys.extend([k.strip() for k in raw_keys.split(",") if k.strip()])
-        
-        # 2. Check numbered keys GITHUB_API_KEY_1, GITHUB_API_KEY_2, etc.
+        # 1. Check explicit PAT environment variables
+        env_vars = [
+            "GITHUB_PRIMARY_PAT", "GITHUB_ROTATION_PAT", "GITHUB_API_KEY",
+            "GITHUB_API_KEYS", "GITHUB_PAT", "GITHUB_TOKEN"
+        ]
+        for var in env_vars:
+            val = os.getenv(var, "")
+            if val:
+                for k in val.split(","):
+                    k_str = k.strip()
+                    if k_str and k_str not in keys:
+                        keys.append(k_str)
+
+        # 2. Check numbered keys GITHUB_API_KEY_1, GITHUB_PAT_1, etc.
         for i in range(1, 10):
-            k = os.getenv(f"GITHUB_API_KEY_{i}")
-            if k and k.strip() and k.strip() not in keys:
-                keys.append(k.strip())
-                
-        # 3. Check primary GITHUB_API_KEY
-        primary = os.getenv("GITHUB_API_KEY")
-        if primary and primary.strip() and primary.strip() not in keys:
-            keys.append(primary.strip())
-            
+            for prefix in ["GITHUB_API_KEY_", "GITHUB_PAT_", "GITHUB_ROTATION_PAT_"]:
+                k = os.getenv(f"{prefix}{i}")
+                if k and k.strip() and k.strip() not in keys:
+                    keys.append(k.strip())
+
         return keys
 
     def _initialize_client_with_key(self, api_key: str) -> Any:
@@ -160,58 +164,94 @@ class LLMClient:
                 "vulnerability_details": "Zero raw PII leaks found during local rules-based simulation."
             })
             
-        # 3. PII Detection Batch List Mock
-        # Extract column names from prompt tables formatting
-        columns_found = re.findall(r"-\s*column\s*['\"]([^'\"]+)['\"]", prompt_content, re.IGNORECASE)
-        if not columns_found:
-            # Try to match columns listed in bullet lists or raw texts
+        # 3. PII Detection Column Extraction & Classification
+        col_match = re.search(r"Column\s+Name:\s*['\"]?([a-zA-Z0-9_]+)['\"]?", prompt_content, re.IGNORECASE)
+        if not col_match:
+            col_match = re.search(r"column\s+['\"]?([a-zA-Z0-9_]+)['\"]?", prompt_content, re.IGNORECASE)
+        
+        target_col = col_match.group(1) if col_match else None
+        
+        columns_found = [target_col] if target_col else re.findall(r"-\s*column\s*['\"]([^'\"]+)['\"]", prompt_content, re.IGNORECASE)
+        if not columns_found or columns_found == [None]:
             columns_found = re.findall(r"['\"]([a-zA-Z_0-9]+)['\"]\s*:", prompt_content)
         if not columns_found:
-            columns_found = ["email", "phone", "salary", "first_name", "last_name", "aadhaar", "pan"]
+            columns_found = ["unknown_column"]
             
         results = []
         for col_name in columns_found:
+            if not col_name:
+                continue
             is_pii = False
-            pii_type = None
+            pii_type = "NON_PII"
             tech = "NO_CHANGE"
-            reason = "Not classified as sensitive."
+            reason = f"Column '{col_name}' classified as non-sensitive."
             
             col_lower = col_name.lower()
-            if "email" in col_lower:
+            if any(k in col_lower for k in ["email", "mail"]):
                 is_pii = True
                 pii_type = "EMAIL"
-                tech = "MASK_EMAIL"
-                reason = "Identified as email address format."
-            elif "phone" in col_lower or "mobile" in col_lower:
+                tech = "TOKENIZATION"
+                reason = f"Column '{col_name}' contains email address format."
+            elif any(k in col_lower for k in ["phone", "mobile", "contact", "cell"]):
                 is_pii = True
                 pii_type = "PHONE"
-                tech = "MASK_EMAIL"
-                reason = "Identified as contact phone number."
-            elif "salary" in col_lower or "balance" in col_lower or "amount" in col_lower:
+                tech = "TOKENIZATION"
+                reason = f"Column '{col_name}' contains phone number contact details."
+            elif any(k in col_lower for k in ["salary", "balance", "amount", "income", "price", "cost"]):
                 is_pii = True
                 pii_type = "FINANCIAL"
                 tech = "PERTURBATION"
-                reason = "Identified as financial record value."
-            elif "aadhaar" in col_lower or "pan" in col_lower or "tax" in col_lower:
+                reason = f"Column '{col_name}' contains sensitive financial metrics."
+            elif any(k in col_lower for k in ["aadhaar", "uid"]):
                 is_pii = True
-                pii_type = "IDENTIFIER"
-                tech = "MASK_EMAIL"
-                reason = "Identified as government credential id."
-            elif "name" in col_lower:
+                pii_type = "AADHAAR"
+                tech = "MASKING"
+                reason = f"Column '{col_name}' contains 12-digit Aadhaar government ID."
+            elif any(k in col_lower for k in ["pan", "tax_id"]):
+                is_pii = True
+                pii_type = "PAN"
+                tech = "HASHING"
+                reason = f"Column '{col_name}' contains Permanent Account Number (PAN)."
+            elif any(k in col_lower for k in ["gstin", "gst"]):
+                is_pii = True
+                pii_type = "GSTIN"
+                tech = "HASHING"
+                reason = f"Column '{col_name}' contains GST Identification Number."
+            elif any(k in col_lower for k in ["ifsc", "swift", "branch"]):
+                is_pii = True
+                pii_type = "BANK_CODE"
+                tech = "TOKENIZATION"
+                reason = f"Column '{col_name}' contains banking branch identifier."
+            elif any(k in col_lower for k in ["name", "first_name", "last_name", "full_name"]):
                 is_pii = True
                 pii_type = "FULL_NAME"
                 tech = "TOKENIZATION"
-                reason = "Identified as user full name."
-            elif "address" in col_lower or "city" in col_lower or "pincode" in col_lower:
+                reason = f"Column '{col_name}' contains individual's name."
+            elif any(k in col_lower for k in ["dob", "birth", "date_of_birth", "opening_date", "created_at"]):
+                is_pii = True
+                pii_type = "DATE_OF_BIRTH" if ("birth" in col_lower or "dob" in col_lower) else "DATE"
+                tech = "GENERALIZATION"
+                reason = f"Column '{col_name}' contains date timestamp."
+            elif any(k in col_lower for k in ["address", "city", "state", "pin", "pincode", "location"]):
                 is_pii = True
                 pii_type = "LOCATION"
-                tech = "TOKENIZATION"
-                reason = "Identified as residency location detail."
-            elif "id" in col_lower:
+                tech = "GENERALIZATION"
+                reason = f"Column '{col_name}' contains geographic address data."
+            elif any(k in col_lower for k in ["account_number", "card_number", "credit_card", "ssn"]):
+                is_pii = True
+                pii_type = "ACCOUNT_NUMBER"
+                tech = "HASHING"
+                reason = f"Column '{col_name}' contains confidential account or card number."
+            elif col_lower.endswith("_id") or col_lower == "id":
                 is_pii = True
                 pii_type = "IDENTIFIER"
-                tech = "NO_CHANGE"
-                reason = "Identified as system key constraint."
+                tech = "HASHING"
+                reason = f"Column '{col_name}' is a primary/foreign database identifier."
+            elif "type" in col_lower or "status" in col_lower:
+                is_pii = True
+                pii_type = "CATEGORICAL"
+                tech = "TOKENIZATION"
+                reason = f"Column '{col_name}' contains categorical classification data."
                 
             results.append({
                 "column_name": col_name,
@@ -222,8 +262,8 @@ class LLMClient:
                 "reasoning": reason
             })
             
-        self.current_provider = "local"
-        self.current_model = "heuristics-fallback"
+        if target_col and len(results) == 1:
+            return json.dumps(results[0])
         return json.dumps(results)
     
     def get_current_model(self) -> tuple:

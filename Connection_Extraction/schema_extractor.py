@@ -25,27 +25,23 @@ class SchemaExtractor:
         self.engine = engine
         self.inspector: Inspector = inspect(engine)
     
-    def get_table_names(self) -> List[str]:
+    def get_table_names(self, target_table: str = None) -> List[str]:
         """
-        Get all table names in the database.
-        
-        Returns:
-            List of table names
+        Get table names in the database, filtered by targeted table if specified.
         """
         try:
             import os
-            tables_env = os.getenv("TABLES_TO_PROCESS")
-            if tables_env:
-                table_names = [t.strip() for t in tables_env.split(",") if t.strip()]
-                logger.info(f"Using filtered tables from env: {table_names}")
-                # Ensure they actually exist in the database
+            target = target_table or os.getenv("TARGET_TABLE") or os.getenv("TABLES_TO_PROCESS")
+            if target:
+                requested_tables = [t.strip() for t in target.split(",") if t.strip()]
                 db_tables = self.inspector.get_table_names()
-                table_names = [t for t in table_names if t in db_tables]
-                logger.info(f"Filtered tables existing in DB: {table_names}")
-                return table_names
-                
+                filtered = [t for t in requested_tables if t in db_tables]
+                if filtered:
+                    logger.info(f"Target table filtering active: {filtered}")
+                    return filtered
+
             table_names = self.inspector.get_table_names()
-            logger.info(f"Found {len(table_names)} tables")
+            logger.info(f"Found {len(table_names)} tables in database")
             return table_names
         except Exception as e:
             logger.error(f"Failed to get table names: {e}")

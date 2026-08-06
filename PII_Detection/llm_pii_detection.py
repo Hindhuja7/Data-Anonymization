@@ -354,6 +354,14 @@ Respond in JSON only, no extra text:
             response_text = self._clean_json_response(response_text)
             result = json.loads(response_text)
             
+            if isinstance(result, list):
+                if len(result) > 0 and isinstance(result[0], dict):
+                    result = result[0]
+                else:
+                    result = {}
+            elif not isinstance(result, dict):
+                result = {}
+            
             return LLMPIIDetection(
                 column_name=column_name,
                 is_pii=result.get("is_pii", False),

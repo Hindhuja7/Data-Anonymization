@@ -316,6 +316,34 @@ class PollingWorker:
                     if new_rows_df is not None and not new_rows_df.empty:
                         logger.info(f"Incremental Sync: Found {len(new_rows_df)} new/updated rows in table '{table_name}'")
                         self._anonymize_and_load_rows(table_name, new_rows_df, checkpoint)
+                        
+                        # Emit live audit event, invalidate count cache, and broadcast WebSocket update
+                        try:
+                            from app.services.audit_service import audit_service
+                            from app.services.websocket_service import websocket_service
+                            from app.pipeline.state import pipeline_state
+                            import asyncio
+
+                            audit_service.invalidate_count_cache(table_name)
+                            active_uid = pipeline_state.get("user_id") or "b@gmail.com"
+                            audit_service.log_event(
+                                user_id=active_uid,
+                                action=f"[CONTINUOUS SYNC] Processed {len(new_rows_df)} records for table '{table_name}'",
+                                category="pipeline",
+                                level="success",
+                                step_name="Continuous Sync Worker",
+                                details=f"PollingWorker detected and anonymized {len(new_rows_df)} incremental record updates in table '{table_name}'. Destination database synced.",
+                                run_id=pipeline_state.get("run_id") or "RUN_SYNC"
+                            )
+
+                            try:
+                                loop = asyncio.get_running_loop()
+                                if loop and loop.is_running():
+                                    loop.create_task(websocket_service.broadcast_state({"type": "dashboard_update", "table": table_name, "synced_rows": len(new_rows_df)}))
+                            except Exception:
+                                pass
+                        except Exception as log_err:
+                            logger.warning(f"Error logging polling worker audit event: {log_err}")
                     else:
                         logger.debug(f"Table '{table_name}' has no new incremental changes.")
                         

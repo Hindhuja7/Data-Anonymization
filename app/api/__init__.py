@@ -4,6 +4,7 @@ from .policy import router as policy_router
 from .reports import router as reports_router
 from .auth import router as auth_router
 from .websocket import router as websocket_router
+from .audit import router as audit_router
 
 __all__ = [
     'pipeline_router',
@@ -11,5 +12,6 @@ __all__ = [
     'policy_router',
     'reports_router',
     'auth_router',
-    'websocket_router'
+    'websocket_router',
+    'audit_router'
 ]

@@ -26,7 +26,7 @@ interface ApprovalWorkspaceProps {
   state?: any;
 }
 
-export default function ApprovalWorkspace({ onClose }: ApprovalWorkspaceProps) {
+export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);

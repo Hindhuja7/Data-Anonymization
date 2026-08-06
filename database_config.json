@@ -5,7 +5,7 @@
   "username": "neondb_owner",
   "password": "npg_BsO9tyw8dTRW",
   "database": "neondb",
-  "target_table": "employees",
+  "target_table": "accounts",
   "user_id": "default",
   "auto_start": false
 }
