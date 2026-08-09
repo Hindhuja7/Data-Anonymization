@@ -190,15 +190,15 @@ export default function Reports() {
       )}
 
       {/* TABBED NAVIGATION INTERFACE */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3 overflow-x-auto">
             <button
               onClick={() => setActiveTab('3')}
               className={`px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
                 activeTab === '3'
-                  ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-600/20'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-600 shadow-lg shadow-emerald-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
               <Search size={14} />
@@ -209,8 +209,8 @@ export default function Reports() {
               onClick={() => setActiveTab('12')}
               className={`px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
                 activeTab === '12'
-                  ? 'bg-purple-600/20 border-purple-500 text-purple-300 shadow-lg shadow-purple-600/20'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-purple-50 border-purple-300 text-purple-600 shadow-lg shadow-purple-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
               <Lock size={14} />
@@ -221,8 +221,8 @@ export default function Reports() {
               onClick={() => setActiveTab('13')}
               className={`px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
                 activeTab === '13'
-                  ? 'bg-blue-600/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-600/20'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-lg shadow-blue-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
               <Server size={14} />
@@ -233,8 +233,8 @@ export default function Reports() {
               onClick={() => setActiveTab('14')}
               className={`px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
                 activeTab === '14'
-                  ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-600/20'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-600 shadow-lg shadow-emerald-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
               <Activity size={14} />
@@ -245,8 +245,8 @@ export default function Reports() {
               onClick={() => setActiveTab('compliance')}
               className={`px-4 py-2.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
                 activeTab === 'compliance'
-                  ? 'bg-teal-600/20 border-teal-500 text-teal-300 shadow-lg shadow-teal-600/20'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-teal-50 border-teal-300 text-teal-600 shadow-lg shadow-teal-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'
               }`}
             >
               <ShieldCheck size={14} />
@@ -254,17 +254,17 @@ export default function Reports() {
             </button>
           </div>
 
-          <span className="text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded border border-slate-800">
-            Run ID: <strong className="text-white">{pipelineState?.run_id || 'Idle'}</strong>
+          <span className="text-xs font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded border border-slate-200">
+            Run ID: <strong className="text-slate-900">{pipelineState?.run_id || 'Idle'}</strong>
           </span>
         </div>
 
         {/* TAB 3: STEP 3 ENTERPRISE DETECTION (READ-ONLY VIEW OF COMPLETED STEP 3 EXECUTION) */}
         {activeTab === '3' && (
           !hasStep3Run ? (
-            <div className="py-20 text-center space-y-3 bg-slate-950 border border-slate-800 rounded-xl">
-              <Search className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-mono font-bold text-slate-400">Step 03: Enterprise PII Detection Has Not Executed</h3>
+            <div className="py-20 text-center space-y-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <Search className="w-10 h-10 text-slate-400 mx-auto" />
+              <h3 className="text-sm font-mono font-bold text-slate-500">Step 03: Enterprise PII Detection Has Not Executed</h3>
               <p className="text-xs text-slate-500 font-mono font-normal">Run the pipeline to Step 3 to view dynamic enterprise detection results for your target database.</p>
             </div>
           ) : (
@@ -288,44 +288,44 @@ export default function Reports() {
 
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-1">
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1">
                       <span className="text-[10px] text-slate-500 font-mono uppercase block">Enterprise Domain</span>
-                      <span className="text-base font-bold text-emerald-400 font-mono">{domain}</span>
+                      <span className="text-base font-bold text-emerald-600 font-mono">{domain}</span>
                     </div>
-                    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-1">
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1">
                       <span className="text-[10px] text-slate-500 font-mono uppercase block">Confidence Score</span>
-                      <span className="text-base font-bold text-emerald-300 font-mono">{confDisplay}</span>
+                      <span className="text-base font-bold text-emerald-600 font-mono">{confDisplay}</span>
                     </div>
-                    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-1">
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1">
                       <span className="text-[10px] text-slate-500 font-mono uppercase block">Detection Status</span>
-                      <span className="text-base font-bold text-blue-400 font-mono">{status}</span>
+                      <span className="text-base font-bold text-blue-600 font-mono">{status}</span>
                     </div>
-                    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-1">
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1">
                       <span className="text-[10px] text-slate-500 font-mono uppercase block">Detection Timestamp</span>
-                      <span className="text-xs font-bold text-slate-300 font-mono truncate block">{timestamp}</span>
+                      <span className="text-xs font-bold text-slate-600 font-mono truncate block">{timestamp}</span>
                     </div>
-                    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-1">
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1">
                       <span className="text-[10px] text-slate-500 font-mono uppercase block">Detection Reasoning</span>
-                      <span className="text-xs font-bold text-amber-300 font-mono truncate block">{reason}</span>
+                      <span className="text-xs font-bold text-amber-600 font-mono truncate block">{reason}</span>
                     </div>
                   </div>
                 );
               })()}
 
               {/* DYNAMIC REASON FOR DOMAIN CHOICE MATRIX FOR TARGET TABLE */}
-              <div className="bg-slate-950 p-5 rounded-lg border border-slate-800 space-y-4 font-mono text-xs">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="text-xs text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 space-y-4 font-mono text-xs">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <h3 className="text-xs text-emerald-600 font-bold uppercase tracking-wider flex items-center gap-2">
                     <Search size={14} />
-                    Dynamic Domain Choice & Protection Rationale — Table: <span className="text-white font-bold">{targetTable}</span>
+                    Dynamic Domain Choice & Protection Rationale — Table: <span className="text-slate-900 font-bold">{targetTable}</span>
                   </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200">
                     {piiColumns.length} DYNAMICALLY DETECTED PII DOMAINS
                   </span>
                 </div>
 
                 {piiColumns.length === 0 ? (
-                  <div className="p-4 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 text-center">
+                  <div className="p-4 bg-white border border-slate-200 rounded-lg text-slate-500 text-center">
                     No PII columns detected for table '{targetTable}'. All fields retained under NO_CHANGE.
                   </div>
                 ) : (
@@ -337,10 +337,10 @@ export default function Reports() {
                       const rationale = col.reason || getDomainRationale(colName, piiType, technique, targetTable);
 
                       return (
-                        <div key={idx} className="p-4 bg-slate-900 border border-emerald-500/30 rounded-lg space-y-2">
+                        <div key={idx} className="p-4 bg-white border border-emerald-200 rounded-lg space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="text-emerald-300 font-bold text-xs">{colName}</span>
+                              <span className="text-emerald-600 font-bold text-xs">{colName}</span>
                               <span className="text-[10px] text-slate-500 uppercase">({piiType})</span>
                             </div>
                             <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border ${

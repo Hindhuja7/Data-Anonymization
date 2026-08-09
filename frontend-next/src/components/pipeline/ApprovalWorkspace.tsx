@@ -304,7 +304,7 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
   return (
     <div className="space-y-6">
       {/* Top Header Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-xl">
         <div className="flex items-center gap-4">
           <div>
             <span className="text-[10px] text-slate-500 font-mono uppercase block mb-1">Target Table</span>
@@ -312,7 +312,7 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
               <select
                 value={selectedTable || activeTable}
                 onChange={(e) => handleTableChange(e.target.value)}
-                className="bg-slate-950 border border-slate-700 text-blue-400 text-xs font-bold font-mono rounded px-2.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 text-blue-600 text-xs font-bold font-mono rounded px-2.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
               >
                 {tableNames.map((t) => (
                   <option key={t} value={t}>
@@ -321,41 +321,41 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
                 ))}
               </select>
             ) : (
-              <span className="text-sm font-bold text-blue-400 font-mono">{activeTable}</span>
+              <span className="text-sm font-bold text-blue-600 font-mono">{activeTable}</span>
             )}
           </div>
-          <div className="h-8 w-px bg-slate-800" />
+          <div className="h-8 w-px bg-slate-200" />
           <div>
             <span className="text-[10px] text-slate-500 font-mono uppercase block">Risk Score</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-amber-400 font-mono">
+              <span className="text-sm font-bold text-amber-600 font-mono">
                 {currentScore !== null ? `${currentScore.toFixed(1)} / 100` : '—'}
               </span>
               {previousScore !== null && currentScore !== null && previousScore !== currentScore && (
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-[10px] text-slate-500 font-mono">
                   (Prev: {previousScore.toFixed(1)})
                 </span>
               )}
-              {isRecalculating && <RefreshCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />}
+              {isRecalculating && <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" />}
             </div>
           </div>
-          <div className="h-8 w-px bg-slate-800" />
+          <div className="h-8 w-px bg-slate-200" />
           <div>
             <span className="text-[10px] text-slate-500 font-mono uppercase block">Privacy Score</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-emerald-400 font-mono">
+              <span className="text-sm font-bold text-emerald-600 font-mono">
                 {privacyScore !== null ? `${privacyScore.toFixed(1)} / 100` : '—'}
               </span>
-              {isRecalculating && <span className="text-[10px] text-blue-400 animate-pulse font-mono">Recalculating...</span>}
+              {isRecalculating && <span className="text-[10px] text-blue-600 animate-pulse font-mono">Recalculating...</span>}
             </div>
           </div>
-          <div className="h-8 w-px bg-slate-800" />
+          <div className="h-8 w-px bg-slate-200" />
           <div>
             <span className="text-[10px] text-slate-500 font-mono uppercase block">Risk Level</span>
             <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full font-mono border ${
-              riskLevel === 'HIGH' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' :
-              riskLevel === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-              'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+              riskLevel === 'HIGH' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+              riskLevel === 'MEDIUM' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+              'bg-emerald-50 text-emerald-600 border-emerald-200'
             }`}>
               {riskLevel}
             </span>
@@ -364,7 +364,7 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
 
         <div className="flex items-center gap-3">
           {isApprovedState ? (
-            <span className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-lg flex items-center gap-2">
+            <span className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 text-xs font-bold rounded-lg flex items-center gap-2">
               <Check className="w-4 h-4" />
               POLICY APPROVED ✓
             </span>
@@ -373,9 +373,9 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
               <button
                 onClick={handleModifyPolicy}
                 disabled={isSubmitting || isRecalculating}
-                className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 text-blue-300 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 border border-blue-500/40 disabled:opacity-40 shadow-sm"
+                className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 border border-blue-200 disabled:opacity-40 shadow-sm"
               >
-                {isRecalculating ? <RefreshCw className="w-4 h-4 animate-spin text-blue-400" /> : <Save className="w-4 h-4 text-blue-400" />}
+                {isRecalculating ? <RefreshCw className="w-4 h-4 animate-spin text-blue-600" /> : <Save className="w-4 h-4 text-blue-600" />}
                 {isRecalculating ? "MODIFYING / RECALCULATING..." : "MODIFY"}
               </button>
               <button
@@ -392,12 +392,12 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
       </div>
 
       {vulnerabilities.length > 0 && (
-        <div className="bg-amber-950/30 border border-amber-500/30 p-4 rounded-xl space-y-2">
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-bold font-mono uppercase">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2">
+          <div className="flex items-center gap-2 text-amber-600 text-xs font-bold font-mono uppercase">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
             Detected Policy Vulnerabilities ({vulnerabilities.length})
           </div>
-          <ul className="list-disc list-inside text-xs font-mono text-amber-200/80 space-y-1">
+          <ul className="list-disc list-inside text-xs font-mono text-amber-700 space-y-1">
             {vulnerabilities.map((v, i) => (
               <li key={i}>{v}</li>
             ))}
@@ -406,15 +406,15 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
       )}
 
       {/* Rules & Technique Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider">PII Protection Rules</h4>
-          <span className="text-[10px] font-mono text-slate-400">{filteredColumns.length} Columns</span>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">PII Protection Rules</h4>
+          <span className="text-[10px] font-mono text-slate-500">{filteredColumns.length} Columns</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200">
               <tr>
                 <th className="p-3">Column Name</th>
                 <th className="p-3">PII Type</th>
@@ -422,7 +422,7 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
                 <th className="p-3">Anonymization Technique</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+            <tbody className="divide-y divide-slate-200 text-slate-600">
               {filteredColumns.map((col, idx) => {
                 const globalIndex = columns.findIndex(c => c.table_name === col.table_name && c.column_name === col.column_name);
                 const currentPiiType = (!col.is_pii || !col.pii_type || col.pii_type === 'null') ? 'NON_PII' : col.pii_type;
@@ -434,27 +434,27 @@ export default function ApprovalWorkspace({ onClose, state }: ApprovalWorkspaceP
                 ]));
 
                 return (
-                  <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="p-3 font-semibold text-white">{col.column_name}</td>
+                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-3 font-semibold text-slate-900">{col.column_name}</td>
                     <td className="p-3">
                       <select
                         value={currentPiiType}
                         disabled={isApprovedState}
                         onChange={(e) => handlePiiTypeChange(globalIndex, e.target.value)}
-                        className="bg-slate-950 border border-slate-700 text-blue-400 font-semibold rounded px-2 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="bg-slate-50 border border-slate-200 text-blue-600 font-semibold rounded px-2 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {piiOptions.map(type => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
                     </td>
-                    <td className="p-3 text-slate-400">{(col.confidence * 100).toFixed(0)}%</td>
+                    <td className="p-3 text-slate-500">{(col.confidence * 100).toFixed(0)}%</td>
                     <td className="p-3">
                       <select
                         value={col.anonymization_technique}
                         disabled={isApprovedState}
                         onChange={(e) => handleTechniqueChange(globalIndex, e.target.value)}
-                        className="bg-slate-950 border border-slate-700 text-white rounded px-2 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="bg-slate-50 border border-slate-200 text-slate-900 rounded px-2 py-1 text-xs outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value="MASKING">MASKING</option>
                         <option value="HASHING">HASHING</option>

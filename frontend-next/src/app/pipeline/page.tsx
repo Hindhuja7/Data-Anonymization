@@ -78,6 +78,7 @@ export default function Pipeline() {
     step_results: Record<string, StepResult>;
     step_12_status?: string;
     step_13_status?: string;
+    approval_state?: string;
     logs: LogEntry[];
   }>({
     run_id: null,
@@ -462,24 +463,24 @@ export default function Pipeline() {
       {/* Top Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Anonymization Pipeline Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900">Anonymization Pipeline Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Real-time 17-step data protection and compliance execution dashboard
           </p>
         </div>
         <div className="flex items-center gap-3">
           <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded-lg border flex items-center gap-2 ${
             isStep17Completed
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
               : currentRun.status === 'running' || currentRun.status === 'RUNNING'
-              ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-              : 'bg-slate-800 text-slate-400 border-slate-700'
+              ? 'bg-blue-50 text-blue-600 border-blue-200'
+              : 'bg-slate-100 text-slate-500 border-slate-200'
           }`}>
             <span className={`w-2 h-2 rounded-full ${isStep17Completed ? 'bg-emerald-400 animate-ping' : 'bg-blue-400'}`}></span>
             STATE: {pipelineStateLabel}
           </span>
           <span className={`text-xs font-mono px-3 py-1.5 rounded-lg border ${
-            isConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+            isConnected ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'
           }`}>
             {isConnected ? 'LIVE WEBSOCKET' : 'HTTP POLLING'}
           </span>
@@ -487,7 +488,7 @@ export default function Pipeline() {
       </div>
 
       {/* Observation-Only Status Toolbar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {(pipelineState?.active_step === 7 || pipelineState?.status === 'waiting_for_approval') && (
             <button
@@ -512,19 +513,19 @@ export default function Pipeline() {
         <div className="flex items-center gap-6 text-xs font-mono">
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Run ID</span>
-            <span className="text-white font-bold">{currentRun.run_id || 'Idle'}</span>
+            <span className="text-slate-900 font-bold">{currentRun.run_id || 'Idle'}</span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Target Table</span>
-            <span className="text-blue-400 font-bold">{pipelineState?.target_table || 'None'}</span>
+            <span className="text-blue-600 font-bold">{pipelineState?.target_table || 'None'}</span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Progress</span>
-            <span className="text-white font-bold">{calculatedProgress}%</span>
+            <span className="text-slate-900 font-bold">{calculatedProgress}%</span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Privacy Score</span>
-            <span className="text-emerald-400 font-bold font-mono">
+            <span className="text-emerald-600 font-bold font-mono">
               {(pipelineState?.active_step >= 7 || pipelineState?.approval_state === 'approved') && pipelineState?.privacy_score !== undefined && pipelineState?.privacy_score !== null
                 ? `${pipelineState.privacy_score}%`
                 : 'Pending (Step 7)'}
@@ -532,7 +533,7 @@ export default function Pipeline() {
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Risk Score</span>
-            <span className="text-amber-400 font-bold font-mono">
+            <span className="text-amber-600 font-bold font-mono">
               {(pipelineState?.active_step >= 7 || pipelineState?.approval_state === 'approved') && pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null
                 ? `${pipelineState.risk_score}`
                 : 'Pending (Step 7)'}
@@ -540,7 +541,7 @@ export default function Pipeline() {
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase">Elapsed Time</span>
-            <span className="text-white font-bold">{executionTime}</span>
+            <span className="text-slate-900 font-bold">{executionTime}</span>
           </div>
         </div>
       </div>
@@ -549,10 +550,10 @@ export default function Pipeline() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* LEFT PANEL: 17 Steps List */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">17-Step Execution Lifecycle</h3>
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">17-Step Execution Lifecycle</h3>
+            <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               {completedCount} / 17 COMPLETED
             </span>
           </div>
@@ -570,36 +571,36 @@ export default function Pipeline() {
                   onClick={() => setSelectedStep(step.id)}
                   className={`p-3 rounded-lg cursor-pointer transition-all border ${
                     isSelected
-                      ? 'bg-blue-500/10 border-blue-500/60 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                      ? 'bg-blue-50 border-blue-400 text-slate-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {step.status === 'completed' ? (
-                        <div className="p-1 bg-emerald-500/20 text-emerald-400 rounded-full">
+                        <div className="p-1 bg-emerald-100 text-emerald-600 rounded-full">
                           <Check className="w-3.5 h-3.5 stroke-[3]" />
                         </div>
                       ) : step.status === 'current' ? (
-                        <div className="p-1 bg-blue-500/20 text-blue-400 rounded-full animate-spin">
+                        <div className="p-1 bg-blue-100 text-blue-600 rounded-full animate-spin">
                           <Circle className="w-3.5 h-3.5 stroke-[3]" />
                         </div>
                       ) : step.status === 'waiting_for_approval' ? (
-                        <div className="p-1 bg-amber-500/20 text-amber-400 rounded-full animate-pulse">
+                        <div className="p-1 bg-amber-100 text-amber-600 rounded-full animate-pulse">
                           <Pause className="w-3.5 h-3.5 fill-current" />
                         </div>
                       ) : step.status === 'stopped' ? (
-                        <div className="p-1 bg-red-500/20 text-red-400 rounded-full">
+                        <div className="p-1 bg-red-100 text-red-600 rounded-full">
                           <Square className="w-3.5 h-3.5 fill-current" />
                         </div>
                       ) : (
-                        <div className="p-1 bg-slate-800 text-slate-500 rounded-full">
+                        <div className="p-1 bg-slate-200 text-slate-400 rounded-full">
                           <Circle className="w-3.5 h-3.5" />
                         </div>
                       )}
 
                       <span className={`text-xs font-mono font-medium ${
-                        step.status === 'completed' ? 'text-emerald-300 font-bold' : step.status === 'current' ? 'text-blue-300 font-bold' : 'text-slate-300'
+                        step.status === 'completed' ? 'text-emerald-600 font-bold' : step.status === 'current' ? 'text-blue-600 font-bold' : 'text-slate-600'
                       }`}>
                         {step.name}
                       </span>
@@ -613,7 +614,7 @@ export default function Pipeline() {
                             e.stopPropagation();
                             router.push('/reports?step=3');
                           }}
-                          className="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-emerald-500/40 flex items-center gap-1 transition-all"
+                          className="px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-600 text-[10px] font-mono font-semibold rounded border border-emerald-300 flex items-center gap-1 transition-all"
                         >
                           Report
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -627,7 +628,7 @@ export default function Pipeline() {
                             e.stopPropagation();
                             router.push('/reports?step=12');
                           }}
-                          className="px-2 py-0.5 bg-purple-600/30 hover:bg-purple-600 text-purple-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-purple-500/40 flex items-center gap-1 transition-all"
+                          className="px-2 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-600 text-[10px] font-mono font-semibold rounded border border-purple-300 flex items-center gap-1 transition-all"
                         >
                           Report
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -641,7 +642,7 @@ export default function Pipeline() {
                             e.stopPropagation();
                             router.push('/reports?step=13');
                           }}
-                          className="px-2 py-0.5 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-blue-500/40 flex items-center gap-1 transition-all"
+                          className="px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-600 text-[10px] font-mono font-semibold rounded border border-blue-300 flex items-center gap-1 transition-all"
                         >
                           Report
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -655,7 +656,7 @@ export default function Pipeline() {
                             e.stopPropagation();
                             router.push('/reports?step=14');
                           }}
-                          className="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-mono font-semibold rounded border border-emerald-500/40 flex items-center gap-1 transition-all"
+                          className="px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-600 text-[10px] font-mono font-semibold rounded border border-emerald-300 flex items-center gap-1 transition-all"
                         >
                           Report
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -664,14 +665,14 @@ export default function Pipeline() {
 
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
                         step.status === 'completed'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                           : step.status === 'current'
-                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          ? 'bg-blue-50 text-blue-600 border border-blue-200'
                           : step.status === 'waiting_for_approval'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          ? 'bg-amber-50 text-amber-600 border border-amber-200'
                           : step.status === 'stopped'
-                          ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                          : 'bg-slate-800 text-slate-500'
+                          ? 'bg-red-50 text-red-600 border border-red-200'
+                          : 'bg-slate-100 text-slate-500'
                       }`}>
                         {step.status === 'completed' ? 'COMPLETED' : step.status === 'current' ? 'RUNNING' : step.status === 'waiting_for_approval' ? 'WAITING APPROVAL' : step.status === 'stopped' ? 'STOPPED' : 'PENDING'}
                       </span>
@@ -684,21 +685,21 @@ export default function Pipeline() {
         </div>
 
         {/* RIGHT PANEL: RESTORED PIPELINE SUMMARY LOGS STREAM */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col justify-between min-h-[580px]">
+        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between min-h-[580px]">
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Pipeline Summary Logs</h3>
+                <Terminal className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Pipeline Summary Logs</h3>
               </div>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                 CHRONOLOGICAL EXECUTION HISTORY
               </span>
             </div>
 
             <div
               ref={logContainerRef}
-              className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-300 max-h-[480px] overflow-y-auto space-y-3"
+              className="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs text-slate-600 max-h-[480px] overflow-y-auto space-y-3"
             >
               {/* CHRONOLOGICAL LOGS FOR ALL STEPS 1 THROUGH 17 */}
               {workflowSteps.map((step) => {
@@ -719,16 +720,16 @@ export default function Pipeline() {
                 });
 
                 return (
-                  <div key={step.id} className="space-y-1 border-b border-slate-800/60 pb-3.5">
+                  <div key={step.id} className="space-y-1 border-b border-slate-200 pb-3.5">
                     {dynamicLogs.map((line, idx) => (
                       <div
                         key={idx}
                         className={`leading-relaxed ${
                           idx === 0
-                            ? step.status === 'completed' ? 'text-emerald-400 font-bold' : 'text-blue-400 font-bold animate-pulse'
+                            ? step.status === 'completed' ? 'text-emerald-600 font-bold' : 'text-blue-600 font-bold animate-pulse'
                             : line.startsWith('✓')
-                            ? 'text-emerald-300'
-                            : 'text-slate-300'
+                            ? 'text-emerald-600'
+                            : 'text-slate-600'
                         }`}
                       >
                         {line}
@@ -739,14 +740,14 @@ export default function Pipeline() {
                     {backendStepLogs.map((logItem, i) => {
                       const msg = typeof logItem === 'string' ? logItem : logItem?.message || '';
                       return (
-                        <div key={i} className="text-slate-300 pl-2 text-[11px] leading-tight">
+                        <div key={i} className="text-slate-600 pl-2 text-[11px] leading-tight">
                           {msg}
                         </div>
                       );
                     })}
 
                     {summaryMsg && !dynamicLogs.some(l => l.includes(summaryMsg)) && (
-                      <div className="text-slate-300 pl-2 text-[11px]">✓ {summaryMsg}</div>
+                      <div className="text-slate-600 pl-2 text-[11px]">✓ {summaryMsg}</div>
                     )}
 
                     {/* Step Action Buttons */}
@@ -799,9 +800,9 @@ export default function Pipeline() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between font-mono">
+          <div className="pt-4 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between font-mono">
             <span>Authoritative Pipeline Summary Logs</span>
-            <span className="text-blue-400">Target Table: {pipelineState?.target_table || '—'}</span>
+            <span className="text-blue-600">Target Table: {pipelineState?.target_table || '—'}</span>
           </div>
         </div>
 
@@ -809,24 +810,24 @@ export default function Pipeline() {
 
       {/* Custom Application Stop Confirmation Modal */}
       {showStopModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-amber-400">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-amber-600">
               <AlertTriangle className="w-6 h-6" />
-              <h3 className="text-base font-bold text-white">Stop Pipeline Execution?</h3>
+              <h3 className="text-base font-bold text-slate-900">Stop Pipeline Execution?</h3>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              The current pipeline run <strong className="text-white font-mono">{currentRun.run_id}</strong> will stop execution at the next safe boundary. Completed step results will remain saved.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              The current pipeline run <strong className="text-slate-900 font-mono">{currentRun.run_id}</strong> will stop execution at the next safe boundary. Completed step results will remain saved.
             </p>
             {stopError && (
-              <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400 font-mono">
+              <div className="p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-600 font-mono">
                 {stopError}
               </div>
             )}
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowStopModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition-colors"
               >
                 Continue Running
               </button>

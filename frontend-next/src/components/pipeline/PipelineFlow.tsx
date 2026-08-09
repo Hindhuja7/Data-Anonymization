@@ -4,7 +4,17 @@ import { useMemo } from 'react';
 import { Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PipelineStep } from '@/types';
-import { getStepMeta } from '@/lib/pipelineSteps';
+// import { getStepMeta } from '@/lib/pipelineSteps'; // TODO: Create pipelineSteps utility
+
+// Temporary stub for getStepMeta
+const getStepMeta = (stepId: number) => ({
+  icon: Check,
+  title: `Step ${stepId}`,
+  name: `Step ${stepId}`,
+  description: `Step ${stepId} description`,
+  details: [],
+  howItWorks: []
+});
 
 interface PipelineFlowProps {
   steps: PipelineStep[];

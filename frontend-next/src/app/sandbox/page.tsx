@@ -7,7 +7,7 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 
 export default function SandboxPage() {
   const router = useRouter();
-  const { onMessage } = useWebSocket();
+  const { onMessage } = useWebSocket('ws://localhost:8000/api/pipeline/ws');
   const [selectedTable, setSelectedTable] = useState<string>('customers');
   const [configuredTargetTable, setConfiguredTargetTable] = useState<string>('customers');
   const [records, setRecords] = useState<any[]>([]);
@@ -114,21 +114,21 @@ export default function SandboxPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/20 shadow-md">
+          <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-200 shadow-md">
             <HardDrive className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
               Sandbox Environment
               {statusState === 'success' && (
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
                   DESTINATION DB: neondb_anonymized
                 </span>
               )}
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Isolated target database containing privacy-preserved records generated strictly by Pipeline Step 12 & Step 13 for the targeted table.
             </p>
           </div>
@@ -138,9 +138,9 @@ export default function SandboxPage() {
           <button
             type="button"
             onClick={() => fetchSandboxRecords(selectedTable)}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 border border-slate-700 shadow"
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 border border-slate-200 shadow"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-600' : ''}`} />
             Refresh Sandbox
           </button>
         )}
@@ -148,18 +148,18 @@ export default function SandboxPage() {
 
       {/* Render Main Content Based on Connection & Step Execution State */}
       {isLoading ? (
-        <div className="py-24 text-center space-y-3 bg-slate-900 border border-slate-800 rounded-xl">
-          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
-          <p className="text-xs text-slate-400 font-mono">Checking destination database records...</p>
+        <div className="py-24 text-center space-y-3 bg-white border border-slate-200 rounded-xl">
+          <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-mono">Checking destination database records...</p>
         </div>
       ) : statusState === 'not_connected' ? (
-        <div className="py-20 text-center space-y-4 bg-slate-900 rounded-2xl border border-slate-800 p-8 max-w-xl mx-auto shadow-2xl my-8">
-          <div className="w-14 h-14 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/20 shadow-inner">
+        <div className="py-20 text-center space-y-4 bg-white rounded-2xl border border-slate-200 p-8 max-w-xl mx-auto shadow-2xl my-8">
+          <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto border border-blue-200 shadow-inner">
             <Database className="w-7 h-7" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="text-lg font-bold text-white">No Source Database Connected</h3>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+            <h3 className="text-lg font-bold text-slate-900">No Source Database Connected</h3>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
               No database connected yet. Please configure your source database credentials at /database to view destination records.
             </p>
           </div>
@@ -174,14 +174,14 @@ export default function SandboxPage() {
           </button>
         </div>
       ) : statusState === 'step_pending' ? (
-        <div className="py-20 text-center space-y-4 bg-slate-900 rounded-2xl border border-amber-500/30 p-8 max-w-xl mx-auto shadow-2xl my-8">
-          <div className="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20 shadow-inner">
+        <div className="py-20 text-center space-y-4 bg-white rounded-2xl border border-amber-200 p-8 max-w-xl mx-auto shadow-2xl my-8">
+          <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200 shadow-inner">
             <ShieldAlert className="w-7 h-7" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="text-lg font-bold text-white">Pipeline Step 12 & 13 Pending</h3>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
-              Anonymized destination records for target table <strong className="text-white font-mono">{configuredTargetTable || 'targeted table'}</strong> will be generated after executing Step 12 (Data Anonymization) & Step 13 (Destination Loading).
+            <h3 className="text-lg font-bold text-slate-900">Pipeline Step 12 & 13 Pending</h3>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+              Anonymized destination records for target table <strong className="text-slate-900 font-mono">{configuredTargetTable || 'targeted table'}</strong> will be generated after executing Step 12 (Data Anonymization) & Step 13 (Destination Loading).
             </p>
           </div>
           <button
@@ -198,53 +198,53 @@ export default function SandboxPage() {
         <>
           {/* Metadata KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
-              <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
                 <Database className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Target Database</span>
-                <span className="text-xs font-mono font-bold text-emerald-400">neondb_anonymized</span>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Target Database</span>
+                <span className="text-xs font-mono font-bold text-emerald-600">neondb_anonymized</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
-              <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-lg">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Configured Target Table</span>
-                <span className="text-xs font-mono font-bold text-purple-300 uppercase">{configuredTargetTable}</span>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Configured Target Table</span>
+                <span className="text-xs font-mono font-bold text-purple-600 uppercase">{configuredTargetTable}</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Step 12 & 13 Execution</span>
-                <span className="text-xs font-bold text-emerald-400">✓ Step 12 & 13 Complete</span>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Step 12 & 13 Execution</span>
+                <span className="text-xs font-bold text-emerald-600">✓ Step 12 & 13 Complete</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
-              <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+              <div className="p-2.5 bg-amber-50 text-amber-600 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Loaded Records</span>
-                <span className="text-xs font-mono font-bold text-white">{records.length} Rows Rendered</span>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Loaded Records</span>
+                <span className="text-xs font-mono font-bold text-slate-900">{records.length} Rows Rendered</span>
               </div>
             </div>
           </div>
 
           {/* Main Sandbox Data Workspace */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6 shadow-xl">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6 shadow-xl">
             {/* Controls Header: Targeted Table Badge & Search */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 text-xs font-mono font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center gap-2">
+                <span className="px-3 py-1.5 text-xs font-mono font-bold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-2">
                   <Table className="w-3.5 h-3.5" />
                   TARGETED TABLE: {configuredTargetTable.toUpperCase()}
                 </span>
@@ -252,45 +252,45 @@ export default function SandboxPage() {
 
               {/* Search Bar */}
               <div className="relative min-w-[240px]">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   placeholder="Search anonymized rows..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
             </div>
 
             {/* Table View */}
             {filteredRecords.length > 0 ? (
-              <div className="overflow-x-auto rounded-lg border border-slate-800">
+              <div className="overflow-x-auto rounded-lg border border-slate-200">
                 <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200">
                     <tr>
                       {Object.keys(filteredRecords[0]).map((col) => (
-                        <th key={col} className="px-4 py-3 font-semibold text-slate-300">
+                        <th key={col} className="px-4 py-3 font-semibold text-slate-600">
                           {col}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
+                  <tbody className="divide-y divide-slate-200 bg-white">
                     {filteredRecords.map((row, rIdx) => (
-                      <tr key={rIdx} className="hover:bg-slate-800/40 transition-colors">
+                      <tr key={rIdx} className="hover:bg-slate-50 transition-colors">
                         {Object.entries(row).map(([k, val]: [string, any]) => {
                           const valStr = String(val ?? '');
                           const isMasked = valStr.includes('*') || valStr.includes('xxxx');
                           const isHash = valStr.length > 20 && !valStr.includes('@') && !valStr.includes(' ');
                           return (
-                            <td key={k} className="px-4 py-2.5 text-slate-200 whitespace-nowrap">
+                            <td key={k} className="px-4 py-2.5 text-slate-600 whitespace-nowrap">
                               {isMasked ? (
-                                <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30 text-[11px] font-bold">
+                                <span className="px-2 py-0.5 rounded border border-amber-200 text-[11px] font-bold">
                                   {valStr}
                                 </span>
                               ) : isHash ? (
-                                <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/30 text-[10px] font-bold truncate max-w-[150px] inline-block">
+                                <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded border border-purple-300 text-[10px] font-bold truncate max-w-[150px] inline-block">
                                   {valStr}
                                 </span>
                               ) : (
@@ -305,13 +305,13 @@ export default function SandboxPage() {
                 </table>
               </div>
             ) : (
-              <div className="py-16 text-center space-y-3 bg-slate-950/50 rounded-lg border border-slate-800">
-                <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
-                <p className="text-xs text-slate-300">
-                  No anonymized records found in table <strong className="text-emerald-400 font-mono">{selectedTable}</strong>.
+              <div className="py-16 text-center space-y-3 bg-slate-50 rounded-lg border border-slate-200">
+                <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
+                <p className="text-xs text-slate-600">
+                  No anonymized records found in table <strong className="text-emerald-600 font-mono">{selectedTable}</strong>.
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Run the 17-step pipeline on <strong className="text-blue-400">/pipeline</strong> to populate anonymized records into <code className="text-emerald-400 font-mono">neondb_anonymized</code>.
+                  Run the 17-step pipeline on <strong className="text-blue-600">/pipeline</strong> to populate anonymized records into <code className="text-emerald-600 font-mono">neondb_anonymized</code>.
                 </p>
               </div>
             )}

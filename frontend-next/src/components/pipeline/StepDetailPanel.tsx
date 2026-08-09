@@ -4,9 +4,25 @@ import { useEffect, useState, useMemo } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PipelineState } from '@/types';
-import { getStepMeta } from '@/lib/pipelineSteps';
+// import { getStepMeta } from '@/lib/pipelineSteps'; // TODO: Create pipelineSteps utility
 import StepIllustration from './StepIllustration';
 import LiveActivityChart from './LiveActivityChart';
+
+// Temporary stub for getStepMeta
+const getStepMeta = (stepId: number) => ({
+  icon: TrendingUp,
+  title: `Step ${stepId}`,
+  name: `Step ${stepId}`,
+  description: `Step ${stepId} description`,
+  details: [
+    { icon: TrendingUp, label: 'Detail 1', value: 'Value 1' },
+    { icon: TrendingUp, label: 'Detail 2', value: 'Value 2' }
+  ],
+  howItWorks: [
+    { icon: TrendingUp, label: 'Step 1 description' },
+    { icon: TrendingUp, label: 'Step 2 description' }
+  ]
+});
 
 interface StepDetailPanelProps {
   state: PipelineState | null;

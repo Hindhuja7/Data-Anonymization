@@ -234,20 +234,20 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
 
   if (loadingConfig) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl animate-pulse font-mono">
-        <p className="text-xs text-slate-400">Loading target database schema...</p>
+      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xl animate-pulse font-mono">
+        <p className="text-xs text-slate-500">Loading target database schema...</p>
       </div>
     );
   }
 
   if (!activeTable) {
     return (
-      <div className="bg-slate-900 border border-amber-900/40 rounded-xl p-5 shadow-xl font-mono">
+      <div className="bg-white border border-amber-200 rounded-xl p-5 shadow-xl font-mono">
         <div className="flex items-center gap-2 mb-2">
-          <span className="w-3 h-3 rounded-full bg-amber-400"></span>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Live Traffic Simulator</h3>
+          <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Live Traffic Simulator</h3>
         </div>
-        <p className="text-xs text-amber-300">
+        <p className="text-xs text-amber-600">
           No database target table configured. Configure a database to enable live traffic simulation.
         </p>
       </div>
@@ -277,43 +277,43 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl font-mono">
+    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xl font-mono">
       {/* Header & Dedicated Sub-Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-200">
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Live Traffic Simulator</h3>
+              <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse"></div>
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Live Traffic Simulator</h3>
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded px-2 py-0.5">
-              <span className="text-[10px] text-slate-400 uppercase font-bold">Target Table:</span>
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded px-2 py-0.5">
+              <span className="text-[10px] text-slate-500 uppercase font-bold">Target Table:</span>
               <select
                 value={activeTable}
                 onChange={(e) => setActiveTable(e.target.value)}
-                className="bg-transparent text-cyan-300 font-bold text-xs outline-none cursor-pointer"
+                className="bg-transparent text-cyan-600 font-bold text-xs outline-none cursor-pointer"
               >
-                <option value="accounts" className="bg-slate-900 text-white">accounts</option>
-                <option value="transactions" className="bg-slate-900 text-white">transactions</option>
-                <option value="customers" className="bg-slate-900 text-white">customers</option>
-                <option value="employees" className="bg-slate-900 text-white">employees</option>
+                <option value="accounts" className="bg-white text-slate-900">accounts</option>
+                <option value="transactions" className="bg-white text-slate-900">transactions</option>
+                <option value="customers" className="bg-white text-slate-900">customers</option>
+                <option value="employees" className="bg-white text-slate-900">employees</option>
               </select>
             </div>
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            Test continuous Change Data Capture (CDC) & Polling Worker on target table <strong className="text-cyan-300">{activeTable}</strong>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Test continuous Change Data Capture (CDC) & Polling Worker on target table <strong className="text-cyan-600">{activeTable}</strong>
           </p>
         </div>
 
         {/* Dedicated Sub-Tabs for INSERT, UPDATE, DELETE & 1-CLICK */}
-        <div className="bg-slate-950 p-1 rounded-lg border border-slate-800 flex items-center gap-1">
+        <div className="bg-slate-50 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
           <button
             type="button"
             onClick={() => setSubTab('insert')}
             className={`px-3 py-1.5 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
               subTab === 'insert'
                 ? 'bg-emerald-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <Plus size={13} />
@@ -325,7 +325,7 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
             className={`px-3 py-1.5 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
               subTab === 'update'
                 ? 'bg-amber-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <Edit3 size={13} />
@@ -337,32 +337,33 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
             className={`px-3 py-1.5 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
               subTab === 'delete'
                 ? 'bg-rose-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <Trash2 size={13} />
             Delete
           </button>
+          <div className="w-px h-6 bg-slate-300 mx-1"></div>
           <button
             type="button"
             onClick={() => setSubTab('quick')}
             className={`px-3 py-1.5 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
               subTab === 'quick'
                 ? 'bg-blue-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <Zap size={13} />
-            1-Click
+            1-Click Demo
           </button>
         </div>
       </div>
 
       {/* 1. DEDICATED INSERT TAB */}
       {subTab === 'insert' && (
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-2">
               <Plus size={14} />
               Insert New Record into '{activeTable}'
             </h4>
@@ -370,21 +371,21 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
           </div>
 
           {loadingSchema ? (
-            <div className="text-xs text-slate-400 py-4 text-center">Inspecting column schema...</div>
+            <div className="text-xs text-slate-500 py-4 text-center">Inspecting column schema...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {schemaColumns.map((col) => (
                 <div key={col.name} className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-300 flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-600 flex items-center justify-between">
                     <span className="capitalize">{col.name.replace('_', ' ')}</span>
-                    <span className="text-[9px] text-emerald-400/80 font-mono">[{col.type}]</span>
+                    <span className="text-[9px] text-emerald-600 font-mono">[{col.type}]</span>
                   </label>
                   <input
                     type="text"
                     value={insertFormData[col.name] || ''}
                     onChange={(e) => setInsertFormData(prev => ({ ...prev, [col.name]: e.target.value }))}
                     placeholder={getSmartPlaceholder(col.name, col.type)}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
                   />
                   <span className="text-[10px] text-slate-500 block font-mono">
                     Format: {getSmartPlaceholder(col.name, col.type)}
@@ -413,9 +414,9 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
 
       {/* 2. DEDICATED UPDATE TAB */}
       {subTab === 'update' && (
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center gap-2">
               <Edit3 size={14} />
               Update Existing Record in '{activeTable}'
             </h4>
@@ -424,16 +425,16 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
 
           {/* Record Selector Dropdown */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-300 block">Select Record ID to Update</label>
+            <label className="text-[11px] font-bold text-slate-600 block">Select Record ID to Update</label>
             {loadingRecords ? (
-              <div className="text-xs text-slate-400 py-1">Fetching target table records...</div>
+              <div className="text-xs text-slate-500 py-1">Fetching target table records...</div>
             ) : existingRecords.length === 0 ? (
-              <div className="text-xs text-amber-400 py-1">No existing records found in table '{activeTable}'. Insert a record first.</div>
+              <div className="text-xs text-amber-600 py-1">No existing records found in table '{activeTable}'. Insert a record first.</div>
             ) : (
               <select
                 value={selectedRecordId}
                 onChange={(e) => handleRecordSelect(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono"
               >
                 {existingRecords.map((rec, i) => {
                   const idVal = rec[pkCol] ?? rec.id ?? Object.values(rec)[0];
@@ -452,15 +453,15 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
             {schemaColumns.map((col) => (
               <div key={col.name} className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-300 flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-600 flex items-center justify-between">
                   <span className="capitalize">{col.name.replace('_', ' ')}</span>
-                  <span className="text-[9px] text-amber-400/80 font-mono">[{col.type}]</span>
+                  <span className="text-[9px] text-amber-600 font-mono">[{col.type}]</span>
                 </label>
                 <input
                   type="text"
                   value={updateFormData[col.name] || ''}
                   onChange={(e) => setUpdateFormData(prev => ({ ...prev, [col.name]: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500 transition-colors font-mono"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-amber-500 transition-colors font-mono"
                 />
               </div>
             ))}
@@ -485,9 +486,9 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
 
       {/* 3. DEDICATED DELETE TAB */}
       {subTab === 'delete' && (
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h4 className="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-2">
               <Trash2 size={14} />
               Safely Delete Record from '{activeTable}'
             </h4>
@@ -496,16 +497,16 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
 
           {/* Record Selector Dropdown for Delete */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-300 block">Select Record ID to Delete</label>
+            <label className="text-[11px] font-bold text-slate-600 block">Select Record ID to Delete</label>
             {loadingRecords ? (
-              <div className="text-xs text-slate-400 py-1">Fetching target table records...</div>
+              <div className="text-xs text-slate-500 py-1">Fetching target table records...</div>
             ) : existingRecords.length === 0 ? (
-              <div className="text-xs text-amber-400 py-1">No records available to delete in '{activeTable}'.</div>
+              <div className="text-xs text-amber-600 py-1">No records available to delete in '{activeTable}'.</div>
             ) : (
               <select
                 value={selectedRecordId}
                 onChange={(e) => setSelectedRecordId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-rose-500 font-mono"
               >
                 {existingRecords.map((rec, i) => {
                   const idVal = rec[pkCol] ?? rec.id ?? Object.values(rec)[0];
@@ -543,10 +544,10 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
           <button
             onClick={() => handleSimulate('INSERT')}
             disabled={loading !== null}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg font-bold text-xs transition-all disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-lg font-bold text-xs transition-all disabled:opacity-50"
           >
             {loading === 'INSERT' ? (
-              <span className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
+              <span className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
             ) : (
               <Plus size={14} />
             )}
@@ -556,10 +557,10 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
           <button
             onClick={() => handleSimulate('UPDATE')}
             disabled={loading !== null}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg font-bold text-xs transition-all disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 rounded-lg font-bold text-xs transition-all disabled:opacity-50"
           >
             {loading === 'UPDATE' ? (
-              <span className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
+              <span className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
             ) : (
               <Edit3 size={14} />
             )}
@@ -569,10 +570,10 @@ export const LiveTrafficSimulator: React.FC<LiveTrafficSimulatorProps> = ({
           <button
             onClick={() => handleSimulate('DELETE')}
             disabled={loading !== null}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 rounded-lg font-bold text-xs transition-all disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg font-bold text-xs transition-all disabled:opacity-50"
           >
             {loading === 'DELETE' ? (
-              <span className="w-4 h-4 border-2 border-rose-400 border-t-transparent rounded-full animate-spin"></span>
+              <span className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></span>
             ) : (
               <Trash2 size={14} />
             )}
