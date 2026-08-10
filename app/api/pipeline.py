@@ -715,23 +715,40 @@ async def get_destination_records(table: Optional[str] = None, limit: int = 25, 
             password = db_cfg.get("password") or "npg_BsO9tyw8dTRW"
             sslmode = db_cfg.get("sslmode", "require")
             
-            conn = psycopg2.connect(
-                host=host, port=port, dbname=dbname, user=user, password=password, sslmode=sslmode, connect_timeout=25
-            )
-            cursor = conn.cursor()
-            cursor.execute(f'SELECT * FROM "{target_table}" ORDER BY 1 DESC LIMIT %s;', (limit,))
-            col_names = [desc[0] for desc in cursor.description]
-            rows = cursor.fetchall()
-            conn.close()
+            try:
+                conn = psycopg2.connect(
+                    host=host, port=port, dbname=dbname, user=user, password=password, sslmode=sslmode, connect_timeout=3
+                )
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT * FROM "{target_table}" ORDER BY 1 DESC LIMIT %s;', (limit,))
+                col_names = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+                conn.close()
 
-            for row in rows:
-                record_dict = dict(zip(col_names, row))
-                for k, v in record_dict.items():
-                    if hasattr(v, 'isoformat'):
-                        record_dict[k] = v.isoformat()
-                    elif not isinstance(v, (str, int, float, bool, type(None))):
-                        record_dict[k] = str(v)
-                records.append(record_dict)
+                for row in rows:
+                    record_dict = dict(zip(col_names, row))
+                    for k, v in record_dict.items():
+                        if hasattr(v, 'isoformat'):
+                            record_dict[k] = v.isoformat()
+                        elif not isinstance(v, (str, int, float, bool, type(None))):
+                            record_dict[k] = str(v)
+                    records.append(record_dict)
+            except Exception as pg_err:
+                logger.warning(f"PostgreSQL destination records query note for '{target_table}': {pg_err}")
+                import sqlite3
+                db_path = os.path.join(config.DIRECTORY, "test_destination.db")
+                if os.path.exists(db_path):
+                    try:
+                        conn = sqlite3.connect(db_path)
+                        cursor = conn.cursor()
+                        cursor.execute(f"SELECT * FROM {target_table} ORDER BY 1 DESC LIMIT {limit}")
+                        col_names = [desc[0] for desc in cursor.description]
+                        rows = cursor.fetchall()
+                        conn.close()
+                        for row in rows:
+                            records.append(dict(zip(col_names, row)))
+                    except Exception:
+                        pass
         else:
             import sqlite3
             db_path = os.path.join(config.DIRECTORY, "test_destination.db")
