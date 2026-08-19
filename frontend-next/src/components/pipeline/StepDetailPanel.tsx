@@ -88,13 +88,13 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
       {/* Header row with illustration */}
       <div className="flex gap-6 mb-5 flex-shrink-0">
         <div className="flex-1">
-          <div className="text-[10px] font-bold text-[#4F7CFF] uppercase tracking-wider mb-2">
+          <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2">
             STEP {stepId} OF 17
           </div>
-          <h2 className="text-xl font-extrabold tracking-tight text-white mb-2 leading-snug">
+          <h2 className="text-xl font-extrabold tracking-tight text-slate-900 mb-2 leading-snug">
             {meta.name}
           </h2>
-          <p className="text-sm text-[#8C96B5] leading-relaxed">{meta.description}</p>
+          <p className="text-sm text-slate-500 leading-relaxed">{meta.description}</p>
         </div>
         <div className="flex-shrink-0 w-[180px] h-[120px]">
           <StepIllustration stepId={stepId} />
@@ -104,12 +104,12 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
       {/* Progress bar */}
       <div className="mb-4 flex-shrink-0">
         <div className="flex justify-between text-xs font-bold mb-2">
-          <span className="text-[#8C96B5] uppercase tracking-wider">Progress</span>
-          <strong className="text-[#4F7CFF]">{progress}%</strong>
+          <span className="text-slate-400 uppercase tracking-wider">Progress</span>
+          <strong className="text-blue-600">{progress}%</strong>
         </div>
-        <div className="h-2.5 bg-white/6 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-[#4F7CFF] to-[#38bdf8] rounded-full shadow-[0_0_12px_rgba(79,124,255,0.5)]"
+            className="h-full bg-gradient-to-r from-blue-600 to-sky-400 rounded-full shadow-[0_0_12px_rgba(37,99,235,0.3)]"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -122,18 +122,18 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
         {metrics.map((metric) => (
           <div
             key={metric.label}
-            className="bg-[#050816]/50 border border-white/6 rounded-xl p-3 hover-lift"
+            className="bg-slate-50 border border-slate-200 rounded-xl p-3 hover-lift"
           >
-            <div className="text-[9px] text-[#8C96B5] uppercase tracking-wider mb-1 font-semibold">
+            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-1 font-semibold">
               {metric.label}
             </div>
-            <div className={`text-base font-extrabold ${metric.isTimer ? 'text-[#4F7CFF] font-mono' : 'text-white'}`}>
+            <div className={`text-base font-extrabold ${metric.isTimer ? 'text-blue-600 font-mono' : 'text-slate-900'}`}>
               {metric.value}
             </div>
             {metric.trend && (
               <div className="flex items-center gap-1 mt-1">
-                <TrendingUp size={10} className="text-[#33D17A]" />
-                <span className="text-[10px] text-[#33D17A] font-semibold">{metric.trend}</span>
+                <TrendingUp size={10} className="text-emerald-600" />
+                <span className="text-[10px] text-emerald-600 font-semibold">{metric.trend}</span>
               </div>
             )}
           </div>
@@ -143,8 +143,8 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
       {/* Details layout */}
       <div className="grid grid-cols-3 gap-4 flex-grow min-h-0">
         {/* Step Details */}
-        <div className="bg-[#050816]/40 border border-white/6 rounded-xl p-4 overflow-y-auto custom-scrollbar">
-          <h3 className="text-[10px] font-bold text-[#8C96B5] uppercase tracking-wider mb-3">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-y-auto custom-scrollbar">
+          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">
             Step Details
           </h3>
           <div className="space-y-2.5">
@@ -152,12 +152,12 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
               const Icon = detail.icon;
               return (
                 <div key={detail.label} className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-md bg-[#4F7CFF]/10 flex items-center justify-center flex-shrink-0">
-                    <Icon size={12} className="text-[#4F7CFF]" />
+                  <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Icon size={12} className="text-blue-600" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[9px] text-[#8C96B5]">{detail.label}</div>
-                    <div className="text-[11px] font-semibold text-white truncate">{detail.value}</div>
+                    <div className="text-[9px] text-slate-500">{detail.label}</div>
+                    <div className="text-[11px] font-semibold text-slate-900 truncate">{detail.value}</div>
                   </div>
                 </div>
               );
@@ -166,21 +166,21 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
         </div>
 
         {/* How It Works */}
-        <div className="bg-[#050816]/40 border border-white/6 rounded-xl p-4 overflow-y-auto custom-scrollbar">
-          <h3 className="text-[10px] font-bold text-[#8C96B5] uppercase tracking-wider mb-3">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-y-auto custom-scrollbar">
+          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">
             How It Works
           </h3>
           <div className="relative">
-            <div className="absolute left-[11px] top-2 bottom-2 w-px border-l border-dashed border-white/10" />
+            <div className="absolute left-[11px] top-2 bottom-2 w-px border-l border-dashed border-slate-200" />
             <div className="space-y-3">
               {meta.howItWorks.map((item, index) => {
                 const Icon = item.icon;
                 return (
                   <div key={index} className="flex items-center gap-2.5 relative">
-                    <div className="w-6 h-6 rounded-full bg-[#0D1324] border border-white/10 flex items-center justify-center flex-shrink-0 z-10">
-                      <Icon size={11} className="text-[#8C96B5]" />
+                    <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 z-10">
+                      <Icon size={11} className="text-slate-500" />
                     </div>
-                    <span className="text-[11px] text-[#8C96B5] leading-tight">{item.label}</span>
+                    <span className="text-[11px] text-slate-600 leading-tight">{item.label}</span>
                   </div>
                 );
               })}
@@ -189,14 +189,14 @@ export default function StepDetailPanel({ state, selectedStep }: StepDetailPanel
         </div>
 
         {/* Live Activity */}
-        <div className="bg-[#050816]/40 border border-white/6 rounded-xl p-4 flex flex-col overflow-hidden">
-          <h3 className="text-[10px] font-bold text-[#8C96B5] uppercase tracking-wider mb-3 flex-shrink-0">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col overflow-hidden">
+          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex-shrink-0">
             Live Activity
           </h3>
           <div className="flex-grow min-h-[80px]">
             <LiveActivityChart isActive={isActive && state?.status === 'running'} />
           </div>
-          <p className="text-[10px] text-[#4F7CFF]/70 mt-2 flex-shrink-0">
+          <p className="text-[10px] text-blue-600/70 mt-2 flex-shrink-0">
             {isActive && state?.status === 'running'
               ? 'Polling every 30 seconds...'
               : step?.status === 'completed'

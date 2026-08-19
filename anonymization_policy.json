@@ -1,18 +1,15 @@
 {
   "policy_metadata": {
     "policy_version": "1.0",
-    "generated_at": "2026-08-06T19:54:00.742523",
+    "generated_at": "2026-08-10T22:31:43.683751",
     "status": "APPROVED",
     "approved_by": "Dashboard Admin",
-    "approved_at": "2026-08-06 19:54:22.991364",
+    "approved_at": "2026-08-10 22:32:39.213838",
     "comments": [],
     "enterprise_type": "BANKING",
     "compliance_law": "RBI Guidelines + DPDP Act 2023",
-    "target_table": "accounts",
-    "run_id": "RUN_DEFAULT",
-    "risk_score": 42.0,
-    "privacy_score": 58.0,
-    "risk_level": "MEDIUM"
+    "target_table": "transactions",
+    "run_id": "RUN_DEFAULT"
   },
   "database_info": {
     "database_name": "neondb",
@@ -25,26 +22,23 @@
   },
   "column_policies": [
     {
-      "table_name": "accounts",
-      "column_name": "account_id",
+      "table_name": "transactions",
+      "column_name": "transaction_id",
       "is_pii": true,
       "pii_type": "IDENTIFIER",
       "confidence": 0.95,
-      "anonymization_technique": "NO_CHANGE",
+      "anonymization_technique": "HASHING",
       "reason": "Column identified as IDENTIFIER. One-way hash for irreversible identification protection. High confidence detection.",
       "is_primary_key": true,
       "is_foreign_key": false,
       "foreign_key_details": null,
       "data_type": "INTEGER",
       "admin_override": false,
-      "admin_comments": "",
-      "is_modified": true,
-      "modified_by": "Dashboard Admin",
-      "modified_at": "2026-08-06T14:24:20.083Z"
+      "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "customer_id",
+      "table_name": "transactions",
+      "column_name": "account_id",
       "is_pii": true,
       "pii_type": "IDENTIFIER",
       "confidence": 0.95,
@@ -53,9 +47,9 @@
       "is_primary_key": false,
       "is_foreign_key": true,
       "foreign_key_details": {
-        "referred_table": "customers",
+        "referred_table": "accounts",
         "referred_columns": [
-          "customer_id"
+          "account_id"
         ]
       },
       "data_type": "INTEGER",
@@ -63,26 +57,8 @@
       "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "account_number",
-      "is_pii": true,
-      "pii_type": "ACCOUNT_NUMBER",
-      "confidence": 0.99,
-      "anonymization_technique": "NO_CHANGE",
-      "reason": "Column identified as ACCOUNT_NUMBER. One-way hash for irreversible identification protection. High confidence detection.",
-      "is_primary_key": false,
-      "is_foreign_key": false,
-      "foreign_key_details": null,
-      "data_type": "BIGINT",
-      "admin_override": false,
-      "admin_comments": "",
-      "is_modified": true,
-      "modified_by": "Dashboard Admin",
-      "modified_at": "2026-08-06T14:24:17.774Z"
-    },
-    {
-      "table_name": "accounts",
-      "column_name": "account_type",
+      "table_name": "transactions",
+      "column_name": "transaction_type",
       "is_pii": true,
       "pii_type": "CATEGORICAL",
       "confidence": 0.95,
@@ -91,13 +67,13 @@
       "is_primary_key": false,
       "is_foreign_key": false,
       "foreign_key_details": null,
-      "data_type": "VARCHAR(50)",
+      "data_type": "VARCHAR(20)",
       "admin_override": false,
       "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "balance",
+      "table_name": "transactions",
+      "column_name": "amount",
       "is_pii": true,
       "pii_type": "FINANCIAL",
       "confidence": 0.95,
@@ -111,43 +87,58 @@
       "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "status",
-      "is_pii": true,
-      "pii_type": "CATEGORICAL",
-      "confidence": 0.95,
-      "anonymization_technique": "MASKING",
-      "reason": "Column identified as CATEGORICAL. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "table_name": "transactions",
+      "column_name": "transaction_date",
+      "is_pii": false,
+      "pii_type": "NON_PII",
+      "confidence": 0.0,
+      "anonymization_technique": "NO_CHANGE",
+      "reason": "Column identified as non-PII. No anonymization required.",
       "is_primary_key": false,
       "is_foreign_key": false,
       "foreign_key_details": null,
-      "data_type": "VARCHAR(20)",
+      "data_type": "TIMESTAMP",
       "admin_override": false,
       "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "opening_date",
-      "is_pii": true,
-      "pii_type": "DATE",
-      "confidence": 0.95,
-      "anonymization_technique": "MASKING",
-      "reason": "Column identified as DATE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "table_name": "transactions",
+      "column_name": "category",
+      "is_pii": false,
+      "pii_type": "NON_PII",
+      "confidence": 0.0,
+      "anonymization_technique": "NO_CHANGE",
+      "reason": "Column identified as non-PII. No anonymization required.",
       "is_primary_key": false,
       "is_foreign_key": false,
       "foreign_key_details": null,
-      "data_type": "DATE",
+      "data_type": "VARCHAR(50)",
       "admin_override": false,
       "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "ifsc_code",
+      "table_name": "transactions",
+      "column_name": "description",
+      "is_pii": false,
+      "pii_type": "NON_PII",
+      "confidence": 0.0,
+      "anonymization_technique": "NO_CHANGE",
+      "reason": "Column identified as non-PII. No anonymization required.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "TEXT",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "transactions",
+      "column_name": "reference_number",
       "is_pii": true,
-      "pii_type": "BANK_CODE",
-      "confidence": 0.95,
+      "pii_type": "AADHAAR",
+      "confidence": 0.7999999999999999,
       "anonymization_technique": "MASKING",
-      "reason": "Column identified as BANK_CODE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "reason": "Column identified as AADHAAR. Mask sensitive characters to preserve format while obscuring data. Medium confidence detection.",
       "is_primary_key": false,
       "is_foreign_key": false,
       "foreign_key_details": null,
@@ -156,58 +147,58 @@
       "admin_comments": ""
     },
     {
-      "table_name": "accounts",
-      "column_name": "branch_name",
+      "table_name": "transactions",
+      "column_name": "beneficiary_account",
       "is_pii": true,
-      "pii_type": "BANK_CODE",
-      "confidence": 0.95,
+      "pii_type": "INDIAN_PHONE",
+      "confidence": 0.75,
       "anonymization_technique": "TOKENIZATION",
-      "reason": "Column identified as BANK_CODE. Replace with realistic fake values for usability while protecting privacy. High confidence detection.",
-      "is_primary_key": false,
-      "is_foreign_key": false,
-      "foreign_key_details": null,
-      "data_type": "VARCHAR(200)",
-      "admin_override": false,
-      "admin_comments": ""
-    },
-    {
-      "table_name": "accounts",
-      "column_name": "gstin",
-      "is_pii": true,
-      "pii_type": "GSTIN",
-      "confidence": 0.95,
-      "anonymization_technique": "HASHING",
-      "reason": "Column identified as GSTIN. One-way hash for irreversible identification protection. High confidence detection.",
+      "reason": "Column identified as INDIAN_PHONE. Replace with realistic fake values for usability while protecting privacy. Medium confidence detection.",
       "is_primary_key": false,
       "is_foreign_key": false,
       "foreign_key_details": null,
       "data_type": "VARCHAR(20)",
       "admin_override": false,
       "admin_comments": ""
+    },
+    {
+      "table_name": "transactions",
+      "column_name": "beneficiary_name",
+      "is_pii": true,
+      "pii_type": "FULL_NAME",
+      "confidence": 0.95,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as FULL_NAME. Replace with realistic fake values for usability while protecting privacy. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(200)",
+      "admin_override": false,
+      "admin_comments": ""
     }
   ],
   "policy_summary": {
     "total_columns": 10,
-    "pii_columns": 10,
-    "non_pii_columns": 0,
-    "pii_percentage": 100.0,
+    "pii_columns": 7,
+    "non_pii_columns": 3,
+    "pii_percentage": 70.0,
     "technique_distribution": {
-      "HASHING": 4,
-      "MASKING": 4,
+      "HASHING": 2,
+      "MASKING": 2,
       "DIFFERENTIAL_PRIVACY": 1,
-      "TOKENIZATION": 1
+      "NO_CHANGE": 3,
+      "TOKENIZATION": 2
     },
     "pii_type_distribution": {
       "IDENTIFIER": 2,
-      "ACCOUNT_NUMBER": 1,
-      "CATEGORICAL": 2,
+      "CATEGORICAL": 1,
       "FINANCIAL": 1,
-      "DATE": 1,
-      "BANK_CODE": 2,
-      "GSTIN": 1
+      "AADHAAR": 1,
+      "INDIAN_PHONE": 1,
+      "FULL_NAME": 1
     },
     "table_distribution": {
-      "accounts": 10
+      "transactions": 10
     }
   }
 }

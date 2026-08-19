@@ -547,12 +547,23 @@ export default function Pipeline() {
       </div>
 
       {/* Main Grid: Steps List on Left (5 cols), Complete Pipeline Summary Logs on Right (7 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        {/* Ocean Blue Section Header */}
+        <div className="bg-gradient-to-r from-sky-600 to-blue-600 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">17-Step Anonymization Pipeline</h2>
+            <span className="text-xs font-mono text-white/80 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+              DPDP Act 2023 Compliant
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
         
         {/* LEFT PANEL: 17 Steps List */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <div className="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">17-Step Execution Lifecycle</h3>
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Execution Lifecycle</h3>
             <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               {completedCount} / 17 COMPLETED
             </span>
@@ -594,7 +605,7 @@ export default function Pipeline() {
                           <Square className="w-3.5 h-3.5 fill-current" />
                         </div>
                       ) : (
-                        <div className="p-1 bg-slate-200 text-slate-400 rounded-full">
+                        <div className="p-1 bg-slate-100 text-slate-400 rounded-full">
                           <Circle className="w-3.5 h-3.5" />
                         </div>
                       )}
@@ -672,7 +683,7 @@ export default function Pipeline() {
                           ? 'bg-amber-50 text-amber-600 border border-amber-200'
                           : step.status === 'stopped'
                           ? 'bg-red-50 text-red-600 border border-red-200'
-                          : 'bg-slate-100 text-slate-500'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
                       }`}>
                         {step.status === 'completed' ? 'COMPLETED' : step.status === 'current' ? 'RUNNING' : step.status === 'waiting_for_approval' ? 'WAITING APPROVAL' : step.status === 'stopped' ? 'STOPPED' : 'PENDING'}
                       </span>
@@ -685,14 +696,14 @@ export default function Pipeline() {
         </div>
 
         {/* RIGHT PANEL: RESTORED PIPELINE SUMMARY LOGS STREAM */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between min-h-[580px]">
+        <div className="lg:col-span-7 bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col justify-between min-h-[580px]">
           <div className="space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-emerald-600" />
+                <Terminal className="w-4 h-4 text-sky-600" />
                 <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Pipeline Summary Logs</h3>
               </div>
-              <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              <span className="text-[10px] font-mono text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
                 CHRONOLOGICAL EXECUTION HISTORY
               </span>
             </div>
@@ -805,12 +816,12 @@ export default function Pipeline() {
             <span className="text-blue-600">Target Table: {pipelineState?.target_table || '—'}</span>
           </div>
         </div>
-
+        </div>
       </div>
 
       {/* Custom Application Stop Confirmation Modal */}
       {showStopModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-amber-600">
               <AlertTriangle className="w-6 h-6" />

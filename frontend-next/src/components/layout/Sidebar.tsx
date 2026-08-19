@@ -80,14 +80,14 @@ export default function Sidebar({ pipelineProgress }: SidebarProps) {
 
   return (
     <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
-      {/* Logo */}
-      <div className="p-4 border-b border-slate-200">
+      {/* Logo - Ocean Blue Branding Area */}
+      <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-sky-50 to-blue-50">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
             <ShieldCheck className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-slate-900">DataVault AI</h1>
+            <h1 className="text-sm font-bold text-slate-900">DataVault AI</h1>
             <p className="text-xs text-slate-500">Enterprise Data Protection</p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function Sidebar({ pipelineProgress }: SidebarProps) {
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-500'}`} />
                     <span className="flex-1 text-left">{item.label}</span>
                     {item.progress && (
                       <span className="text-xs text-slate-400">{item.progress}</span>

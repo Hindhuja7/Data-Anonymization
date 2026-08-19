@@ -818,6 +818,11 @@ class PolicyExecutor:
             else:
                 tables_to_process = ["customers"]
 
+            # Debug: Print tables being processed
+            print(f"[DEBUG] Tables to process: {tables_to_process}")
+            print(f"[DEBUG] Source schema keys: {list(self.source_schema.keys()) if self.source_schema else 'None'}")
+            print(f"[DEBUG] Policy column_policies tables: {list(set([col.get('table_name') for col in self.policy.get('column_policies', []) if col.get('table_name')])) if self.policy and self.policy.get('column_policies') else 'None'}")
+
             total_chunks_processed = 0
 
             for table_name in tables_to_process:
@@ -827,12 +832,21 @@ class PolicyExecutor:
 
                 print(f"\nTable: {table_name}")
                 
+                # Check if table exists in source schema
+                if table_name not in self.source_schema:
+                    print(f"[WARN] Table '{table_name}' not found in source schema. Skipping.")
+                    continue
+                
                 # 1. Determine record count
                 query_count = text(f'SELECT COUNT(*) FROM "{table_name}"')
                 with self.source_connector.engine.connect() as conn:
                     total_records = conn.execute(query_count).scalar() or 0
 
                 print(f"Rows Found: {total_records:,}")
+                
+                if total_records == 0:
+                    print(f"[WARN] Table '{table_name}' has 0 rows. Skipping chunk processing.")
+                    continue
 
                 # 2. Call existing calculate_chunk_size()
                 chunk_size = chunk_calculator.calculate_chunk_size(total_records)

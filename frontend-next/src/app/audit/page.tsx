@@ -153,26 +153,26 @@ export default function AuditLogsPage() {
       case 'simulation':
         return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold">SIMULATION</span>;
       default:
-        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-bold">PIPELINE</span>;
+        return <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">PIPELINE</span>;
     }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 shadow-md">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-200 shadow-md">
             <FileText className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
               Audit Logs & Compliance Trail
-              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
                 HMAC-SHA256 VERIFIED
               </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Immutable, single-view 17-step pipeline execution stream & DPDP Act 2023 compliance audit log.
             </p>
           </div>
@@ -184,11 +184,11 @@ export default function AuditLogsPage() {
             onClick={() => setIsLiveStreaming(!isLiveStreaming)}
             className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all border flex items-center gap-2 ${
               isLiveStreaming
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-md'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-md'
+                : 'bg-slate-100 text-slate-500 border-slate-200'
             }`}
           >
-            <Radio className={`w-3.5 h-3.5 ${isLiveStreaming ? 'animate-pulse text-emerald-400' : ''}`} />
+            <Radio className={`w-3.5 h-3.5 ${isLiveStreaming ? 'animate-pulse text-emerald-600' : ''}`} />
             {isLiveStreaming ? 'Live Stream Active' : 'Live Stream Paused'}
           </button>
         </div>
@@ -196,51 +196,51 @@ export default function AuditLogsPage() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
-          <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 uppercase font-bold block">17-Step Coverage</span>
-            <span className="text-xs font-bold text-white">All 17 Steps Logged</span>
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">17-Step Coverage</span>
+            <span className="text-xs font-bold text-slate-900">All 17 Steps Logged</span>
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
-          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 uppercase font-bold block">Integrity Check</span>
-            <span className="text-xs font-bold text-emerald-300">HMAC-SHA256 Verified</span>
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Integrity Check</span>
+            <span className="text-xs font-bold text-emerald-600">HMAC-SHA256 Verified</span>
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
-          <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 uppercase font-bold block">Compliance Standard</span>
-            <span className="text-xs font-bold text-purple-300">DPDP Act 2023 / GDPR</span>
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Compliance Standard</span>
+            <span className="text-xs font-bold text-purple-600">DPDP Act 2023 / GDPR</span>
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
-          <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-3 shadow-xl">
+          <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
             <Database className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Recorded Logs</span>
-            <span className="text-xs font-mono font-bold text-white">{logs.length} Events</span>
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Total Recorded Logs</span>
+            <span className="text-xs font-mono font-bold text-slate-900">{logs.length} Events</span>
           </div>
         </div>
       </div>
 
       {/* Unified Single-View Log Feed */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xl">
         {/* Search & Filter Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div className="flex items-center gap-3 flex-1 min-w-[280px]">
             <div className="relative w-full">
               <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" />
@@ -250,13 +250,13 @@ export default function AuditLogsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchAuditLogs()}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 font-mono"
               />
             </div>
             <button
               type="button"
               onClick={() => fetchAuditLogs()}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl border border-slate-700"
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold rounded-xl border border-slate-200"
             >
               Search
             </button>
@@ -265,11 +265,11 @@ export default function AuditLogsPage() {
           <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
             <div className="flex items-center gap-1.5">
               <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-300 font-bold">Category:</span>
+              <span className="text-slate-600 font-bold">Category:</span>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 font-medium"
+                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-sky-500 font-medium"
               >
                 <option value="all">All Categories</option>
                 <option value="pipeline">Pipeline (17 Steps)</option>
@@ -282,11 +282,11 @@ export default function AuditLogsPage() {
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-300 font-bold">Severity:</span>
+              <span className="text-slate-600 font-bold">Severity:</span>
               <select
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 font-medium"
+                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-sky-500 font-medium"
               >
                 <option value="all">All Severities</option>
                 <option value="info">Info</option>
@@ -301,13 +301,13 @@ export default function AuditLogsPage() {
         {/* Logs Table */}
         {isLoading ? (
           <div className="py-20 text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
-            <p className="text-xs text-slate-400 font-mono">Loading unified 17-step audit stream...</p>
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+            <p className="text-xs text-slate-500 font-mono">Loading unified 17-step audit stream...</p>
           </div>
         ) : logs.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-slate-800">
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800 font-bold">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200 font-bold">
                 <tr>
                   <th className="px-4 py-3">Timestamp</th>
                   <th className="px-3 py-3">Step / Event</th>
@@ -317,19 +317,19 @@ export default function AuditLogsPage() {
                   <th className="px-4 py-3">HMAC Hash Checksum</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
+              <tbody className="divide-y divide-slate-200 bg-white">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-800/50 transition-colors">
-                    <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-[11px]">
+                  <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-[11px]">
                       {log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A'}
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       {log.step_index ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200">
                           STEP {log.step_index}
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
                           EVENT
                         </span>
                       )}
@@ -340,16 +340,16 @@ export default function AuditLogsPage() {
                     <td className="px-3 py-3 whitespace-nowrap">
                       {getCategoryBadge(log.category)}
                     </td>
-                    <td className="px-4 py-3 text-slate-200">
-                      <div className="font-bold text-xs text-white">{log.action}</div>
-                      <div className="text-[11px] text-slate-400 font-normal mt-0.5 leading-relaxed">{log.details}</div>
+                    <td className="px-4 py-3 text-slate-600">
+                      <div className="font-bold text-xs text-slate-900">{log.action}</div>
+                      <div className="text-[11px] text-slate-500 font-normal mt-0.5 leading-relaxed">{log.details}</div>
                       {log.run_id && (
-                        <span className="text-[10px] text-blue-400 font-mono mt-1 block">Run ID: {log.run_id}</span>
+                        <span className="text-[10px] text-blue-600 font-mono mt-1 block">Run ID: {log.run_id}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {log.audit_hash ? (
-                        <span className="bg-slate-950 text-slate-300 px-2 py-1 rounded text-[10px] font-mono border border-slate-800 block truncate max-w-[140px]" title={log.audit_hash}>
+                        <span className="bg-slate-50 text-slate-600 px-2 py-1 rounded text-[10px] font-mono border border-slate-200 block truncate max-w-[140px]" title={log.audit_hash}>
                           🔑 {log.audit_hash}
                         </span>
                       ) : (
@@ -362,9 +362,9 @@ export default function AuditLogsPage() {
             </table>
           </div>
         ) : (
-          <div className="py-16 text-center space-y-3 bg-slate-950 rounded-xl border border-slate-800">
-            <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
-            <p className="text-xs font-bold text-slate-300">No audit log records match the selected filters.</p>
+          <div className="py-16 text-center space-y-3 bg-slate-50 rounded-xl border border-slate-200">
+            <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
+            <p className="text-xs font-bold text-slate-600">No audit log records match the selected filters.</p>
             <button
               type="button"
               onClick={() => {
@@ -372,7 +372,7 @@ export default function AuditLogsPage() {
                 setSelectedLevel('all');
                 setSearchQuery('');
               }}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5"
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Reset Filters

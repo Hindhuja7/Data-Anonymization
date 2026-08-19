@@ -13,11 +13,11 @@ export default function StepIllustration({ stepId }: StepIllustrationProps) {
       <svg viewBox="0 0 180 120" className="w-full h-full relative z-10">
         <defs>
           <linearGradient id="platformGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1e3a5f" />
-            <stop offset="100%" stopColor="#0a1628" />
+            <stop offset="0%" stopColor="#e2e8f0" />
+            <stop offset="100%" stopColor="#cbd5e1" />
           </linearGradient>
           <linearGradient id="dbGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#4F7CFF" />
+            <stop offset="0%" stopColor="#3b82f6" />
             <stop offset="100%" stopColor="#2563eb" />
           </linearGradient>
           <filter id="isoGlow">
@@ -52,21 +52,21 @@ export default function StepIllustration({ stepId }: StepIllustrationProps) {
         <ellipse cx="70" cy="74" rx="18" ry="8" fill="#2563eb" />
 
         {/* Clock */}
-        <circle cx="120" cy="52" r="16" fill="#0D1324" stroke="#4F7CFF" strokeWidth={1.5} filter="url(#isoGlow)" />
-        <circle cx="120" cy="52" r="2" fill="#4F7CFF" />
-        <line x1="120" y1="52" x2="120" y2="42" stroke="#4F7CFF" strokeWidth={1.5} strokeLinecap="round" />
-        <line x1="120" y1="52" x2="128" y2="56" stroke="#33D17A" strokeWidth={1.5} strokeLinecap="round" />
+        <circle cx="120" cy="52" r="16" fill="#f8fafc" stroke="#3b82f6" strokeWidth={1.5} filter="url(#isoGlow)" />
+        <circle cx="120" cy="52" r="2" fill="#3b82f6" />
+        <line x1="120" y1="52" x2="120" y2="42" stroke="#3b82f6" strokeWidth={1.5} strokeLinecap="round" />
+        <line x1="120" y1="52" x2="128" y2="56" stroke="#10b981" strokeWidth={1.5} strokeLinecap="round" />
 
         {/* Data sheets floating */}
         <g transform="translate(105, 30)" opacity="0.85">
-          <rect x="0" y="0" width="22" height="16" rx="2" fill="#1e293b" stroke="rgba(79,124,255,0.4)" strokeWidth={1} transform="rotate(-8)" />
-          <line x1="4" y1="5" x2="16" y2="5" stroke="#4F7CFF" strokeWidth={0.8} transform="rotate(-8)" />
-          <line x1="4" y1="9" x2="14" y2="9" stroke="rgba(79,124,255,0.5)" strokeWidth={0.8} transform="rotate(-8)" />
+          <rect x="0" y="0" width="22" height="16" rx="2" fill="#f1f5f9" stroke="rgba(59,130,246,0.4)" strokeWidth={1} transform="rotate(-8)" />
+          <line x1="4" y1="5" x2="16" y2="5" stroke="#3b82f6" strokeWidth={0.8} transform="rotate(-8)" />
+          <line x1="4" y1="9" x2="14" y2="9" stroke="rgba(59,130,246,0.5)" strokeWidth={0.8} transform="rotate(-8)" />
         </g>
         <g transform="translate(88, 22)" opacity="0.7">
-          <rect x="0" y="0" width="18" height="14" rx="2" fill="#1e293b" stroke="rgba(51,209,122,0.4)" strokeWidth={1} transform="rotate(12)" />
-          <line x1="3" y1="4" x2="13" y2="4" stroke="#33D17A" strokeWidth={0.8} transform="rotate(12)" />
-          <line x1="3" y1="8" x2="11" y2="8" stroke="rgba(51,209,122,0.5)" strokeWidth={0.8} transform="rotate(12)" />
+          <rect x="0" y="0" width="18" height="14" rx="2" fill="#f1f5f9" stroke="rgba(16,185,129,0.4)" strokeWidth={1} transform="rotate(12)" />
+          <line x1="3" y1="4" x2="13" y2="4" stroke="#10b981" strokeWidth={0.8} transform="rotate(12)" />
+          <line x1="3" y1="8" x2="11" y2="8" stroke="rgba(16,185,129,0.5)" strokeWidth={0.8} transform="rotate(12)" />
         </g>
 
         {/* Step number badge */}

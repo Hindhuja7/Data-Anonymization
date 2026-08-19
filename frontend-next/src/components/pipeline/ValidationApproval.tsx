@@ -82,30 +82,30 @@ export default function ValidationApproval({ onClose, state }: ValidationApprova
   };
 
   const getRiskColor = () => {
-    if (privacyScore >= 90) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-    if (privacyScore >= 70) return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
-    return 'text-red-400 bg-red-500/10 border-red-500/30';
+    if (privacyScore >= 90) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+    if (privacyScore >= 70) return 'text-amber-600 bg-amber-50 border-amber-200';
+    return 'text-red-600 bg-red-50 border-red-200';
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#040816] text-white p-6 relative overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col min-h-0 bg-slate-50 text-slate-900 p-6 relative overflow-hidden font-sans">
       
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between pb-4 border-b border-white/6 mb-6">
+      <div className="flex-shrink-0 flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <ShieldCheck className="text-blue-500" size={20} />
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <ShieldCheck className="text-blue-600" size={20} />
             Post-Validation Approval
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Step 14 of 17 • Validation Complete - Privacy Score Calculated</p>
+          <p className="text-sm text-slate-500 mt-1">Step 14 of 17 • Validation Complete - Privacy Score Calculated</p>
         </div>
       </div>
 
       {/* Privacy Score Card */}
-      <div className="bg-[#0D1324] border border-white/8 rounded-xl p-6 mb-6">
+      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-slate-300 mb-2">Privacy Protection Score</h2>
+            <h2 className="text-sm font-semibold text-slate-900 mb-2">Privacy Protection Score</h2>
             <div className={`text-4xl font-black ${getRiskColor().split(' ')[0]} px-4 py-2 rounded-lg border ${getRiskColor()}`}>
               {privacyScore}/100
             </div>
@@ -116,54 +116,48 @@ export default function ValidationApproval({ onClose, state }: ValidationApprova
           
           <div className="flex gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{state?.recordsProcessed?.toLocaleString() || '0'}</div>
-              <div className="text-xs text-slate-400">Records Processed</div>
+              <div className="text-2xl font-bold text-slate-900">{state?.recordsProcessed?.toLocaleString() || '0'}</div>
+              <div className="text-xs text-slate-500">Records Processed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{state?.batchesLoaded || '0'}</div>
-              <div className="text-xs text-slate-400">Batches Loaded</div>
+              <div className="text-2xl font-bold text-slate-900">{state?.batchesLoaded || '0'}</div>
+              <div className="text-xs text-slate-500">Batches Loaded</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{state?.currentTable || 'N/A'}</div>
-              <div className="text-xs text-slate-400">Current Table</div>
+              <div className="text-2xl font-bold text-slate-900">{state?.currentTable || 'N/A'}</div>
+              <div className="text-xs text-slate-500">Current Table</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Validation Report */}
-      <div className="flex-1 bg-[#0D1324] border border-white/8 rounded-xl p-6 mb-6 overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl p-6 mb-6 overflow-hidden flex flex-col">
         <div className="flex items-center gap-2 mb-4">
-          <FileText className="text-slate-400" size={16} />
-          <h2 className="text-sm font-semibold text-slate-300">Validation Report</h2>
+          <FileText className="text-slate-500" size={16} />
+          <h2 className="text-sm font-semibold text-slate-900">Validation Report</h2>
         </div>
-        <div className="flex-1 overflow-auto bg-[#050816] rounded-lg p-4 font-mono text-xs text-slate-300">
+        <div className="flex-1 overflow-auto bg-slate-50 rounded-lg p-4 font-mono text-xs text-slate-600">
           {validationReport || 'Validation report loading...'}
         </div>
       </div>
 
       {/* Information Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-[#0D1324] border border-white/8 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Database className="text-blue-400" size={16} />
-            <h3 className="text-sm font-semibold text-slate-300">Destination Database</h3>
+            <Database className="text-blue-600" size={16} />
+            <h3 className="text-sm font-semibold text-slate-900">Destination Database</h3>
           </div>
-          <p className="text-xs text-slate-400">
-            Anonymized data will be written to destination database upon approval.
-            This action is irreversible.
-          </p>
+          <p className="text-xs text-slate-500">{state?.destinationDb || 'Not configured'}</p>
         </div>
         
-        <div className="bg-[#0D1324] border border-white/8 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="text-amber-400" size={16} />
-            <h3 className="text-sm font-semibold text-slate-300">Approval Required</h3>
+            <AlertTriangle className="text-amber-600" size={16} />
+            <h3 className="text-sm font-semibold text-slate-900">Approval Required</h3>
           </div>
-          <p className="text-xs text-slate-400">
-            Review the privacy score and validation report before approving.
-            If score is too low, modify policy and re-anonymize.
-          </p>
+          <p className="text-xs text-slate-500">{state?.isApproved ? 'Policy approved' : 'Awaiting approval'}</p>
         </div>
       </div>
 
@@ -172,7 +166,7 @@ export default function ValidationApproval({ onClose, state }: ValidationApprova
         <button
           onClick={handleModifyAndReanonymize}
           disabled={isReanonymizing}
-          className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50"
+          className="flex-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-600 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50"
         >
           {isReanonymizing ? (
             <>

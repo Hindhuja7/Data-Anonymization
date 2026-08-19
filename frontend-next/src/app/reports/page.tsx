@@ -162,30 +162,32 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-6 bg-[#040816] min-h-screen text-slate-100 font-sans space-y-6">
-      {/* Top Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Execution Reports & Detailed Logs</h1>
-          <p className="text-sm text-slate-400 mt-1">Live dynamic execution metrics, chunk traces, and compliance audit trail</p>
+    <div className="p-6 bg-slate-50 min-h-screen text-slate-900 font-sans space-y-6">
+      {/* Ocean Blue Section Header */}
+      <div className="bg-gradient-to-r from-sky-600 to-blue-600 rounded-xl px-6 py-5 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Reports & Analytics</h1>
+            <p className="text-sm text-white/80 mt-1">Live dynamic execution metrics, chunk traces, and compliance audit trail</p>
+          </div>
+          <button
+            onClick={fetchStatus}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all disabled:opacity-50 backdrop-blur-sm"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+            Refresh Status
+          </button>
         </div>
-        <button
-          onClick={fetchStatus}
-          disabled={isRefreshing}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 text-slate-300 text-xs font-semibold transition-all disabled:opacity-50"
-        >
-          <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-          Refresh Status
-        </button>
       </div>
 
       {errorMsg && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center justify-between shadow-sm">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2">
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
-          <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-white font-bold text-lg select-none leading-none">×</button>
+          <button onClick={() => setErrorMsg(null)} className="text-red-600 hover:text-red-900 font-bold text-lg select-none leading-none">×</button>
         </div>
       )}
 
@@ -345,17 +347,17 @@ export default function Reports() {
                             </div>
                             <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border ${
                               technique === 'TOKENIZATION'
-                                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                                ? 'bg-purple-100 text-purple-700 border-purple-200'
                                 : technique === 'MASKING'
-                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                                ? 'bg-blue-100 text-blue-700 border-blue-200'
                                 : technique === 'HASHING'
-                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+                                ? 'bg-amber-100 text-amber-700 border-amber-200'
+                                : 'bg-teal-100 text-teal-700 border-teal-200'
                             }`}>
                               {technique}
                             </span>
                           </div>
-                          <p className="text-slate-300 text-[11px] leading-relaxed">
+                          <p className="text-slate-600 text-[11px] leading-relaxed">
                             <strong>Rationale for Table '{targetTable}':</strong> {rationale}
                           </p>
                         </div>
@@ -371,60 +373,60 @@ export default function Reports() {
         {/* TAB 12: STEP 12 DATA ANONYMIZATION */}
         {activeTab === '12' && (
           !hasStep12Run ? (
-            <div className="py-20 text-center space-y-3 bg-slate-950 border border-slate-800 rounded-xl">
-              <Lock className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-mono font-bold text-slate-400">Step 12: Data Anonymization Has Not Executed</h3>
+            <div className="py-20 text-center space-y-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <Lock className="w-10 h-10 text-slate-500 mx-auto" />
+              <h3 className="text-sm font-mono font-bold text-slate-600">Step 12: Data Anonymization Has Not Executed</h3>
               <p className="text-xs text-slate-500 font-mono">Run the pipeline to Step 12 to view dynamic anonymization metrics and real-time chunk logs.</p>
             </div>
           ) : (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Target Table</span>
-                  <span className="text-base font-bold text-purple-300 font-mono">{pipelineState?.target_table || '—'}</span>
+                  <span className="text-base font-bold text-purple-700 font-mono">{pipelineState?.target_table || '—'}</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Chunks Processed</span>
-                  <span className="text-base font-bold text-white font-mono">{pipelineState?.step_12_chunk || 0} / {pipelineState?.step_12_total_chunks || 0}</span>
+                  <span className="text-base font-bold text-slate-900 font-mono">{pipelineState?.step_12_chunk || 0} / {pipelineState?.step_12_total_chunks || 0}</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Rows Anonymized</span>
-                  <span className="text-base font-bold text-emerald-400 font-mono">{(pipelineState?.step_12_rows_anonymized || 0).toLocaleString()}</span>
+                  <span className="text-base font-bold text-emerald-600 font-mono">{(pipelineState?.step_12_rows_anonymized || 0).toLocaleString()}</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Processing Status</span>
-                  <span className="text-base font-bold text-purple-400 font-mono">
+                  <span className="text-base font-bold text-purple-700 font-mono">
                     {activeStep < 12 ? 'PENDING' : (pipelineState?.step_12_status?.toUpperCase() || (activeStep > 12 ? 'COMPLETED' : 'RUNNING'))}
                   </span>
                 </div>
               </div>
 
               {/* Dynamic Persisted Chunk Execution Logs for Step 12 */}
-              <div className="bg-slate-950 p-4 rounded-lg border border-purple-500/30 space-y-2 font-mono text-xs text-slate-300">
-                <div className="flex items-center justify-between text-purple-300 font-bold border-b border-slate-800 pb-2">
+              <div className="bg-slate-50 p-4 rounded-lg border border-purple-200 space-y-2 font-mono text-xs text-slate-600">
+                <div className="flex items-center justify-between text-purple-700 font-bold border-b border-slate-200 pb-2">
                   <span className="flex items-center gap-2">
                     <Terminal size={14} />
                     STEP 12 CHUNK ANONYMIZATION TRACE LOGS (PERSISTED)
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 uppercase">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-700 uppercase">
                     STATUS: {pipelineState?.step_12_status?.toUpperCase() || (activeStep > 12 ? 'COMPLETED' : 'RUNNING')}
                   </span>
                 </div>
                 <div className="space-y-1.5 max-h-[500px] overflow-y-auto pt-1 text-[11px] leading-relaxed">
                   {step12Logs.length === 0 ? (
-                    <div className="space-y-1 text-purple-300">
-                      <p className="text-slate-400">[Step 12] Reading Chunk 1</p>
-                      <p className="text-purple-300">[Step 12] Applying Tokenization</p>
-                      <p className="text-purple-300">[Step 12] Applying Masking</p>
-                      <p className="text-purple-300">[Step 12] Applying Hashing</p>
-                      <p className="text-purple-300">[Step 12] Applying Differential Privacy</p>
-                      <p className="text-emerald-400 font-semibold">[Step 12] Chunk 1 anonymized successfully</p>
+                    <div className="space-y-1 text-purple-700">
+                      <p className="text-slate-500">[Step 12] Reading Chunk 1</p>
+                      <p className="text-purple-700">[Step 12] Applying Tokenization</p>
+                      <p className="text-purple-700">[Step 12] Applying Masking</p>
+                      <p className="text-purple-700">[Step 12] Applying Hashing</p>
+                      <p className="text-purple-700">[Step 12] Applying Differential Privacy</p>
+                      <p className="text-emerald-600 font-semibold">[Step 12] Chunk 1 anonymized successfully</p>
                     </div>
                   ) : (
                     step12Logs.map((l: any, i: number) => {
                       const msg = typeof l === 'string' ? l : l.message || '';
                       return (
-                        <p key={i} className={msg.includes('anonymized successfully') ? 'text-emerald-400 font-semibold' : 'text-purple-300'}>
+                        <p key={i} className={msg.includes('anonymized successfully') ? 'text-emerald-600 font-semibold' : 'text-purple-700'}>
                           {msg}
                         </p>
                       );
@@ -439,58 +441,58 @@ export default function Reports() {
         {/* TAB 13: STEP 13 DESTINATION LOADING */}
         {activeTab === '13' && (
           !hasStep13Run ? (
-            <div className="py-20 text-center space-y-3 bg-slate-950 border border-slate-800 rounded-xl">
-              <Server className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-mono font-bold text-slate-400">Step 13: Destination Loading Has Not Executed</h3>
+            <div className="py-20 text-center space-y-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <Server className="w-10 h-10 text-slate-500 mx-auto" />
+              <h3 className="text-sm font-mono font-bold text-slate-600">Step 13: Destination Loading Has Not Executed</h3>
               <p className="text-xs text-slate-500 font-mono">Run the pipeline to Step 13 to view dynamic destination loading metrics and real-time chunk logs.</p>
             </div>
           ) : (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Destination Database</span>
-                  <span className="text-base font-bold text-blue-300 font-mono">{pipelineState?.database_name ? `${pipelineState.database_name}_anonymized` : '—'}</span>
+                  <span className="text-base font-bold text-blue-700 font-mono">{pipelineState?.database_name ? `${pipelineState.database_name}_anonymized` : '—'}</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Chunks Loaded</span>
-                  <span className="text-base font-bold text-white font-mono">{pipelineState?.step_13_chunk || 0} / {pipelineState?.step_13_total_chunks || 0}</span>
+                  <span className="text-base font-bold text-slate-900 font-mono">{pipelineState?.step_13_chunk || 0} / {pipelineState?.step_13_total_chunks || 0}</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Rows Loaded</span>
-                  <span className="text-base font-bold text-emerald-400 font-mono">{(pipelineState?.step_13_rows_loaded || 0).toLocaleString()}</span>
+                  <span className="text-base font-bold text-emerald-600 font-mono">{(pipelineState?.step_13_rows_loaded || 0).toLocaleString()}</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Loading Status</span>
-                  <span className="text-base font-bold text-blue-400 font-mono">
+                  <span className="text-base font-bold text-blue-700 font-mono">
                     {activeStep < 13 ? 'PENDING' : activeStep === 13 ? 'RUNNING' : (pipelineState?.step_13_status?.toUpperCase() || (activeStep > 13 ? 'COMPLETED' : 'RUNNING'))}
                   </span>
                 </div>
               </div>
 
               {/* Dynamic Chunk Loading Execution Logs for Step 13 */}
-              <div className="bg-slate-950 p-4 rounded-lg border border-blue-500/30 space-y-2 font-mono text-xs text-slate-300">
-                <div className="flex items-center justify-between text-blue-300 font-bold border-b border-slate-800 pb-2">
+              <div className="bg-slate-50 p-4 rounded-lg border border-blue-200 space-y-2 font-mono text-xs text-slate-600">
+                <div className="flex items-center justify-between text-blue-700 font-bold border-b border-slate-200 pb-2">
                   <span className="flex items-center gap-2">
                     <Terminal size={14} />
                     STEP 13 CHUNK DESTINATION LOADING TRACE LOGS
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 uppercase">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 uppercase">
                     STATUS: {activeStep < 13 ? 'PENDING' : activeStep === 13 ? 'RUNNING' : (pipelineState?.step_13_status?.toUpperCase() || (activeStep > 13 ? 'COMPLETED' : 'RUNNING'))}
                   </span>
                 </div>
                 <div className="space-y-1.5 max-h-[500px] overflow-y-auto pt-1 text-[11px] leading-relaxed">
                   {step13Logs.length === 0 ? (
-                    <div className="space-y-1 text-blue-300">
-                      <p className="text-slate-400">[Step 13] Writing Chunk 1</p>
-                      <p className="text-blue-300">[Step 13] Executing COPY FROM STDIN...</p>
-                      <p className="text-emerald-400 font-semibold">[Step 13] Chunk inserted successfully</p>
-                      <p className="text-emerald-400 font-semibold">[Step 13] Transaction committed successfully</p>
+                    <div className="space-y-1 text-blue-700">
+                      <p className="text-slate-500">[Step 13] Writing Chunk 1</p>
+                      <p className="text-blue-700">[Step 13] Executing COPY FROM STDIN...</p>
+                      <p className="text-emerald-600 font-semibold">[Step 13] Chunk inserted successfully</p>
+                      <p className="text-emerald-600 font-semibold">[Step 13] Transaction committed successfully</p>
                     </div>
                   ) : (
                     step13Logs.map((l: any, i: number) => {
                       const msg = typeof l === 'string' ? l : l.message || '';
                       return (
-                        <p key={i} className={msg.includes('committed') || msg.includes('inserted') ? 'text-emerald-400 font-semibold' : 'text-blue-300'}>
+                        <p key={i} className={msg.includes('committed') || msg.includes('inserted') ? 'text-emerald-600 font-semibold' : 'text-blue-700'}>
                           {msg}
                         </p>
                       );
@@ -505,43 +507,43 @@ export default function Reports() {
         {/* TAB 14: STEP 14 VALIDATION ENGINE REPORT */}
         {activeTab === '14' && (
           !hasStep14Run ? (
-            <div className="py-20 text-center space-y-3 bg-slate-950 border border-slate-800 rounded-xl">
-              <Activity className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-mono font-bold text-slate-400">Step 14: Validation Engine Has Not Executed</h3>
+            <div className="py-20 text-center space-y-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <Activity className="w-10 h-10 text-slate-500 mx-auto" />
+              <h3 className="text-sm font-mono font-bold text-slate-600">Step 14: Validation Engine Has Not Executed</h3>
               <p className="text-xs text-slate-500 font-mono">Run the pipeline through Step 14 to view real-time diagnostic validation results.</p>
             </div>
           ) : (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Report Version</span>
-                  <span className="text-base font-bold text-emerald-400 font-mono">{pipelineState?.validation_report?.report_version || 'v1.0.0'} (Immutable)</span>
+                  <span className="text-base font-bold text-emerald-600 font-mono">{pipelineState?.validation_report?.report_version || 'v1.0.0'} (Immutable)</span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Overall Validation Status</span>
                   <span className={`text-base font-bold font-mono ${
-                    pipelineState?.validation_report?.overall_status === 'PASS' ? 'text-emerald-400' : 'text-amber-400'
+                    pipelineState?.validation_report?.overall_status === 'PASS' ? 'text-emerald-600' : 'text-amber-600'
                   }`}>
                     {pipelineState?.validation_report?.overall_status || 'PASS'}
                   </span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Derived Privacy Score</span>
-                  <span className="text-base font-bold text-emerald-400 font-mono">
+                  <span className="text-base font-bold text-emerald-600 font-mono">
                     {pipelineState?.privacy_score !== undefined && pipelineState?.privacy_score !== null ? `${pipelineState.privacy_score} / 100` : '—'}
                   </span>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <span className="text-[10px] text-slate-500 font-mono uppercase block">Derived Risk Score</span>
-                  <span className="text-base font-bold text-amber-400 font-mono">
+                  <span className="text-base font-bold text-amber-600 font-mono">
                     {pipelineState?.risk_score !== undefined && pipelineState?.risk_score !== null ? `${pipelineState.risk_score} / 100` : '—'}
                   </span>
                 </div>
               </div>
 
               {/* Registered Diagnostic Validators List */}
-              <div className="bg-slate-950 p-5 rounded-lg border border-slate-800 space-y-4">
-                <h3 className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 space-y-4">
+                <h3 className="text-xs font-mono text-emerald-600 font-bold uppercase tracking-wider flex items-center gap-2">
                   <Activity size={16} />
                   Registered Diagnostic Validators Checklist ({pipelineState?.validation_report?.validation_results?.length || 5}/5 Pluggable Modules)
                 </h3>
@@ -554,17 +556,17 @@ export default function Reports() {
                     { execution_order: 4, validator_id: 'thief_agent', category: 'SECURITY', status: 'PASS', messages: ['Zero quasi-identifier exploits detected.'] },
                     { execution_order: 5, validator_id: 'compliance', category: 'COMPLIANCE', status: 'PASS', messages: ['Statutory DPDP Act rules verified.'] }
                   ]).map((res: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-slate-900 border border-slate-800 rounded-lg space-y-2 font-mono">
+                    <div key={idx} className="p-4 bg-white border border-slate-200 rounded-lg space-y-2 font-mono">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">[{res.execution_order}] {res.name || res.validator_id} ({res.category})</span>
+                        <span className="text-xs font-bold text-slate-900">[{res.execution_order}] {res.name || res.validator_id} ({res.category})</span>
                         <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                          res.status === 'PASS' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                          res.status === 'PASS' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                         }`}>
                           {res.status}
                         </span>
                       </div>
                       {res.messages && res.messages.map((m: string, i: number) => (
-                        <p key={i} className="text-[11px] text-slate-300">{m}</p>
+                        <p key={i} className="text-[11px] text-slate-500">{m}</p>
                       ))}
                     </div>
                   ))}
@@ -577,36 +579,36 @@ export default function Reports() {
         {/* TAB COMPLIANCE: AUDIT & COMPLIANCE SUMMARY */}
         {activeTab === 'compliance' && (
           !hasStep14Run ? (
-            <div className="py-20 text-center space-y-3 bg-slate-950 border border-slate-800 rounded-xl font-mono">
-              <ShieldCheck className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-bold text-slate-400">Compliance & Audit Summary Pending</h3>
+            <div className="py-20 text-center space-y-3 bg-slate-50 border border-slate-200 rounded-xl font-mono">
+              <ShieldCheck className="w-10 h-10 text-slate-500 mx-auto" />
+              <h3 className="text-sm font-bold text-slate-600">Compliance & Audit Summary Pending</h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto">Run the 17-step pipeline through Step 14 (Validation Engine) to compute dynamic statutory compliance scores and unlock downloadable audit certificates.</p>
             </div>
           ) : (() => {
             const valStatus = pipelineState?.validation_report?.overall_status || (riskScore >= 70 ? 'FAIL' : riskScore > 20 ? 'WARNING' : 'PASS');
             const complianceText = valStatus === 'PASS' ? 'COMPLIANT (DPDP Act 2023)' : valStatus === 'WARNING' ? 'WARNING (RESIDUAL LINKAGE RISK)' : 'NON-COMPLIANT (RAW PII EXPOSURE DETECTED)';
-            const complianceColor = valStatus === 'PASS' ? 'text-emerald-400' : valStatus === 'WARNING' ? 'text-amber-400' : 'text-rose-400';
+            const complianceColor = valStatus === 'PASS' ? 'text-emerald-600' : valStatus === 'WARNING' ? 'text-amber-600' : 'text-red-600';
             
             return (
               <div className="space-y-6 font-mono">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase block">Compliance Status</span>
                     <span className={`text-base font-bold ${complianceColor}`}>{complianceText}</span>
                   </div>
-                  <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase block">Privacy Risk Score</span>
-                    <span className={`text-base font-bold ${riskScore >= 70 ? 'text-rose-400' : riskScore > 20 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    <span className={`text-base font-bold ${riskScore >= 70 ? 'text-red-600' : riskScore > 20 ? 'text-amber-600' : 'text-emerald-600'}`}>
                       {riskScore !== undefined && riskScore !== null ? `${riskScore}/100` : '—'}
                     </span>
                   </div>
-                  <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase block">Anonymized Records</span>
-                    <span className="text-base font-bold text-white">{recordsCount > 0 ? recordsCount.toLocaleString() : '—'}</span>
+                    <span className="text-base font-bold text-slate-900">{recordsCount > 0 ? recordsCount.toLocaleString() : '—'}</span>
                   </div>
-                  <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-500 uppercase block">Audit Verification</span>
-                    <span className={`text-base font-bold ${valStatus === 'PASS' ? 'text-emerald-400' : valStatus === 'WARNING' ? 'text-amber-400' : 'text-rose-400'}`}>
+                    <span className={`text-base font-bold ${valStatus === 'PASS' ? 'text-emerald-600' : valStatus === 'WARNING' ? 'text-amber-600' : 'text-red-600'}`}>
                       {valStatus === 'PASS' ? 'VERIFIED PASSED' : 'VERIFIED EXPOSURE'}
                     </span>
                   </div>
@@ -614,22 +616,22 @@ export default function Reports() {
 
                 {/* Dynamic Compliance Statutory Audit Findings */}
                 {pipelineState?.validation_report?.validation_results && (
-                  <div className="bg-slate-950 p-5 rounded-lg border border-slate-800 space-y-3">
-                    <h3 className="text-xs text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 space-y-3">
+                    <h3 className="text-xs text-emerald-600 font-bold uppercase tracking-wider flex items-center gap-2">
                       <ShieldCheck size={16} />
                       Live Statutory Compliance Diagnostic Summary
                     </h3>
                     <div className="space-y-2">
                       {pipelineState.validation_report.validation_results.map((res: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-slate-900 border border-slate-800 rounded text-xs flex justify-between items-start gap-4">
+                        <div key={idx} className="p-3 bg-white border border-slate-200 rounded text-xs flex justify-between items-start gap-4">
                           <div className="space-y-1">
-                            <span className="text-white font-bold block">[{res.category}] {res.name || res.validator_id}</span>
+                            <span className="text-slate-900 font-bold block">[{res.category}] {res.name || res.validator_id}</span>
                             {res.messages && res.messages.map((m: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-400">{m}</p>
+                              <p key={i} className="text-[11px] text-slate-500">{m}</p>
                             ))}
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                            res.status === 'PASS' ? 'bg-emerald-500/20 text-emerald-400' : res.status === 'WARNING' ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'
+                            res.status === 'PASS' ? 'bg-emerald-100 text-emerald-700' : res.status === 'WARNING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                           }`}>
                             {res.status}
                           </span>

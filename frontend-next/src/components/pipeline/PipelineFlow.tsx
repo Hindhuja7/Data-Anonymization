@@ -115,28 +115,28 @@ export default function PipelineFlow({
                 {/* Circle step badge */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all flex-shrink-0 ${
                   isActive 
-                    ? 'border-[#4F7CFF] bg-[#4F7CFF]/20 text-[#4F7CFF] shadow-[0_0_15px_rgba(79,124,255,0.4)] animate-pulse' 
+                    ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.4)] animate-pulse' 
                     : isCompleted 
-                      ? 'border-[#33D17A] bg-[#33D17A]/10 text-[#33D17A]' 
-                      : 'border-white/10 bg-[#0D1324] text-[#8C96B5]'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-600' 
+                      : 'border-slate-200 bg-white text-slate-500'
                 }`}>
                   {step.id}
                 </div>
 
                 {/* Step Card */}
-                <div className={`w-[210px] bg-[#0D1324] border rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all ${
+                <div className={`w-[210px] bg-white border rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all ${
                   isActive 
-                    ? 'border-[#4F7CFF] shadow-[0_0_20px_rgba(79,124,255,0.25)]' 
-                    : 'border-white/6 hover:border-white/15'
+                    ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.25)]' 
+                    : 'border-slate-200 hover:border-slate-300'
                 }`}>
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon size={14} className={isActive ? 'text-[#4F7CFF]' : isCompleted ? 'text-[#33D17A]' : 'text-slate-400'} />
-                    <span className={`text-[11px] font-semibold truncate ${isActive ? 'text-white font-bold' : 'text-[#8C96B5]'}`}>
+                    <Icon size={14} className={isActive ? 'text-blue-600' : isCompleted ? 'text-emerald-600' : 'text-slate-400'} />
+                    <span className={`text-[11px] font-semibold truncate ${isActive ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>
                       {meta.name}
                     </span>
                   </div>
                   {isCompleted && (
-                    <span className="w-4 h-4 rounded-full bg-[#33D17A]/15 text-[#33D17A] flex items-center justify-center text-[9px] font-bold flex-shrink-0">✓</span>
+                    <span className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[9px] font-bold flex-shrink-0">✓</span>
                   )}
                 </div>
 

@@ -199,9 +199,9 @@ export default function DashboardPage() {
 
       {/* NEW USER ONBOARDING BANNER */}
       {isNewUser ? (
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 via-white to-indigo-50 border border-blue-200 text-slate-900 space-y-4 shadow-xl">
+        <div className="p-6 rounded-2xl bg-sky-50 border border-sky-200 text-slate-900 space-y-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl border border-blue-200">
+            <div className="p-3 bg-sky-100 text-sky-600 rounded-xl border border-sky-200">
               <Rocket className="w-6 h-6" />
             </div>
             <div>
@@ -215,16 +215,16 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             <div 
               onClick={() => router.push('/database')}
-              className="bg-white p-4 rounded-xl border border-slate-200 hover:border-blue-400 cursor-pointer transition-all space-y-2"
+              className="bg-white p-4 rounded-xl border border-slate-200 hover:border-sky-400 cursor-pointer transition-all space-y-2 shadow-sm"
             >
-              <div className="text-xs font-mono font-bold text-blue-600">STEP 1</div>
+              <div className="text-xs font-mono font-bold text-sky-600">STEP 1</div>
               <h3 className="text-sm font-bold text-slate-900">Connect Source Database</h3>
               <p className="text-xs text-slate-500">Configure PostgreSQL credentials & target table.</p>
             </div>
 
             <div 
               onClick={() => router.push('/pipeline')}
-              className="bg-white p-4 rounded-xl border border-slate-200 hover:border-emerald-400 cursor-pointer transition-all space-y-2"
+              className="bg-white p-4 rounded-xl border border-slate-200 hover:border-emerald-400 cursor-pointer transition-all space-y-2 shadow-sm"
             >
               <div className="text-xs font-mono font-bold text-emerald-600">STEP 2</div>
               <h3 className="text-sm font-bold text-slate-900">Run 17-Step Pipeline</h3>
@@ -233,7 +233,7 @@ export default function DashboardPage() {
 
             <div 
               onClick={() => router.push('/audit')}
-              className="bg-white p-4 rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer transition-all space-y-2"
+              className="bg-white p-4 rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer transition-all space-y-2 shadow-sm"
             >
               <div className="text-xs font-mono font-bold text-purple-600">STEP 3</div>
               <h3 className="text-sm font-bold text-slate-900">Inspect Compliance & Audit Logs</h3>
@@ -526,7 +526,7 @@ export default function DashboardPage() {
 
       {/* HISTORICAL POLICY SNAPSHOT MODAL */}
       {selectedHistoryItem && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div>

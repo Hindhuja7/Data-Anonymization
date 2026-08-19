@@ -16,41 +16,41 @@ export default function PipelineFooter({ state }: PipelineFooterProps) {
   const elapsed = state?.elapsedSeconds ?? 0;
 
   return (
-    <footer className="flex items-center gap-8 px-6 py-3.5 border-t border-white/6 bg-[#060911]/60 backdrop-blur-xl flex-shrink-0">
-      <span className="text-[10px] font-bold text-[#8C96B5] uppercase tracking-wider mr-2">
+    <footer className="flex items-center gap-8 px-6 py-3.5 border-t border-slate-200 bg-white flex-shrink-0">
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">
         Pipeline Summary
       </span>
 
       <div className="flex items-center gap-2">
-        <CheckCircle2 size={14} className="text-[#33D17A]" />
-        <span className="text-xs text-[#8C96B5]">Completed:</span>
-        <strong className="text-xs text-white font-bold">
+        <CheckCircle2 size={14} className="text-emerald-600" />
+        <span className="text-xs text-slate-500">Completed:</span>
+        <strong className="text-xs text-slate-900 font-bold">
           {completed} / {total}
         </strong>
       </div>
 
-      <div className="w-px h-4 bg-white/10" />
+      <div className="w-px h-4 bg-slate-200" />
 
       <div className="flex items-center gap-2">
         {state?.status === 'running' ? (
-          <Loader2 size={14} className="text-[#4F7CFF] animate-spin" />
+          <Loader2 size={14} className="text-blue-600 animate-spin" />
         ) : (
-          <Circle size={14} className="text-[#4F7CFF]" />
+          <Circle size={14} className="text-blue-600" />
         )}
-        <span className="text-xs text-[#8C96B5]">In Progress:</span>
-        <strong className="text-xs text-[#4F7CFF] font-bold">
+        <span className="text-xs text-slate-500">In Progress:</span>
+        <strong className="text-xs text-blue-600 font-bold">
           {state?.status === 'running' || state?.status === 'completed'
             ? `Step ${currentStep} of ${total}`
             : '—'}
         </strong>
       </div>
 
-      <div className="w-px h-4 bg-white/10" />
+      <div className="w-px h-4 bg-slate-200" />
 
       <div className="flex items-center gap-2">
-        <Circle size={14} className="text-[#8C96B5]/50" />
-        <span className="text-xs text-[#8C96B5]">Pending:</span>
-        <strong className="text-xs text-white font-bold">
+        <Circle size={14} className="text-slate-400" />
+        <span className="text-xs text-slate-500">Pending:</span>
+        <strong className="text-xs text-slate-900 font-bold">
           {pending} Steps Remaining
         </strong>
       </div>
@@ -58,9 +58,9 @@ export default function PipelineFooter({ state }: PipelineFooterProps) {
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
-        <Clock size={14} className="text-[#8C96B5]" />
-        <span className="text-xs text-[#8C96B5]">Total Elapsed Time:</span>
-        <strong className="text-xs text-white font-bold font-mono">
+        <Clock size={14} className="text-slate-400" />
+        <span className="text-xs text-slate-500">Total Elapsed Time:</span>
+        <strong className="text-xs text-slate-900 font-bold font-mono">
           {formatElapsed(elapsed)}
         </strong>
       </div>

@@ -171,7 +171,7 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
           />
 
           {/* Modal Container */}
@@ -180,33 +180,33 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="relative w-full max-w-4xl bg-[#090D1A]/95 border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(79,124,255,0.15)] flex flex-col max-h-[85vh] overflow-hidden z-10 glow-blue"
+            className="relative w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-[0_0_50px_rgba(79,124,255,0.15)] flex flex-col max-h-[85vh] overflow-hidden z-10"
           >
             {/* Header */}
-            <div className="p-6 border-b border-white/6 flex justify-between items-center bg-white/2 flex-shrink-0">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
                   <ShieldCheck size={22} className="animate-pulse" />
                 </div>
                 <div>
                   <div className="flex items-center gap-3">
-                    <h2 className="text-lg font-extrabold text-white tracking-tight">Compliance & Policy Sign-off</h2>
+                    <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">Compliance & Policy Sign-off</h2>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border tracking-wider flex items-center gap-1 ${
                       liveRiskScore > 70
-                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                        ? 'bg-red-50 text-red-600 border-red-200'
                         : liveRiskScore > 30
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        ? 'bg-amber-50 text-amber-600 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                     }`}>
                       Live Privacy Risk: {liveRiskScore} / 100
                     </span>
                   </div>
-                  <p className="text-xs text-[#8C96B5]">Review detected PII columns and customize anonymization rules</p>
+                  <p className="text-xs text-slate-500">Review detected PII columns and customize anonymization rules</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/4 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors"
               >
                 <X size={16} />
               </button>
@@ -214,13 +214,13 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
 
             {/* Tab Controls */}
             {!isLoading && (
-              <div className="px-6 pt-4 flex gap-2 border-b border-white/6 bg-white/1 flex-shrink-0">
+              <div className="px-6 pt-4 flex gap-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
                 <button
                   onClick={() => setActiveTab('policy')}
                   className={`px-4 py-2 text-xs font-bold transition-all border-b-2 -mb-[2px] ${
                     activeTab === 'policy'
-                      ? 'border-[#4F7CFF] text-[#4F7CFF] font-extrabold'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-blue-500 text-blue-600 font-extrabold'
+                      : 'border-transparent text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   Anonymization Policies
@@ -229,8 +229,8 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                   onClick={() => setActiveTab('samples')}
                   className={`px-4 py-2 text-xs font-bold transition-all border-b-2 -mb-[2px] ${
                     activeTab === 'samples'
-                      ? 'border-[#4F7CFF] text-[#4F7CFF] font-extrabold'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-blue-500 text-blue-600 font-extrabold'
+                      : 'border-transparent text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   Privacy Safe Row Samples (Step 4)
@@ -239,10 +239,10 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
             )}
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 min-h-0 bg-[#050816]/40">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0 bg-slate-50">
               {isLoading ? (
-                <div className="flex h-48 w-full items-center justify-center text-slate-400 gap-2">
-                  <Loader2 className="animate-spin text-[#4F7CFF]" size={20} />
+                <div className="flex h-48 w-full items-center justify-center text-slate-500 gap-2">
+                  <Loader2 className="animate-spin text-blue-600" size={20} />
                   <span className="text-sm font-semibold">Loading active configuration and sample rows...</span>
                 </div>
               ) : activeTab === 'policy' ? (
@@ -252,23 +252,23 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                     No columns configured in the anonymization policy.
                   </div>
                 ) : (
-                  <div className="border border-white/6 rounded-xl overflow-hidden bg-[#0D1324]/40">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-white/4 text-[#8C96B5] border-b border-white/6 font-bold uppercase tracking-wider text-[10px]">
+                        <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-bold uppercase tracking-wider text-[10px]">
                           <th className="p-3.5 pl-4">Target Table</th>
                           <th className="p-3.5">Column Reference</th>
                           <th className="p-3.5">PII Category</th>
                           <th className="p-3.5 pr-4 text-right">Anonymization Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/4 text-slate-300">
+                      <tbody className="divide-y divide-slate-200 text-slate-600">
                         {columns.map((col, index) => (
-                          <tr key={index} className="hover:bg-white/2 transition-colors">
-                            <td className="p-3.5 pl-4 font-bold text-white">{col.table_name}</td>
-                            <td className="p-3.5 font-mono text-[#38bdf8]">{col.column_name}</td>
+                          <tr key={index} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-3.5 pl-4 font-bold text-slate-900">{col.table_name}</td>
+                            <td className="p-3.5 font-mono text-blue-600">{col.column_name}</td>
                             <td className="p-3.5">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#4F7CFF]/10 text-[#4F7CFF] border border-[#4F7CFF]/20 uppercase">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 uppercase">
                                 {col.pii_type}
                               </span>
                             </td>
@@ -276,7 +276,7 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                               <select
                                 value={col.anonymization_technique}
                                 onChange={(e) => handleTechniqueChange(index, e.target.value)}
-                                className="bg-[#050816] border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#4F7CFF] cursor-pointer hover:border-white/20 transition-all font-semibold font-mono"
+                                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer hover:border-slate-300 transition-all font-semibold font-mono"
                               >
                                 <option value="NO_CHANGE">NO_CHANGE</option>
                                 <option value="MASK_EMAIL">MASK_EMAIL</option>
@@ -301,14 +301,14 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                 ) : (
                   <div className="space-y-4">
                     {/* Controls Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0D1324]/60 border border-white/6 rounded-xl p-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                       <div className="flex items-center gap-3">
-                        <Database size={16} className="text-[#4F7CFF]" />
-                        <span className="text-xs text-[#8C96B5] font-semibold">Select Table Sample:</span>
+                        <Database size={16} className="text-blue-600" />
+                        <span className="text-xs text-slate-600 font-semibold">Select Table Sample:</span>
                         <select
                           value={selectedTable}
                           onChange={(e) => setSelectedTable(e.target.value)}
-                          className="bg-[#050816] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#4F7CFF] cursor-pointer font-bold transition-all hover:border-white/20"
+                          className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer font-bold transition-all hover:border-slate-300"
                         >
                           {Object.keys(samples).map((tbl) => (
                             <option key={tbl} value={tbl}>
@@ -323,8 +323,8 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                         onClick={() => setShowAnonymized(!showAnonymized)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
                           showAnonymized 
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
-                            : 'bg-white/4 border-white/10 text-slate-400 hover:text-white'
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm' 
+                            : 'bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         {showAnonymized ? (
@@ -347,18 +347,18 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
                         No rows found for table "{selectedTable}".
                       </div>
                     ) : (
-                      <div className="border border-white/6 rounded-xl overflow-x-auto bg-[#0D1324]/40 max-h-[45vh]">
+                      <div className="border border-slate-200 rounded-xl overflow-x-auto bg-white max-h-[45vh]">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
-                            <tr className="bg-white/4 text-[#8C96B5] border-b border-white/6 font-bold uppercase tracking-wider text-[10px]">
+                            <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-bold uppercase tracking-wider text-[10px]">
                               {sampleHeaders.map((h) => (
                                 <th key={h} className="p-3.5 whitespace-nowrap">{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-white/4 text-slate-300">
+                          <tbody className="divide-y divide-slate-200 text-slate-600">
                             {sampleRows.map((row, idx) => (
-                              <tr key={idx} className="hover:bg-white/2 transition-colors">
+                              <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                 {sampleHeaders.map((h) => (
                                   <td key={h} className="p-3.5 font-mono text-[11px] whitespace-nowrap">
                                     {row[h] === null ? (
@@ -384,11 +384,11 @@ export default function ApprovalModal({ isOpen, onClose }: ApprovalModalProps) {
             </div>
 
             {/* Actions */}
-            <div className="p-6 border-t border-white/6 bg-white/2 flex justify-end gap-3 flex-shrink-0">
+            <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 flex-shrink-0">
               <button
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-[#8C96B5] hover:text-white hover:bg-white/4 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>

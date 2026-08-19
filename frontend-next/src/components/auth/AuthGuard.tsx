@@ -30,7 +30,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   // Prevent flash of protected content before hydration/auth check
   if (!mounted) {
     return (
-      <div className="h-screen w-screen bg-slate-950 flex items-center justify-center">
+      <div className="h-screen w-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
       </div>
     );
@@ -39,21 +39,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   // Login page layout (no sidebar or topnav)
   if (pathname === '/login') {
     if (token) return null; // Redirecting to dashboard
-    return <div className="min-h-screen bg-slate-950">{children}</div>;
+    return <div className="min-h-screen bg-slate-50">{children}</div>;
   }
 
   // Redirecting unauthenticated user
   if (!token) {
-    return null;
+    return (
+      <div className="h-screen w-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
   }
 
   // Authenticated protected page layout
   return (
-    <div className="flex h-screen bg-slate-950">
+    <div className="flex h-screen bg-slate-50">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopNav />
-        <main className="flex-1 overflow-auto bg-slate-950 text-white">
+        <main className="flex-1 overflow-auto bg-slate-50 text-slate-900">
           {children}
         </main>
       </div>
