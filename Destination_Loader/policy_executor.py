@@ -785,6 +785,50 @@ class PolicyExecutor:
             self._update_pipeline_state(10, "Redis AOF Crash Recovery", "completed")
             print("[WARN] Continuing without crash recovery")
             return True
+    def _check_destination_checkpoint(self, table_name: str, chunk_size: int) -> Tuple[int, int]:
+        """
+        Check existing row count in Destination DB to resume cleanly with strict user isolation.
+        Returns (start_chunk_index, committed_row_count).
+        """
+        enable_checkpoint = os.getenv("ENABLE_CHECKPOINT_RESUME", "true").lower() == "true"
+        if not enable_checkpoint:
+            return 1, 0
+
+        try:
+            # 1. Enforce User Scoping Guard
+            current_user = None
+            if hasattr(self, "pipeline_state") and self.pipeline_state:
+                current_user = getattr(self.pipeline_state, "user_id", None) or self.pipeline_state.get("user_id")
+            
+            # Verify target table matches current user's active configuration
+            if current_user:
+                safe_user = "".join(c for c in str(current_user) if c.isalnum() or c in ("@", ".", "_", "-"))
+                user_cfg_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), f"database_config_{safe_user}.json")
+                if os.path.exists(user_cfg_path):
+                    try:
+                        with open(user_cfg_path, "r", encoding="utf-8") as f:
+                            cfg_data = json.load(f)
+                            active_tbl = cfg_data.get("target_table")
+                            if active_tbl and active_tbl != table_name:
+                                # Target table mismatch for this user — do not cross-pollinate!
+                                return 1, 0
+                    except Exception:
+                        pass
+
+            if not hasattr(self, "destination_connector") or not self.destination_connector or not self.destination_connector.engine:
+                return 1, 0
+
+            with self.destination_connector.engine.connect() as conn:
+                res = conn.execute(text(f'SELECT COUNT(*) FROM "{table_name}"'))
+                row_count = res.scalar() or 0
+
+            if row_count > 0:
+                start_chunk = (row_count // chunk_size) + 1
+                return start_chunk, row_count
+        except Exception:
+            pass
+
+        return 1, 0
 
     def step_11_chunk_processing(self) -> bool:
         """
@@ -862,8 +906,28 @@ class PolicyExecutor:
                     pk_cols = self.source_schema[table_name].get("primary_keys", [])
                 primary_key_col = pk_cols[0] if pk_cols else "id"
 
+                # Check for existing destination checkpoint to resume seamlessly
+                start_chunk, skipped_rows = self._check_destination_checkpoint(table_name, chunk_size)
+                if start_chunk > 1 and start_chunk <= total_chunks:
+                    msg = f"Checkpoint Detected: Skipping Chunks 1 to {start_chunk - 1} ({skipped_rows:,} records already committed in Sandbox ENV). Resuming from Chunk {start_chunk} of {total_chunks}."
+                    print(f"\n[CHECKPOINT RESUME] {msg}")
+                    if self.pipeline_state:
+                        self.pipeline_state.add_log(f"[Step 11] {msg}")
+                        try:
+                            from app.services.audit_service import audit_service
+                            audit_service.log_event(
+                                action="Pipeline Stream Resumed from Checkpoint",
+                                details=msg,
+                                category="pipeline",
+                                level="info",
+                                user_id=getattr(self.pipeline_state, "user_id", None) or "a@gmail.com",
+                                run_id=getattr(self.pipeline_state, "run_id", None)
+                            )
+                        except Exception:
+                            pass
+
                 # 4. Read table incrementally & package chunks
-                for chunk_idx in range(1, total_chunks + 1):
+                for chunk_idx in range(start_chunk, total_chunks + 1):
                     if not self._check_paused_or_cancelled():
                         print(f"[INFO] Step 11 paused or cancelled while reading {table_name} chunk {chunk_idx}/{total_chunks}.")
                         return False

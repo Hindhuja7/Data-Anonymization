@@ -21,43 +21,68 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    """LLM client with sequential model fallback (GitHub models only)."""
+    """LLM client with sequential model fallback (supports Groq, OpenAI, Gemini & GitHub models)."""
     
-    # Priority order for GitHub models (highest quality first)
+    OPENROUTER_MODELS = [
+        "google/gemma-4-26b-a4b-it:free",
+        "google/gemma-4-31b-it:free",
+        "inclusionai/ling-3.0-tiny:free",
+        "cohere/north-mini-code:free",
+    ]
+
+    GROQ_MODELS = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768",
+    ]
+
+    GEMINI_MODELS = [
+        "gemini-1.5-flash",
+        "gemini-2.0-flash",
+    ]
+
+    OLLAMA_MODELS = [
+        "llama3.2",
+        "mistral",
+    ]
+
     GITHUB_MODELS = [
-        "gpt-4o",           # Highest quality
-        "gpt-4o-mini",      # Faster, cheaper
-        "gpt-4-turbo",      # Fallback
+        "gpt-4o",
+        "gpt-4o-mini",
     ]
     
     # Shared cache of models that failed/hit limits during this run
     failed_models = set()
     
-    def __init__(self, provider: str = "github", model: Optional[str] = None):
+    def __init__(self, provider: Optional[str] = None, model: Optional[str] = None):
         """
         Initialize LLM client with fallback support.
         
         Args:
-            provider: Must be 'github' (only GitHub models supported)
-            model: Specific model to try first (must be in GITHUB_MODELS)
+            provider: 'openrouter', 'groq', 'gemini', 'ollama', 'openai', or 'github'
+            model: Specific model to try first
         """
-        if provider != "github":
-            raise ValueError("Only GitHub models are supported. Provider must be 'github'.")
+        env_prov = os.getenv("LLM_PROVIDER", "openrouter" if os.getenv("OPENROUTER_API_KEY") else "groq").lower()
+        self.primary_provider = (provider or env_prov).lower()
+        default_model = "llama-3.3-70b-versatile"
+        if self.primary_provider == "openrouter": default_model = "meta-llama/llama-3.3-70b-instruct:free"
+        elif self.primary_provider == "gemini": default_model = "gemini-1.5-flash"
+        elif self.primary_provider == "ollama": default_model = "llama3.2"
         
-        if model and model not in self.GITHUB_MODELS:
-            raise ValueError(f"Model '{model}' not available. Available models: {self.GITHUB_MODELS}")
-        
-        self.primary_provider = provider
-        self.primary_model = model
+        self.primary_model = model or os.getenv("LLM_MODEL", default_model)
         self.current_client = None
         self.current_model = None
         self.current_provider = None
     
     def _get_all_api_keys(self) -> List[str]:
-        """Collect all configured GitHub PAT keys from environment variables."""
+        """Collect all configured LLM & PAT keys from environment variables."""
         keys = []
-        # 1. Check explicit PAT environment variables
+        if self.primary_provider == "ollama":
+            return ["ollama"]
+
+        # Check explicit environment variables
         env_vars = [
+            "OPENROUTER_API_KEY", "GROQ_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY",
             "GITHUB_PRIMARY_PAT", "GITHUB_ROTATION_PAT", "GITHUB_API_KEY",
             "GITHUB_API_KEYS", "GITHUB_PAT", "GITHUB_TOKEN"
         ]
@@ -69,31 +94,98 @@ class LLMClient:
                     if k_str and k_str not in keys:
                         keys.append(k_str)
 
-        # 2. Check numbered keys GITHUB_API_KEY_1, GITHUB_PAT_1, etc.
-        for i in range(1, 10):
-            for prefix in ["GITHUB_API_KEY_", "GITHUB_PAT_", "GITHUB_ROTATION_PAT_"]:
-                k = os.getenv(f"{prefix}{i}")
-                if k and k.strip() and k.strip() not in keys:
-                    keys.append(k.strip())
+        return keys if keys else ["ollama"]
 
-        return keys
+    def _get_key_for_provider(self, provider: str, api_keys: List[str]) -> Optional[str]:
+        """Find matching key for specified provider from configured keys."""
+        p_low = provider.lower()
+        if p_low == "openrouter":
+            for k in api_keys:
+                if k.startswith("sk-or-v1-") or "openrouter" in k: return k
+            or_env = os.getenv("OPENROUTER_API_KEY")
+            if or_env: return or_env
+        elif p_low == "groq":
+            for k in api_keys:
+                if k.startswith("gsk_"): return k
+            gr_env = os.getenv("GROQ_API_KEY")
+            if gr_env: return gr_env
+        elif p_low == "gemini":
+            for k in api_keys:
+                if k.startswith("AIzaSy"): return k
+            gem_env = os.getenv("GEMINI_API_KEY")
+            if gem_env: return gem_env
+        elif p_low == "github":
+            for k in api_keys:
+                if k.startswith("github_pat_"): return k
+            gh_env = os.getenv("GITHUB_PRIMARY_PAT") or os.getenv("GITHUB_API_KEY")
+            if gh_env: return gh_env
+        elif p_low == "ollama":
+            return "ollama"
 
-    def _initialize_client_with_key(self, api_key: str) -> Any:
-        """Initialize OpenAI client with specified PAT key."""
+        # Fallback to first available key
+        return api_keys[0] if api_keys else None
+
+    def _initialize_client_for_provider(self, provider: str, api_key: str) -> Any:
+        """Initialize OpenAI client targeting the specified provider and API key."""
+        p_low = provider.lower()
+        base_url = None
+        if p_low == "openrouter" or api_key.startswith("sk-or-v1-"):
+            base_url = "https://openrouter.ai/api/v1"
+        elif p_low == "groq" or api_key.startswith("gsk_"):
+            base_url = "https://api.groq.com/openai/v1"
+        elif p_low == "gemini" or api_key.startswith("AIzaSy"):
+            base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+        elif p_low == "ollama" or api_key == "ollama":
+            base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+        else:
+            base_url = "https://models.inference.ai.azure.com"
+
+        headers = {}
+        if "openrouter.ai" in base_url:
+            headers = {
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "DataVault AI Platform"
+            }
+
         return OpenAI(
-            base_url="https://models.inference.ai.azure.com",
-            api_key=api_key,
+            base_url=base_url,
+            api_key=api_key if api_key != "ollama" else "ollama",
+            default_headers=headers if headers else None,
             max_retries=0
         )
     
     def get_models_to_try(self) -> List[tuple]:
-        """Get list of (provider, model) tuples to try in priority order."""
+        """Get list of (provider, model) tuples to try across ALL available providers in priority order."""
         models_to_try = []
+        
+        # 1. Start with explicit primary model if set
         if self.primary_model and self.primary_model not in self.failed_models:
             models_to_try.append((self.primary_provider, self.primary_model))
-        for model in self.GITHUB_MODELS:
-            if model != self.primary_model and model not in self.failed_models:
-                models_to_try.append(("github", model))
+        
+        # 2. Add OpenRouter backup models
+        if os.getenv("OPENROUTER_API_KEY") or self.primary_provider == "openrouter":
+            for model in self.OPENROUTER_MODELS:
+                if (self.primary_provider != "openrouter" or model != self.primary_model) and model not in self.failed_models:
+                    models_to_try.append(("openrouter", model))
+
+        # 3. Add Groq backup models
+        if os.getenv("GROQ_API_KEY") or self.primary_provider == "groq":
+            for model in self.GROQ_MODELS:
+                if (self.primary_provider != "groq" or model != self.primary_model) and model not in self.failed_models:
+                    models_to_try.append(("groq", model))
+
+        # 4. Add Gemini backup models
+        if os.getenv("GEMINI_API_KEY") or self.primary_provider == "gemini":
+            for model in self.GEMINI_MODELS:
+                if (self.primary_provider != "gemini" or model != self.primary_model) and model not in self.failed_models:
+                    models_to_try.append(("gemini", model))
+
+        # 5. Add GitHub backup models
+        if os.getenv("GITHUB_PRIMARY_PAT") or os.getenv("GITHUB_API_KEY") or self.primary_provider == "github":
+            for model in self.GITHUB_MODELS:
+                if (self.primary_provider != "github" or model != self.primary_model) and model not in self.failed_models:
+                    models_to_try.append(("github", model))
+
         return models_to_try
     
     def chat_completion(
@@ -103,49 +195,46 @@ class LLMClient:
         temperature: Optional[float] = None,
         response_format: Optional[Dict[str, Any]] = None
     ) -> str:
-        """Perform chat completion with multi-token PAT rotation and model fallback."""
+        """Perform chat completion with multi-provider backup fallback."""
         api_keys = self._get_all_api_keys()
-        if not api_keys:
-            logger.warning("No GITHUB_API_KEY found. Activating Local Heuristics Fallback...")
-        
         models_to_try = self.get_models_to_try()
         last_error = None
         
         for provider, model in models_to_try:
-            for idx, api_key in enumerate(api_keys, 1):
-                token_preview = f"{api_key[:10]}...{api_key[-4:]}" if len(api_key) > 14 else "token"
-                try:
-                    logger.info(f"Trying {provider} model: {model} using PAT Key #{idx} ({token_preview})")
-                    client = self._initialize_client_with_key(api_key)
+            target_key = self._get_key_for_provider(provider, api_keys)
+            if not target_key:
+                continue
+
+            token_preview = f"{target_key[:10]}...{target_key[-4:]}" if len(target_key) > 14 else "key"
+            try:
+                logger.info(f"Trying backup {provider} model: {model} using key ({token_preview})")
+                client = self._initialize_client_for_provider(provider, target_key)
+                
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": max_tokens
+                }
+                if temperature is not None:
+                    kwargs["temperature"] = temperature
+                if response_format is not None:
+                    kwargs["response_format"] = response_format
                     
-                    kwargs = {
-                        "model": model,
-                        "messages": messages,
-                        "max_tokens": max_tokens
-                    }
-                    if temperature is not None:
-                        kwargs["temperature"] = temperature
-                    if response_format is not None:
-                        kwargs["response_format"] = response_format
-                        
-                    response = client.chat.completions.create(**kwargs)
-                    response_text = response.choices[0].message.content
-                    
-                    self.current_client = client
-                    self.current_model = model
-                    self.current_provider = provider
-                    
-                    logger.info(f"Successfully used {provider} model {model} with PAT Key #{idx}!")
-                    return response_text
-                    
-                except Exception as e:
-                    last_error = e
-                    logger.warning(f"Failed with model {model} using PAT Key #{idx} ({token_preview}): {e}")
-                    # Continue to next PAT key for this model
-                    continue
-            
-            # If all PAT keys failed for this model, mark model failed
-            self.failed_models.add(model)
+                response = client.chat.completions.create(**kwargs)
+                response_text = response.choices[0].message.content
+                
+                self.current_client = client
+                self.current_model = model
+                self.current_provider = provider
+                
+                logger.info(f"Successfully used {provider} model {model}!")
+                return response_text
+                
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Failed with {provider} model {model}: {e}")
+                self.failed_models.add(model)
+                continue
         
         # ALL MODELS AND ALL PAT KEYS FAILED - Trigger Local Heuristics Fallback
         logger.warning("All remote LLM models and PAT keys failed/rate-limited. Activating Local Heuristics Fallback...")
