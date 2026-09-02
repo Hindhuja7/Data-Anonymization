@@ -1,0 +1,31 @@
+{
+  "tables": {
+    "contacts": {
+      "rows_completed": 740000,
+      "last_id": null,
+      "timestamp": "2026-07-29T01:42:05.364698"
+    },
+    "leads": {
+      "rows_completed": 300000,
+      "last_id": null,
+      "timestamp": "2026-07-29T01:42:06.379120"
+    },
+    "opportunities": {
+      "rows_completed": 250000,
+      "last_id": null,
+      "timestamp": "2026-07-29T01:45:17.408864"
+    },
+    "contracts": {
+      "rows_completed": 150000,
+      "last_id": null,
+      "timestamp": "2026-07-29T01:55:39.281427"
+    },
+    "support_tickets": {
+      "rows_completed": 10000,
+      "last_id": null,
+      "timestamp": "2026-07-29T01:58:19.539473"
+    }
+  },
+  "start_time": "2026-07-29T01:35:52.387527",
+  "last_update": "2026-07-29T01:58:19.539473"
+}

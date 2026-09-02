@@ -1,0 +1,207 @@
+{
+  "policy_metadata": {
+    "policy_version": "1.0",
+    "generated_at": "2026-09-02T21:54:42.678601",
+    "status": "APPROVED",
+    "approved_by": "Dashboard Admin",
+    "approved_at": "2026-09-02 21:54:50.335931",
+    "comments": [],
+    "enterprise_type": "BANKING",
+    "compliance_law": "RBI & DPDP Act 2023",
+    "target_table": "accounts",
+    "run_id": "RUN_DEFAULT"
+  },
+  "database_info": {
+    "database_name": null,
+    "database_type": null
+  },
+  "enterprise_info": {
+    "enterprise_type": null,
+    "enterprise_confidence": null,
+    "compliance_law": null
+  },
+  "column_policies": [
+    {
+      "table_name": "accounts",
+      "column_name": "account_id",
+      "is_pii": true,
+      "pii_type": "ACCOUNT_ID",
+      "confidence": 0.95,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as ACCOUNT_ID. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": true,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "customer_id",
+      "is_pii": true,
+      "pii_type": "CUSTOMER_ID",
+      "confidence": 0.96,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as CUSTOMER_ID. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": true,
+      "foreign_key_details": {
+        "referred_table": "customers",
+        "referred_columns": [
+          "customer_id"
+        ]
+      },
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "account_number",
+      "is_pii": true,
+      "pii_type": "ACCOUNT_NUMBER",
+      "confidence": 0.84,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as ACCOUNT_NUMBER. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "BIGINT",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "account_type",
+      "is_pii": true,
+      "pii_type": "ACCOUNT_TYPE",
+      "confidence": 0.85,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as ACCOUNT_TYPE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(50)",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "balance",
+      "is_pii": true,
+      "pii_type": "BALANCE",
+      "confidence": 0.88,
+      "anonymization_technique": "DIFFERENTIAL_PRIVACY",
+      "reason": "Column identified as BALANCE. Add statistical noise to preserve statistical properties. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "NUMERIC(15, 2)",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "status",
+      "is_pii": true,
+      "pii_type": "STATUS",
+      "confidence": 0.86,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as STATUS. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(20)",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "opening_date",
+      "is_pii": true,
+      "pii_type": "OPENING_DATE",
+      "confidence": 0.91,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as OPENING_DATE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "DATE",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "ifsc_code",
+      "is_pii": true,
+      "pii_type": "IFSC_CODE",
+      "confidence": 0.91,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as IFSC_CODE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(15)",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "branch_name",
+      "is_pii": true,
+      "pii_type": "BRANCH_NAME",
+      "confidence": 0.92,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as BRANCH_NAME. Replace with realistic fake values for usability while protecting privacy. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(200)",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "accounts",
+      "column_name": "gstin",
+      "is_pii": true,
+      "pii_type": "GSTIN",
+      "confidence": 0.95,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as GSTIN. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(20)",
+      "admin_override": false,
+      "admin_comments": ""
+    }
+  ],
+  "policy_summary": {
+    "total_columns": 10,
+    "pii_columns": 10,
+    "non_pii_columns": 0,
+    "pii_percentage": 100.0,
+    "technique_distribution": {
+      "HASHING": 4,
+      "MASKING": 4,
+      "DIFFERENTIAL_PRIVACY": 1,
+      "TOKENIZATION": 1
+    },
+    "pii_type_distribution": {
+      "ACCOUNT_ID": 1,
+      "CUSTOMER_ID": 1,
+      "ACCOUNT_NUMBER": 1,
+      "ACCOUNT_TYPE": 1,
+      "BALANCE": 1,
+      "STATUS": 1,
+      "OPENING_DATE": 1,
+      "IFSC_CODE": 1,
+      "BRANCH_NAME": 1,
+      "GSTIN": 1
+    },
+    "table_distribution": {
+      "accounts": 10
+    }
+  }
+}

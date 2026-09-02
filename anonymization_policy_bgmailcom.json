@@ -1,0 +1,300 @@
+{
+  "policy_metadata": {
+    "policy_version": "1.0",
+    "generated_at": "2026-09-02T17:34:44.006537",
+    "status": "APPROVED",
+    "approved_by": "Dashboard Admin",
+    "approved_at": "2026-09-02 17:35:28.619035",
+    "comments": [],
+    "enterprise_type": "GENERAL",
+    "compliance_law": "DPDP Act 2023",
+    "target_table": "support_tickets",
+    "run_id": "RUN_DEFAULT",
+    "risk_score": 23.0,
+    "privacy_score": 77.0,
+    "risk_level": "MEDIUM"
+  },
+  "database_info": {
+    "database_name": null,
+    "database_type": null
+  },
+  "enterprise_info": {
+    "enterprise_type": null,
+    "enterprise_confidence": null,
+    "compliance_law": null
+  },
+  "column_policies": [
+    {
+      "table_name": "support_tickets",
+      "column_name": "id",
+      "is_pii": true,
+      "pii_type": "ID",
+      "confidence": 0.95,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as ID. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": true,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "customer_id",
+      "is_pii": true,
+      "pii_type": "CUSTOMER_ID",
+      "confidence": 0.96,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as CUSTOMER_ID. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": true,
+      "foreign_key_details": {
+        "referred_table": "customers",
+        "referred_columns": [
+          "id"
+        ]
+      },
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "contact_id",
+      "is_pii": true,
+      "pii_type": "CONTACT_ID",
+      "confidence": 0.96,
+      "anonymization_technique": "TOKENIZATION",
+      "reason": "Column identified as CONTACT_ID. Replace with realistic fake values for usability while protecting privacy. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": true,
+      "foreign_key_details": {
+        "referred_table": "contacts",
+        "referred_columns": [
+          "id"
+        ]
+      },
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "contract_id",
+      "is_pii": true,
+      "pii_type": "CONTRACT_ID",
+      "confidence": 0.97,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as CONTRACT_ID. One-way hash for irreversible identification protection. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": true,
+      "foreign_key_details": {
+        "referred_table": "contracts",
+        "referred_columns": [
+          "id"
+        ]
+      },
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "ticket_number",
+      "is_pii": true,
+      "pii_type": "TICKET_NUMBER",
+      "confidence": 0.85,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as TICKET_NUMBER. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(50)",
+      "admin_override": false,
+      "admin_comments": "",
+      "is_modified": true,
+      "modified_by": "Dashboard Admin",
+      "modified_at": "2026-09-02T12:04:59.897Z"
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "subject",
+      "is_pii": true,
+      "pii_type": "SUBJECT",
+      "confidence": 0.84,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as SUBJECT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "VARCHAR(255)",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "description",
+      "is_pii": true,
+      "pii_type": "DESCRIPTION",
+      "confidence": 0.86,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as DESCRIPTION. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "TEXT",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "priority",
+      "is_pii": true,
+      "pii_type": "PRIORITY",
+      "confidence": 0.83,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as PRIORITY. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "ENUM",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "status",
+      "is_pii": true,
+      "pii_type": "STATUS",
+      "confidence": 0.82,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as STATUS. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "ENUM",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "category",
+      "is_pii": true,
+      "pii_type": "CATEGORY",
+      "confidence": 0.82,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as CATEGORY. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "ENUM",
+      "admin_override": false,
+      "admin_comments": "",
+      "is_modified": true,
+      "modified_by": "Dashboard Admin",
+      "modified_at": "2026-09-02T12:05:07.145Z"
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "assigned_to",
+      "is_pii": true,
+      "pii_type": "ASSIGNED_TO",
+      "confidence": 0.87,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as ASSIGNED_TO. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": true,
+      "foreign_key_details": {
+        "referred_table": "sales_representatives",
+        "referred_columns": [
+          "id"
+        ]
+      },
+      "data_type": "INTEGER",
+      "admin_override": false,
+      "admin_comments": "",
+      "is_modified": true,
+      "modified_by": "Dashboard Admin",
+      "modified_at": "2026-09-02T12:05:25.223Z"
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "created_at",
+      "is_pii": true,
+      "pii_type": "CREATED_AT",
+      "confidence": 0.85,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as CREATED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "TIMESTAMP",
+      "admin_override": false,
+      "admin_comments": ""
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "updated_at",
+      "is_pii": true,
+      "pii_type": "UPDATED_AT",
+      "confidence": 0.93,
+      "anonymization_technique": "HASHING",
+      "reason": "Column identified as UPDATED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "TIMESTAMP",
+      "admin_override": false,
+      "admin_comments": "",
+      "is_modified": true,
+      "modified_by": "Dashboard Admin",
+      "modified_at": "2026-09-02T12:05:18.080Z"
+    },
+    {
+      "table_name": "support_tickets",
+      "column_name": "resolved_at",
+      "is_pii": true,
+      "pii_type": "RESOLVED_AT",
+      "confidence": 0.85,
+      "anonymization_technique": "MASKING",
+      "reason": "Column identified as RESOLVED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+      "is_primary_key": false,
+      "is_foreign_key": false,
+      "foreign_key_details": null,
+      "data_type": "TIMESTAMP",
+      "admin_override": false,
+      "admin_comments": ""
+    }
+  ],
+  "policy_summary": {
+    "total_columns": 14,
+    "pii_columns": 14,
+    "non_pii_columns": 0,
+    "pii_percentage": 100.0,
+    "technique_distribution": {
+      "HASHING": 3,
+      "TOKENIZATION": 1,
+      "MASKING": 10
+    },
+    "pii_type_distribution": {
+      "ID": 1,
+      "CUSTOMER_ID": 1,
+      "CONTACT_ID": 1,
+      "CONTRACT_ID": 1,
+      "TICKET_NUMBER": 1,
+      "SUBJECT": 1,
+      "DESCRIPTION": 1,
+      "PRIORITY": 1,
+      "STATUS": 1,
+      "CATEGORY": 1,
+      "ASSIGNED_TO": 1,
+      "CREATED_AT": 1,
+      "UPDATED_AT": 1,
+      "RESOLVED_AT": 1
+    },
+    "table_distribution": {
+      "support_tickets": 14
+    }
+  }
+}

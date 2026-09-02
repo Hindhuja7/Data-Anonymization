@@ -1,0 +1,47 @@
+* [33m5be545d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Ultra-fast parallel PII & Enterprise detection, dynamic per-table risk scoring, live simulation record sync, and audit report optimizations
+* [33m42f47db[m feat: Ultra-fast parallel PII detection, dynamic risk scoring, live simulation record sync, and audit report optimizations
+[31m|[m * [33m0533232[m[33m ([m[1;32mrecovery-0533232[m[33m)[m feat: Synchronize dynamic table scores, real-time backend logs, sub-second PII & Enterprise speedup, and per-table record counts
+[31m|[m[31m/[m  
+[31m|[m *   [33m4af8854[m[33m ([m[1;35mrefs/stash[m[33m)[m WIP on main: 8865f53 feat: Add per-table audit log streams, dynamic date and elapsed time formatting, and multi-tenant persistence
+[31m|[m [33m|[m[34m\[m  
+[31m|[m [33m|[m * [33m7c44c11[m index on main: 8865f53 feat: Add per-table audit log streams, dynamic date and elapsed time formatting, and multi-tenant persistence
+[31m|[m [33m|[m[33m/[m  
+* [33m|[m [33m21a3a99[m Merge remote changes with local ocean-blue design updates
+[35m|[m[33m\[m[33m|[m 
+* [33m|[m [33m7084842[m Apply ocean-blue design system to frontend and add Step 11 debug logging
+[36m|[m * [33m8865f53[m feat: Add per-table audit log streams, dynamic date and elapsed time formatting, and multi-tenant persistence
+[36m|[m[36m/[m  
+* [33m7a6c7c5[m Convert frontend to light theme - update all pages and components
+* [33m8a5cffe[m feat: Add user-isolated real-time Dashboard, Audit Logs stream, Approval Queue logging and Sandbox sync
+* [33m90d2699[m added sandbox env
+* [33mde0a751[m added live simulator
+* [33m485f133[m Add PII detection module with transaction anonymization and monitoring reports
+* [33m51b5109[m Add comprehensive CRM dataset generation suite with monitoring and recovery mechanisms
+* [33m06dbacb[m Add CRM dataset generation scripts: benchmark, readonly check, and schema creation
+* [33m0adff51[m feat: complete 17-step pipeline logging, frozen timer, and dynamic risk scoring engine
+*   [33m9fb4f32[m merge: merge restore-9bbd20 into main
+[1;31m|[m[1;32m\[m  
+[1;31m|[m * [33m6d5778c[m[33m ([m[1;31morigin/restore-9bbd20[m[33m, [m[1;32mrestore-9bbd20[m[33m)[m feat: complete Phase 4 dynamic reports, step logs, detection confidence matrix, and destination loader fixes
+* [1;32m|[m [33me7edc3f[m Remove node_modules from git tracking and add frontend .gitignore
+* [1;32m|[m [33m05c9433[m Add Phase 2 frontend implementation with dashboard pages
+* [1;32m|[m [33m26e0232[m Update anonymization policy configuration
+* [1;32m|[m [33m62e51a8[m Merge remote changes and resolve conflicts
+[1;32m|[m[1;32m/[m  
+* [33m9bbd20c[m Restore clean, numberless directory layout to match original 17-step pipeline architecture
+* [33m2ae6473[m Update pipeline runner, Docker configurations, and README to support sequential layout
+* [33m358f5a3[m Migrate Layer 12: Approval Workflow to sequential folder numbering (12_Approval_Workflow)
+* [33m0f9dfc9[m Migrate Layer 11: Admin Dashboard to sequential folder numbering (11_Admin_Dashboard)
+* [33m9355550[m Migrate Layer 10: Audit Report to sequential folder numbering (10_Audit_Report)
+* [33m292d992[m Migrate Layer 9: Validation Engine to sequential folder numbering (09_Validation_Engine)
+* [33mde8cd07[m Migrate Layer 8: Destination Loader to sequential folder numbering (08_Destination_Loader)
+* [33m2175c71[m Migrate Layer 7: Polling Worker to sequential folder numbering (07_Polling_Worker)
+* [33m75494a7[m Migrate Layer 6: Redis AOF Safety to sequential folder numbering (06_Redis_AOF_Safety)
+* [33m06e4de5[m Migrate Layer 5: Redis Hash Vault to sequential folder numbering (05_Redis_Hash_Vault)
+* [33m51b54b5[m Migrate Layer 4: Change Detection to sequential folder numbering (04_Change_Detection)
+* [33ma0944f5[m Migrate Layer 3: PII Detection to sequential folder numbering (03_PII_Detection)
+* [33md6bc1b6[m Migrate Layer 2: Enterprise Classification to sequential folder numbering (02_Enterprise_Classification)
+* [33mfcff9a7[m Migrate Layer 1: Connection & Extraction to sequential folder numbering (01_Connection_Extraction)
+* [33m3eeaa09[m Update directory tree diagram in README.md to list layer files and test suites
+* [33m98d9ca4[m Add compliance report generator verification suite (Step 16)
+* [33m2557a71[m Add chunked validation and Thief Agent verification suite (Step 14)
+* [33m59c1d96[m Add pre-execution policy risk audit verification suite (Step 7)

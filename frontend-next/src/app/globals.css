@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+:root {
+  /* Ocean Blue Color System */
+  --ocean-blue: #0284C7;
+  --primary-blue: #2563EB;
+  --deep-ocean-blue: #075985;
+  --light-blue: #EFF6FF;
+  --blue-section-bg: #E0F2FE;
+  --blue-border: #BFDBFE;
+
+  /* Backgrounds */
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #F8FAFC;
+  --bg-card: #FFFFFF;
+
+  /* Text Colors */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-label: #334155;
+
+  /* Semantic Colors */
+  --color-success: #16A34A;
+  --color-success-light: #DCFCE7;
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+  --color-error: #DC2626;
+  --color-error-light: #FEE2E2;
+  --color-purple: #7C3AED;
+  --color-pending: #94A3B8;
+
+  /* Borders */
+  --border-color: #E2E8F0;
+  --border-light: #F1F5F9;
+  --border-medium: #CBD5E1;
+
+  /* Button Colors */
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Light theme card styles */
+.light-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.light-card-hover {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.light-card-hover:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-color: var(--color-primary);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.1);
+}
+
+/* Pulsing blue border animation */
+@keyframes pulse-blue-border {
+  0% {
+    border-color: rgba(79, 124, 255, 0.3);
+    box-shadow: 0 0 15px rgba(79, 124, 255, 0.15);
+  }
+  100% {
+    border-color: rgba(79, 124, 255, 0.65);
+    box-shadow: 0 0 25px rgba(79, 124, 255, 0.35);
+  }
+}
+
+.pulse-border {
+  animation: pulse-blue-border 2s infinite alternate;
+}
+
+/* Blueprint animations & vignette overlays */
+.blueprint-glow {
+  background: radial-gradient(circle at center, rgba(79, 124, 255, 0.18) 0%, transparent 65%);
+}
+
+.vignette-overlay {
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.05);
+}
+
+/* Floating particles animation */
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0); opacity: 0.1; }
+  50% { opacity: 0.7; }
+  100% { transform: translateY(-40px) translateX(20px); opacity: 0; }
+}
+
+.animate-particle {
+  animation: float-particle 4s infinite linear;
+}
+
+/* Connector data flow animation */
+@keyframes connector-flow {
+  0% {
+    top: -20%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 120%;
+    opacity: 0;
+  }
+}
+
+.animate-connector-flow {
+  animation: connector-flow 2.5s infinite linear;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Status color utilities */
+.status-success {
+  color: var(--color-success);
+  background-color: var(--color-success-light);
+}
+
+.status-warning {
+  color: var(--color-warning);
+  background-color: var(--color-warning-light);
+}
+
+.status-error {
+  color: var(--color-error);
+  background-color: var(--color-error-light);
+}
+
+.status-pending {
+  color: var(--color-pending);
+  background-color: #F1F5F9;
+}
+
+/* Ocean Blue Section Header */
+.ocean-blue-header {
+  background-color: var(--ocean-blue);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+
+/* Light Blue Section Background */
+.light-blue-section {
+  background-color: var(--light-blue);
+  border: 1px solid var(--blue-border);
+  border-radius: 12px;
+}
+
+/* Ocean Blue Button */
+.ocean-blue-button {
+  background-color: var(--ocean-blue);
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.ocean-blue-button:hover {
+  background-color: var(--deep-ocean-blue);
+}
+
+/* Input styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  placeholder-color: var(--text-muted);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}

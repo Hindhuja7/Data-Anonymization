@@ -1,0 +1,13 @@
+{
+  "tables": {
+    "users": {
+      "name": {
+        "technique": "masking"
+      },
+      "email": {
+        "technique": "masking"
+      }
+    }
+  },
+  "overall_risk_score": 4
+}

@@ -1,0 +1,40 @@
+{
+  "generation_info": {
+    "start_time": "2026-07-29T01:59:20.987600",
+    "end_time": "2026-07-29T01:59:21.544350",
+    "total_execution_time_seconds": 0.5567500591278076,
+    "total_execution_time_formatted": "0s"
+  },
+  "batch_metrics": {
+    "total_batches": 5,
+    "total_rows_inserted": 5000,
+    "average_batch_time_seconds": 0.1,
+    "average_rows_per_second": 8980.690559481736,
+    "peak_throughput_rows_per_second": 10000.0
+  },
+  "error_handling": {
+    "deadlock_count": 1,
+    "readonly_event_count": 1,
+    "total_readonly_wait_time_seconds": 5.0,
+    "total_readonly_wait_time_formatted": "5s",
+    "average_readonly_wait_time_seconds": 5.0
+  },
+  "resilience": {
+    "resume_count": 1
+  },
+  "table_breakdown": {
+    "test_table": {
+      "batches": 5,
+      "rows": 5000,
+      "total_time": 0.5,
+      "deadlocks": 1,
+      "readonly_events": 0
+    }
+  },
+  "readonly_events": [
+    {
+      "timestamp": "2026-07-29T01:59:21.544350",
+      "wait_time": 5.0
+    }
+  ]
+}

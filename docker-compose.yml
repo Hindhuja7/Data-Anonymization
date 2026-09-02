@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Python Anonymizer Pipeline Service
+  anonymizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data_anonymizer_pipeline
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    restart: on-failure
+
+  # Redis Vault Mapping Service (with AOF Persistence for Crash Safety)
+  redis:
+    image: redis:7-alpine
+    container_name: anonymizer_redis_vault
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
