@@ -53,3 +53,7 @@ __pycache__/
 database_config_*.json
 .env
 .env.*
+
+database_config*.json
+.env
+.env.*

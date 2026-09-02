@@ -34,8 +34,8 @@ class RegexLeakScanner(BaseValidator):
                 if not table_name:
                     continue
 
-                # Query sample from destination database
-                query = f'SELECT * FROM "{table_name}" LIMIT 500'
+                dialect = context.destination_connector.engine.name.lower()
+                query = f'SELECT * FROM `{table_name}` LIMIT 500' if 'mysql' in dialect else f'SELECT * FROM "{table_name}" LIMIT 500'
                 df = pd.read_sql(query, context.destination_connector.engine)
                 total_samples_scanned += len(df)
 

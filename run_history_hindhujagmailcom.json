@@ -1,11 +1,516 @@
 [
   {
-    "run_id": "RUN-48BEDFFE",
-    "version": "v10 (Current Active)",
+    "run_id": "RUN-9C05CD04",
+    "version": "v12 (Current Active)",
     "is_current": true,
+    "timestamp": "2026-09-02T23:07:06.505011",
+    "table_name": "support_tickets",
+    "status": "active_current",
+    "records_anonymized": 22746,
+    "privacy_score": 67.0,
+    "risk_score": 33.0,
+    "risk_level": "MEDIUM",
+    "techniques_summary": "HASHING (3), TOKENIZATION (1), MASKING (10)",
+    "total_columns": 14,
+    "policy_snapshot": {
+      "version": "v12",
+      "created_at": "2026-09-02T23:07:06.505011",
+      "column_policies": [
+        {
+          "table_name": "support_tickets",
+          "column_name": "id",
+          "is_pii": true,
+          "pii_type": "ID",
+          "confidence": 0.96,
+          "anonymization_technique": "HASHING",
+          "reason": "Column identified as ID. One-way hash for irreversible identification protection. High confidence detection.",
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "customer_id",
+          "is_pii": true,
+          "pii_type": "CUSTOMER_ID",
+          "confidence": 0.98,
+          "anonymization_technique": "HASHING",
+          "reason": "Column identified as CUSTOMER_ID. One-way hash for irreversible identification protection. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "foreign_key_details": {
+            "referred_table": "customers",
+            "referred_columns": [
+              "id"
+            ]
+          },
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "contact_id",
+          "is_pii": true,
+          "pii_type": "CONTACT_ID",
+          "confidence": 0.96,
+          "anonymization_technique": "TOKENIZATION",
+          "reason": "Column identified as CONTACT_ID. Replace with realistic fake values for usability while protecting privacy. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "foreign_key_details": {
+            "referred_table": "contacts",
+            "referred_columns": [
+              "id"
+            ]
+          },
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "contract_id",
+          "is_pii": true,
+          "pii_type": "CONTRACT_ID",
+          "confidence": 0.96,
+          "anonymization_technique": "HASHING",
+          "reason": "Column identified as CONTRACT_ID. One-way hash for irreversible identification protection. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "foreign_key_details": {
+            "referred_table": "contracts",
+            "referred_columns": [
+              "id"
+            ]
+          },
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "ticket_number",
+          "is_pii": true,
+          "pii_type": "TICKET_NUMBER",
+          "confidence": 0.82,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as TICKET_NUMBER. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "VARCHAR(50)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "subject",
+          "is_pii": true,
+          "pii_type": "SUBJECT",
+          "confidence": 0.85,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as SUBJECT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "VARCHAR(255)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "description",
+          "is_pii": true,
+          "pii_type": "DESCRIPTION",
+          "confidence": 0.87,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as DESCRIPTION. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TEXT",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "priority",
+          "is_pii": true,
+          "pii_type": "PRIORITY",
+          "confidence": 0.84,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as PRIORITY. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "ENUM",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "status",
+          "is_pii": true,
+          "pii_type": "STATUS",
+          "confidence": 0.83,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as STATUS. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "ENUM",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "category",
+          "is_pii": true,
+          "pii_type": "CATEGORY",
+          "confidence": 0.85,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as CATEGORY. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "ENUM",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "assigned_to",
+          "is_pii": true,
+          "pii_type": "ASSIGNED_TO",
+          "confidence": 0.83,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as ASSIGNED_TO. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "foreign_key_details": {
+            "referred_table": "sales_representatives",
+            "referred_columns": [
+              "id"
+            ]
+          },
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "created_at",
+          "is_pii": true,
+          "pii_type": "CREATED_AT",
+          "confidence": 0.82,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as CREATED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TIMESTAMP",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "updated_at",
+          "is_pii": true,
+          "pii_type": "UPDATED_AT",
+          "confidence": 0.9,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as UPDATED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TIMESTAMP",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "support_tickets",
+          "column_name": "resolved_at",
+          "is_pii": true,
+          "pii_type": "RESOLVED_AT",
+          "confidence": 0.83,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as RESOLVED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TIMESTAMP",
+          "admin_override": false,
+          "admin_comments": ""
+        }
+      ]
+    }
+  },
+  {
+    "run_id": "RUN-732CD0A8",
+    "version": "v11 (Previous History)",
+    "is_current": false,
+    "timestamp": "2026-09-02T22:57:57.243791",
+    "table_name": "invoices",
+    "status": "history_previous_version",
+    "records_anonymized": 10000,
+    "privacy_score": 68.5,
+    "risk_score": 31.5,
+    "risk_level": "MEDIUM",
+    "techniques_summary": "HASHING (3), MASKING (9), DIFFERENTIAL_PRIVACY (3)",
+    "total_columns": 15,
+    "policy_snapshot": {
+      "version": "v11",
+      "created_at": "2026-09-02T22:57:57.243791",
+      "column_policies": [
+        {
+          "table_name": "invoices",
+          "column_name": "id",
+          "is_pii": true,
+          "pii_type": "ID",
+          "confidence": 0.98,
+          "anonymization_technique": "HASHING",
+          "reason": "Column identified as ID. One-way hash for irreversible identification protection. High confidence detection.",
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "customer_id",
+          "is_pii": true,
+          "pii_type": "CUSTOMER_ID",
+          "confidence": 0.96,
+          "anonymization_technique": "HASHING",
+          "reason": "Column identified as CUSTOMER_ID. One-way hash for irreversible identification protection. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "foreign_key_details": {
+            "referred_table": "customers",
+            "referred_columns": [
+              "id"
+            ]
+          },
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "contract_id",
+          "is_pii": true,
+          "pii_type": "CONTRACT_ID",
+          "confidence": 0.98,
+          "anonymization_technique": "HASHING",
+          "reason": "Column identified as CONTRACT_ID. One-way hash for irreversible identification protection. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "foreign_key_details": {
+            "referred_table": "contracts",
+            "referred_columns": [
+              "id"
+            ]
+          },
+          "data_type": "INTEGER",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "invoice_number",
+          "is_pii": true,
+          "pii_type": "INVOICE_NUMBER",
+          "confidence": 0.87,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as INVOICE_NUMBER. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "VARCHAR(50)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "invoice_date",
+          "is_pii": true,
+          "pii_type": "INVOICE_DATE",
+          "confidence": 0.88,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as INVOICE_DATE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "DATE",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "due_date",
+          "is_pii": true,
+          "pii_type": "DUE_DATE",
+          "confidence": 0.91,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as DUE_DATE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "DATE",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "amount",
+          "is_pii": true,
+          "pii_type": "AMOUNT",
+          "confidence": 0.9,
+          "anonymization_technique": "DIFFERENTIAL_PRIVACY",
+          "reason": "Column identified as AMOUNT. Add statistical noise to preserve statistical properties. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "DECIMAL(20, 2)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "tax_amount",
+          "is_pii": true,
+          "pii_type": "TAX_AMOUNT",
+          "confidence": 0.91,
+          "anonymization_technique": "DIFFERENTIAL_PRIVACY",
+          "reason": "Column identified as TAX_AMOUNT. Add statistical noise to preserve statistical properties. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "DECIMAL(20, 2)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "total_amount",
+          "is_pii": true,
+          "pii_type": "TOTAL_AMOUNT",
+          "confidence": 0.9,
+          "anonymization_technique": "DIFFERENTIAL_PRIVACY",
+          "reason": "Column identified as TOTAL_AMOUNT. Add statistical noise to preserve statistical properties. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "DECIMAL(20, 2)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "status",
+          "is_pii": true,
+          "pii_type": "STATUS",
+          "confidence": 0.84,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as STATUS. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "ENUM",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "payment_method",
+          "is_pii": true,
+          "pii_type": "PAYMENT_METHOD",
+          "confidence": 0.84,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as PAYMENT_METHOD. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "VARCHAR(100)",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "payment_date",
+          "is_pii": true,
+          "pii_type": "PAYMENT_DATE",
+          "confidence": 0.88,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as PAYMENT_DATE. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "DATE",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "notes",
+          "is_pii": true,
+          "pii_type": "NOTES",
+          "confidence": 0.83,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as NOTES. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TEXT",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "created_at",
+          "is_pii": true,
+          "pii_type": "CREATED_AT",
+          "confidence": 0.85,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as CREATED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TIMESTAMP",
+          "admin_override": false,
+          "admin_comments": ""
+        },
+        {
+          "table_name": "invoices",
+          "column_name": "updated_at",
+          "is_pii": true,
+          "pii_type": "UPDATED_AT",
+          "confidence": 0.88,
+          "anonymization_technique": "MASKING",
+          "reason": "Column identified as UPDATED_AT. Mask sensitive characters to preserve format while obscuring data. High confidence detection.",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "foreign_key_details": null,
+          "data_type": "TIMESTAMP",
+          "admin_override": false,
+          "admin_comments": ""
+        }
+      ]
+    }
+  },
+  {
+    "run_id": "RUN-48BEDFFE",
+    "version": "v10 (Previous History)",
+    "is_current": false,
     "timestamp": "2026-09-02T21:21:41.873995",
     "table_name": "companies",
-    "status": "active_current",
+    "status": "history_previous_version",
     "records_anonymized": 100001,
     "privacy_score": 63.5,
     "risk_score": 36.5,
@@ -227,11 +732,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-9BFD2EC3",
@@ -406,11 +907,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-79995C3D",
@@ -595,11 +1092,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-D9E9E135",
@@ -869,11 +1362,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-4C68D515",
@@ -1123,11 +1612,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-648BE924",
@@ -1352,11 +1837,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-E85AB0F2",
@@ -1586,11 +2067,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-6FCCA611",
@@ -1795,11 +2272,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-61DD4DA5",
@@ -2072,11 +2545,7 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   },
   {
     "run_id": "RUN-7560E97C",
@@ -2349,10 +2818,6 @@
           "admin_comments": ""
         }
       ]
-    },
-    "records_processed": 100001,
-    "total_records": 100001,
-    "rows": 100001,
-    "records": 100001
+    }
   }
 ]

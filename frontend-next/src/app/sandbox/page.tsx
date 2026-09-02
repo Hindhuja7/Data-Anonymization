@@ -22,7 +22,7 @@ export default function SandboxPage() {
     setErrorMsg(null);
     setSelectedTable(table);
     try {
-      const userId = (typeof window !== 'undefined' && localStorage.getItem('datavault_user_id')) || 'b@gmail.com';
+      const userId = (typeof window !== 'undefined' && (localStorage.getItem('datavault_user_id') || localStorage.getItem('user_email'))) || 'b@gmail.com';
       const endpoint = `/api/pipeline/destination-records?table=${encodeURIComponent(table)}&limit=30&user_id=${encodeURIComponent(userId)}`;
       let res = await fetch(`http://127.0.0.1:8000${endpoint}`);
       if (!res.ok) {
@@ -68,14 +68,14 @@ export default function SandboxPage() {
   useEffect(() => {
     const initSandbox = async () => {
       try {
-        const activeUid = getActiveUser()?.email || 'b@gmail.com';
-        let res = await fetch(`/api/pipeline/status?user_id=${encodeURIComponent(activeUid)}`);
+        const activeUid = (typeof window !== 'undefined' && (localStorage.getItem('datavault_user_id') || localStorage.getItem('user_email'))) || 'b@gmail.com';
+        let res = await fetch(`http://127.0.0.1:8000/api/pipeline/status?user_id=${encodeURIComponent(activeUid)}`);
         if (!res.ok) {
-          res = await fetch(`http://127.0.0.1:8000/api/pipeline/status?user_id=${encodeURIComponent(activeUid)}`);
+          res = await fetch(`/api/pipeline/status?user_id=${encodeURIComponent(activeUid)}`);
         }
         if (res.ok) {
           const data = await res.json();
-          const target = data.state?.target_table || 'accounts';
+          const target = data.state?.target_table || 'invoices';
           const destDb = data.state?.dest_database_name || 'neondb_anonymized';
           setConfiguredTargetTable(target);
           setDestinationDbName(destDb);
@@ -86,17 +86,18 @@ export default function SandboxPage() {
       } catch (e) {
         console.error('Initial sandbox target table fetch error:', e);
       }
-      setSelectedTable('accounts');
-      fetchSandboxRecords('accounts', false);
     };
     initSandbox();
 
     const interval = setInterval(() => {
-      fetchSandboxRecords(selectedTable, true);
+      setSelectedTable((currentTbl) => {
+        if (currentTbl) fetchSandboxRecords(currentTbl, true);
+        return currentTbl;
+      });
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [selectedTable]);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onMessage((msg: any) => {
@@ -247,9 +248,9 @@ export default function SandboxPage() {
           <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6 shadow-xl">
             {/* Controls Header: Targeted Table Badge & Search */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 text-xs font-mono font-bold rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-2">
-                  <Table className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-3">
+                <span className="px-3.5 py-2 text-xs font-mono font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center gap-2 shadow-sm">
+                  <Table className="w-4 h-4 text-emerald-600" />
                   TARGETED TABLE: {configuredTargetTable.toUpperCase()}
                 </span>
               </div>

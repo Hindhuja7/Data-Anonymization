@@ -60,8 +60,9 @@ class DatabaseConnector:
 
         self.database_type = str(raw_db_type).lower()
         
-        if self.database_type == "mysql" and (not database_name or str(database_name).lower() in ["neondb", "postgres", "none", ""]):
-            database_name = "defaultdb"
+        if self.database_type == "mysql":
+            if not database_name or "neondb" in str(database_name).lower() or str(database_name).lower() in ["postgres", "none", ""]:
+                database_name = "defaultdb_anonymized" if "anonymized" in str(database_name).lower() else "defaultdb"
 
         self.port = port
         self.username = username

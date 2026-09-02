@@ -32,7 +32,8 @@ class ThiefAgent(BaseValidator):
                 if not table_name:
                     continue
 
-                query = f'SELECT * FROM "{table_name}" LIMIT 200'
+                dialect = context.destination_connector.engine.name.lower()
+                query = f'SELECT * FROM `{table_name}` LIMIT 200' if 'mysql' in dialect else f'SELECT * FROM "{table_name}" LIMIT 200'
                 df = pd.read_sql(query, context.destination_connector.engine)
                 reidentification_attempts += 1
 

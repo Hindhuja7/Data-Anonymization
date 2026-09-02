@@ -35,13 +35,17 @@ class RowCountValidator(BaseValidator):
                 # Query source count
                 src_count = 0
                 with context.source_connector.engine.connect() as conn:
-                    res = conn.execute(text(f'SELECT COUNT(*) FROM "{table_name}"'))
+                    dialect = context.source_connector.engine.name.lower()
+                    sql_str = f'SELECT COUNT(*) FROM `{table_name}`' if 'mysql' in dialect else f'SELECT COUNT(*) FROM "{table_name}"'
+                    res = conn.execute(text(sql_str))
                     src_count = res.scalar() or 0
 
                 # Query destination count
                 dest_count = 0
                 with context.destination_connector.engine.connect() as conn:
-                    res = conn.execute(text(f'SELECT COUNT(*) FROM "{table_name}"'))
+                    dialect = context.destination_connector.engine.name.lower()
+                    sql_str = f'SELECT COUNT(*) FROM `{table_name}`' if 'mysql' in dialect else f'SELECT COUNT(*) FROM "{table_name}"'
+                    res = conn.execute(text(sql_str))
                     dest_count = res.scalar() or 0
 
                 rows_checked += src_count

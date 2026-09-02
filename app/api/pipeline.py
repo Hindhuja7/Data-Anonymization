@@ -149,6 +149,7 @@ async def logout_pipeline():
 async def get_pipeline_status(user_id: Optional[str] = None):
     """Get current pipeline status"""
     try:
+        from app.pipeline.state import pipeline_state
         if user_id:
             pipeline_state.set("user_id", user_id)
         result = pipeline_service.get_pipeline_status()
@@ -780,8 +781,8 @@ async def get_destination_records(table: Optional[str] = None, limit: int = 25, 
                 "message": "No database connected yet. Please configure your source database credentials at /database to view destination records."
             }
 
-        # Resolve targeted table from parameter, pipeline state, config, or default
-        target_table = table or pipeline_state.get("target_table") or db_cfg.get("target_table") or "employees"
+        # Resolve targeted table from parameter, config, pipeline state, or default
+        target_table = table or db_cfg.get("target_table") or pipeline_state.get("target_table") or "support_tickets"
 
         # 3. Step 12 & 13 Guard: Must have executed Step 12 (Anonymization) & Step 13 (Destination Loading)
         s12 = str(pipeline_state.get("step_12_status") or "").lower()
@@ -847,12 +848,9 @@ async def get_destination_records(table: Optional[str] = None, limit: int = 25, 
                 conn = pymysql.connect(host=host, port=port, user=user, password=password, database=src_db, ssl=ssl_dict, connect_timeout=5)
                 cursor = conn.cursor()
                 try:
-                    cursor.execute(f"SELECT * FROM `anon_{target_table}` ORDER BY 1 DESC LIMIT %s;", (limit,))
-                except Exception:
-                    try:
-                        cursor.execute(f"SELECT * FROM `{target_table}` ORDER BY 1 DESC LIMIT %s;", (limit,))
-                    except Exception:
-                        cursor.execute(f"SELECT * FROM `opportunities` ORDER BY 1 DESC LIMIT %s;", (limit,))
+                    cursor.execute(f"SELECT * FROM `{target_table}` ORDER BY 1 DESC LIMIT %s;", (limit,))
+                except Exception as tbl_err:
+                    logger.warning(f"MySQL target_table query note for '{target_table}': {tbl_err}")
                 
                 col_names = [desc[0] for desc in cursor.description]
                 rows = cursor.fetchall()

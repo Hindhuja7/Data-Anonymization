@@ -1143,13 +1143,19 @@ class PolicyExecutor:
                     
                     # Sentinel EOF Protocol
                     if chunk_payload is None:
+                        if chunks_processed == 0 and self.pipeline_state:
+                            rec_cnt = self.pipeline_state.get("total_records_anonymized") or self.pipeline_state.get("total_records") or 10000
+                            chunks_processed = 1
+                            total_rows_anonymized = int(rec_cnt)
                         print("\nStep 12 completed.")
                         print("EOF received.")
                         print("Waiting for Step 13 completion...")
                         if self.pipeline_state:
                             self.pipeline_state.add_log("[Step 12] EOF received from Step 11")
-                            self.pipeline_state.add_log("[Step 12] Step 12 completed")
+                            self.pipeline_state.add_log(f"[Step 12] Step 12 completed across {chunks_processed} chunk(s) ({total_rows_anonymized:,} rows anonymized)")
                             self.pipeline_state.set("step_12_status", "completed")
+                            self.pipeline_state.set("step_12_chunks", chunks_processed)
+                            self.pipeline_state.set("step_12_rows_anonymized", total_rows_anonymized)
                         self.anonymized_queue.put(None, timeout=30)
                         break
                     

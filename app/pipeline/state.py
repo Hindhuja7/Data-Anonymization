@@ -370,7 +370,8 @@ class PipelineState:
                         cfg_d = json.load(f)
                     db_type = cfg_d.get("database_type") or cfg_d.get("type") or "mysql"
                     db_n = cfg_d.get("database_name") or cfg_d.get("database") or ("neondb" if db_type == "postgresql" else "defaultdb")
-                    dest_n = "neondb_anonymized"
+                    if not state_copy.get("target_table") and cfg_d.get("target_table"):
+                        state_copy["target_table"] = cfg_d.get("target_table")
                     state_copy["dest_database_name"] = "neondb_anonymized"
                     state_copy["database_name"] = db_n
                     state_copy["database_type"] = db_type
