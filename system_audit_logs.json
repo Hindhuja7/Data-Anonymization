@@ -1,8 +1,8 @@
 [
   {
-    "id": "log_init_accounts_1_1788326551",
-    "timestamp": "2026-09-02T10:52:32.056793Z",
-    "created_at": "09/02/2026, 10:52:32 AM",
+    "id": "log_init_accounts_1_1788327239",
+    "timestamp": "2026-09-02T11:04:00.622188Z",
+    "created_at": "09/02/2026, 11:04:00 AM",
     "elapsed_time_ms": 800,
     "elapsed_time_str": "+800ms",
     "total_elapsed_str": "0.8s",
@@ -15,12 +15,12 @@
     "action": "[STEP 1] Database Connection Authenticated & Validated",
     "details": "Successfully connected to source database 'neondb'. Schema extracted for target table 'accounts' (5,000 records, 21 columns). SSL TLS v1.3 encryption active.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "6ab099c4029cecbfd56d091b5acc9cc9af9a4a04b471ae2a07cad6c3b81558cc"
+    "audit_hash": "bc0612bbb9ea62d1bffc59d2c7f32a6196d2b812a00811d6fdd7773f2d0c2829"
   },
   {
-    "id": "log_init_accounts_2_1788326551",
-    "timestamp": "2026-09-02T10:52:32.856793Z",
-    "created_at": "09/02/2026, 10:52:32 AM",
+    "id": "log_init_accounts_2_1788327239",
+    "timestamp": "2026-09-02T11:04:01.422188Z",
+    "created_at": "09/02/2026, 11:04:01 AM",
     "elapsed_time_ms": 1600,
     "elapsed_time_str": "+1.60s",
     "total_elapsed_str": "1.6s",
@@ -33,12 +33,12 @@
     "action": "[STEP 2] Source Schema Profiled & Metadata Extracted",
     "details": "Profiled target table 'accounts'. Verified column data types, primary keys, foreign keys, and indexes.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "493ac65cc165f14f9eb396d0b7812cfcc3dd124b065343c7573e120192b1ed90"
+    "audit_hash": "4fa4f6b3bf3e7158984c660edd6e619776058cd270827caa9a10be6bf332a06c"
   },
   {
-    "id": "log_init_accounts_3_1788326551",
-    "timestamp": "2026-09-02T10:52:33.656793Z",
-    "created_at": "09/02/2026, 10:52:33 AM",
+    "id": "log_init_accounts_3_1788327239",
+    "timestamp": "2026-09-02T11:04:02.222188Z",
+    "created_at": "09/02/2026, 11:04:02 AM",
     "elapsed_time_ms": 2400,
     "elapsed_time_str": "+2.40s",
     "total_elapsed_str": "2.4s",
@@ -51,12 +51,12 @@
     "action": "[STEP 3] Enterprise PII Classification Scan Completed",
     "details": "Scanned target table 'accounts'. Detected sensitive PII attributes (Aadhaar, PAN, UAN, Email, Phone, Salary, DOB) using hybrid AI Regex rules.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "57d3644df5d5e56354dbefc01cf49a05e420809556ec01cfae5723ab2ece7e73"
+    "audit_hash": "58f2e29d54d9cc1beff4ddf401c31036661dfc1167db400d99461d6319558d60"
   },
   {
-    "id": "log_init_accounts_4_1788326551",
-    "timestamp": "2026-09-02T10:52:34.456793Z",
-    "created_at": "09/02/2026, 10:52:34 AM",
+    "id": "log_init_accounts_4_1788327239",
+    "timestamp": "2026-09-02T11:04:03.022188Z",
+    "created_at": "09/02/2026, 11:04:03 AM",
     "elapsed_time_ms": 3200,
     "elapsed_time_str": "+3.20s",
     "total_elapsed_str": "3.2s",
@@ -69,12 +69,12 @@
     "action": "[STEP 4] Cryptographic Session Salt & Key Exchange",
     "details": "Generated 256-bit SHA-256 session salt and user-scoped HMAC authentication keys for session RUN-7A90E38A.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "3260bcd98b1f6106850f6bfde5637c0cabecb86e0e28c84af09955329347140e"
+    "audit_hash": "25ec5a0f53be23ba3fc2cc240f35241301a9ed33c8f0a6ac50ac9a78282a96b4"
   },
   {
-    "id": "log_init_accounts_5_1788326551",
-    "timestamp": "2026-09-02T10:52:35.256793Z",
-    "created_at": "09/02/2026, 10:52:35 AM",
+    "id": "log_init_accounts_5_1788327239",
+    "timestamp": "2026-09-02T11:04:03.822188Z",
+    "created_at": "09/02/2026, 11:04:03 AM",
     "elapsed_time_ms": 4000,
     "elapsed_time_str": "+4.00s",
     "total_elapsed_str": "4.0s",
@@ -87,12 +87,12 @@
     "action": "[STEP 5] Token Vault Synchronized",
     "details": "Mapped PII token pairs to Redis Vault namespace 'vault:lokinenihindhuja@gmail.com:accounts'. Persistent AOF replication active for deterministic re-identification lookup.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "cd208ec0c53189fb1a230a3280272484623d7d1eb996552e4b5c27e96e7596b3"
+    "audit_hash": "b9f6885a86cd2130204d929c31bb9fadd9c12c74539579f05710f0e8fd6b4235"
   },
   {
-    "id": "log_init_accounts_6_1788326551",
-    "timestamp": "2026-09-02T10:52:36.056793Z",
-    "created_at": "09/02/2026, 10:52:36 AM",
+    "id": "log_init_accounts_6_1788327239",
+    "timestamp": "2026-09-02T11:04:04.622188Z",
+    "created_at": "09/02/2026, 11:04:04 AM",
     "elapsed_time_ms": 4800,
     "elapsed_time_str": "+4.80s",
     "total_elapsed_str": "4.8s",
@@ -105,12 +105,12 @@
     "action": "[STEP 6] DPDP Act 2023 Policy Rules Generated",
     "details": "Generated compliance policy rules for 'accounts': Configured MASKING for emails/names, TOKENIZATION for IDs, HASHING for passwords, and LAPLACE DIFFERENTIAL PRIVACY for salaries.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "f82c78c86ebd8f8bd6cd3912c76149ca6fa7852e2237de7d8b906567fbd8449e"
+    "audit_hash": "6a3215dbcdbd65b6d0f13129cd72f016fbb6ccc0dadde6180f9b6f99c49e1f5b"
   },
   {
-    "id": "log_init_accounts_7_1788326551",
-    "timestamp": "2026-09-02T10:52:36.856793Z",
-    "created_at": "09/02/2026, 10:52:36 AM",
+    "id": "log_init_accounts_7_1788327239",
+    "timestamp": "2026-09-02T11:04:05.422188Z",
+    "created_at": "09/02/2026, 11:04:05 AM",
     "elapsed_time_ms": 5600,
     "elapsed_time_str": "+5.60s",
     "total_elapsed_str": "5.6s",
@@ -123,12 +123,12 @@
     "action": "[STEP 7] Human-in-the-Loop Policy Review & Approval",
     "details": "Admin reviewed and authorized policy execution for target table 'accounts'. Approved Rules Breakdown: [email \u2192 MASKING, phone \u2192 MASKING, ssn \u2192 HASHING, salary \u2192 LAPLACE_DP, card_number \u2192 TOKENIZATION]. Locked audit baseline.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "1a7f4adea5145b71f0829c07caadf4220b5d3309990b446ee4892fcfad796f6a"
+    "audit_hash": "828455c20e0ae0ba83841c832b023aae31e267aec45cb248b32f43122ba57080"
   },
   {
-    "id": "log_init_accounts_8_1788326551",
-    "timestamp": "2026-09-02T10:52:37.656793Z",
-    "created_at": "09/02/2026, 10:52:37 AM",
+    "id": "log_init_accounts_8_1788327239",
+    "timestamp": "2026-09-02T11:04:06.222188Z",
+    "created_at": "09/02/2026, 11:04:06 AM",
     "elapsed_time_ms": 6400,
     "elapsed_time_str": "+6.40s",
     "total_elapsed_str": "6.4s",
@@ -141,12 +141,12 @@
     "action": "[STEP 8] Pre-Execution Manifest & Hash Signature Locked",
     "details": "Generated SHA-256 pre-execution hash manifest for PII attributes in target table 'accounts'. Baseline cryptographic signature locked.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "4918438205a629f313ea4c25bbdc9120306f9578e3f9f3e418fa6db32534d340"
+    "audit_hash": "ed48d3927ab260c694e677c1915ca32adca20b029dcc01683cf76e97db028a5d"
   },
   {
-    "id": "log_init_accounts_9_1788326551",
-    "timestamp": "2026-09-02T10:52:38.456793Z",
-    "created_at": "09/02/2026, 10:52:38 AM",
+    "id": "log_init_accounts_9_1788327239",
+    "timestamp": "2026-09-02T11:04:07.022188Z",
+    "created_at": "09/02/2026, 11:04:07 AM",
     "elapsed_time_ms": 7200,
     "elapsed_time_str": "+7.20s",
     "total_elapsed_str": "7.2s",
@@ -159,12 +159,12 @@
     "action": "[STEP 9] Destination Sandbox Target Database Verified",
     "details": "Connected to Sandbox destination database 'neondb_anonymized'. Verified schema structure for target table 'accounts' (21 destination columns ready).",
     "ip_address": "127.0.0.1",
-    "audit_hash": "17da96eb27ccf695320956bd8f94803d3f21ced629f54500ddbcbd0e461a193b"
+    "audit_hash": "e690265ae0ba67e3d7cf05658ee0200600e0e664f78f057d86f9a96b4b594dca"
   },
   {
-    "id": "log_init_accounts_10_1788326551",
-    "timestamp": "2026-09-02T10:52:39.256793Z",
-    "created_at": "09/02/2026, 10:52:39 AM",
+    "id": "log_init_accounts_10_1788327239",
+    "timestamp": "2026-09-02T11:04:07.822188Z",
+    "created_at": "09/02/2026, 11:04:07 AM",
     "elapsed_time_ms": 8000,
     "elapsed_time_str": "+8.00s",
     "total_elapsed_str": "8.0s",
@@ -177,12 +177,12 @@
     "action": "[STEP 10] Laplace Differential Privacy Noise Calibrated",
     "details": "Configured Laplace noise parameters (epsilon=0.5, delta=1e-5) for numerical and date attributes in 'accounts' to prevent privacy leakage.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "63c2d6f96d26661c25ad324285f597a87f16c5f323c94d02bacff20c7aa46a06"
+    "audit_hash": "53573f1906aee9dfcaffcdac1ac2e4b5bd607f4c14f87731f5b27a4b6e065a68"
   },
   {
-    "id": "log_init_accounts_11_1788326551",
-    "timestamp": "2026-09-02T10:52:40.056793Z",
-    "created_at": "09/02/2026, 10:52:40 AM",
+    "id": "log_init_accounts_11_1788327239",
+    "timestamp": "2026-09-02T11:04:08.622188Z",
+    "created_at": "09/02/2026, 11:04:08 AM",
     "elapsed_time_ms": 8800,
     "elapsed_time_str": "+8.80s",
     "total_elapsed_str": "8.8s",
@@ -195,12 +195,12 @@
     "action": "[STEP 11] Stateful Stream Chunking & Checkpoint Sync",
     "details": "Stateful Checkpoint Status: Active (Max ID: 100,001). Skipped 5,000 previously committed records in target table 'accounts'. Stream anonymization ready for new incoming records.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "32f679918052f2cbd0245b02ddffed093e661e23353fd6e207fafc727edc7089"
+    "audit_hash": "0c1871a2d0695a5e6e5540e07398a4b8b15c8efc0cd851e54d198c13861a74c7"
   },
   {
-    "id": "log_init_accounts_12_1788326551",
-    "timestamp": "2026-09-02T10:52:40.856793Z",
-    "created_at": "09/02/2026, 10:52:40 AM",
+    "id": "log_init_accounts_12_1788327239",
+    "timestamp": "2026-09-02T11:04:09.422188Z",
+    "created_at": "09/02/2026, 11:04:09 AM",
     "elapsed_time_ms": 9600,
     "elapsed_time_str": "+9.60s",
     "total_elapsed_str": "9.6s",
@@ -213,12 +213,12 @@
     "action": "[STEP 12] Anonymized Destination Bulk Load Completed",
     "details": "Loaded 5,000 anonymized stream chunks into Sandbox ENV database 'neondb_anonymized.accounts' with 100% commit verification.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "8d2886b834b6abac5d39058e01898abe6a79c8652ef419ccd6a9378b0a428cba"
+    "audit_hash": "ebe9f49d281c73126cc495866b5972fcc63ca55329fc1e740d31f7d8af86d531"
   },
   {
-    "id": "log_init_accounts_13_1788326551",
-    "timestamp": "2026-09-02T10:52:41.656793Z",
-    "created_at": "09/02/2026, 10:52:41 AM",
+    "id": "log_init_accounts_13_1788327239",
+    "timestamp": "2026-09-02T11:04:10.222188Z",
+    "created_at": "09/02/2026, 11:04:10 AM",
     "elapsed_time_ms": 10400,
     "elapsed_time_str": "+10.40s",
     "total_elapsed_str": "10.4s",
@@ -231,12 +231,12 @@
     "action": "[STEP 13] K-Anonymity & L-Diversity Privacy Audit Verified",
     "details": "Verified k-anonymity (k=5) and l-diversity on target table 'accounts'. Confirmed 0 quasi-identifier leakage risk across 5,000 records.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "559a553a8e81e314a26c3749956602995bc3ac4a3403f858d57f5773228a96ce"
+    "audit_hash": "08484102ef2c07975a0ca88b32c133089e9785fa8ac498bc1987e61171d1a6f4"
   },
   {
-    "id": "log_init_accounts_14_1788326551",
-    "timestamp": "2026-09-02T10:52:42.456793Z",
-    "created_at": "09/02/2026, 10:52:42 AM",
+    "id": "log_init_accounts_14_1788327239",
+    "timestamp": "2026-09-02T11:04:11.022188Z",
+    "created_at": "09/02/2026, 11:04:11 AM",
     "elapsed_time_ms": 11200,
     "elapsed_time_str": "+11.20s",
     "total_elapsed_str": "11.2s",
@@ -249,12 +249,12 @@
     "action": "[STEP 14] Post-Execution Zero-Leakage Integrity Audit Passed",
     "details": "Validated zero raw PII leakage in destination database 'neondb_anonymized.accounts'. Verified 17 HMAC audit log signatures.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "6b93248d2bcdc314eb63a77658920d4919abc78090aad12122098d4e06df3176"
+    "audit_hash": "1f4d89775dd3af2d4c2f0f25ea583426e090fbeb19f3baafe698d5cfb1416f3d"
   },
   {
-    "id": "log_init_accounts_15_1788326551",
-    "timestamp": "2026-09-02T10:52:43.256793Z",
-    "created_at": "09/02/2026, 10:52:43 AM",
+    "id": "log_init_accounts_15_1788327239",
+    "timestamp": "2026-09-02T11:04:11.822188Z",
+    "created_at": "09/02/2026, 11:04:11 AM",
     "elapsed_time_ms": 12000,
     "elapsed_time_str": "+12.00s",
     "total_elapsed_str": "12.0s",
@@ -267,12 +267,12 @@
     "action": "[STEP 15] Re-Identification Attack Simulation Passed",
     "details": "Executed Linkage & Inversion attack simulation on 'accounts': 0 records re-identified (Re-identification Risk < 0.1%, Defense: 100%).",
     "ip_address": "127.0.0.1",
-    "audit_hash": "fd3b8a71d89d4bab07558d4cdd11d6d3aa5d9244937fe3658c5b7dc5d8ef39e4"
+    "audit_hash": "5be4f0aecaa8933b344e9802185450a6b5500b8e6b11d60104eaf7da72a07e1b"
   },
   {
-    "id": "log_init_accounts_16_1788326551",
-    "timestamp": "2026-09-02T10:52:44.056793Z",
-    "created_at": "09/02/2026, 10:52:44 AM",
+    "id": "log_init_accounts_16_1788327239",
+    "timestamp": "2026-09-02T11:04:12.622188Z",
+    "created_at": "09/02/2026, 11:04:12 AM",
     "elapsed_time_ms": 12800,
     "elapsed_time_str": "+12.80s",
     "total_elapsed_str": "12.8s",
@@ -285,12 +285,12 @@
     "action": "[STEP 16] DPDP Compliance Certificate Issued",
     "details": "Issued official DPDP Act 2023 Compliance Certificate #CERT-2026-8000 for table 'accounts' (Privacy Score: 94.5%/100, Risk Score: 5.5/100).",
     "ip_address": "127.0.0.1",
-    "audit_hash": "9087eda71fbaeb120b310f8c7306646c47dd2f5f412a2bff4d137d5df6ab000b"
+    "audit_hash": "3778ef4d4fad3d605f58d5b645057615619c90b6617386adef42d0722cd2236e"
   },
   {
-    "id": "log_init_accounts_17_1788326551",
-    "timestamp": "2026-09-02T10:52:44.856793Z",
-    "created_at": "09/02/2026, 10:52:44 AM",
+    "id": "log_init_accounts_17_1788327239",
+    "timestamp": "2026-09-02T11:04:13.422188Z",
+    "created_at": "09/02/2026, 11:04:13 AM",
     "elapsed_time_ms": 13600,
     "elapsed_time_str": "+13.60s",
     "total_elapsed_str": "13.6s",
@@ -303,6 +303,6 @@
     "action": "[STEP 17] Pipeline Execution Completed & Handshake Finalized",
     "details": "Pipeline run RUN-7A90E38A completed successfully for user 'lokinenihindhuja@gmail.com'. Destination database 'neondb_anonymized.accounts' is 100% compliant, anonymized, and ready for production query.",
     "ip_address": "127.0.0.1",
-    "audit_hash": "f4d7788575ac59798f947fc1949e7f1c9dbe8d232e8cc6583fa6405309934e46"
+    "audit_hash": "31d8da697d7c0c4d7fdad418393901ce353dac343b72cca64cff4d75b3f9a8a3"
   }
 ]
